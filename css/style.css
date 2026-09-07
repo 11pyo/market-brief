@@ -261,6 +261,7 @@ button { font: inherit; cursor: pointer; }
 .signal-call--up { color: var(--green); }
 .signal-call--down { color: var(--red); }
 .signal-call--flat { color: var(--flat); }
+.signal-note { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border-subtle); font-size: 0.84rem; line-height: 1.6; color: var(--text-secondary); }
 
 /* 3분할 방향성 바 */
 .dirbar { display: flex; height: 30px; border-radius: 8px; overflow: hidden; background: rgba(255, 255, 255, 0.05); }

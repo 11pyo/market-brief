@@ -12,23 +12,16 @@
      - 서비스워커 등록 및 갱신 토스트
 
    보안 규칙 (전 함수 공통)
-     1. innerHTML에 들어가는 모든 동적 문자열은 escapeHtml()을 거친다.
+     1. innerHTML을 쓰지 않는다. 동적 문자열은 textContent / createTextNode로만 넣는다
+        (HTML 이스케이프 헬퍼를 두지 않는 이유 — 이스케이프가 필요한 싱크 자체가 없다).
      2. fetch 경로는 상대 경로만 쓴다 (GitHub Pages 하위 경로 대응 + SSRF 표면 없음).
-     3. eval / new Function / innerHTML로 스크립트 삽입을 하지 않는다.
+     3. eval / new Function / setTimeout(문자열)로 코드를 생성하지 않는다.
      4. 파일명에 들어가는 식별자는 정규식 화이트리스트로 검증한 뒤에만 사용한다.
    ========================================================================= */
 (function () {
   'use strict';
 
   // ===== 공통 유틸 =====
-  var HTML_ENTITIES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-
-  // [SECURE] HTML 출력 인코딩 - XSS 방지 (Category 1)
-  function escapeHtml(value) {
-    if (value === null || value === undefined) return '';
-    return String(value).replace(/[&<>"']/g, function (ch) { return HTML_ENTITIES[ch]; });
-  }
-
   // [SECURE] 정규식 메타문자 이스케이프 - 사용자 입력이 패턴으로 해석되는 것을 방지 (Category 1)
   function escapeRegExp(value) {
     return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -238,6 +231,31 @@
       });
   }
 
+  // 표시 순서 = 데이터 계약의 기간 순서
+  var PERIOD_ORDER = ['1d', '5d', '1mo'];
+
+  // [SECURE] data-* 값을 화이트리스트(PERIOD_ORDER)로 걸러 임의 문자열이 경로에 들어가지 않게 한다 (Category 1)
+  function parsePeriods(raw) {
+    var declared = String(raw || '').split(',');
+    var available = [];
+    for (var i = 0; i < PERIOD_ORDER.length; i++) {
+      for (var j = 0; j < declared.length; j++) {
+        if (declared[j].trim() === PERIOD_ORDER[i]) { available.push(PERIOD_ORDER[i]); break; }
+      }
+    }
+    return available;
+  }
+
+  // 데이터가 없는 기간 탭은 비활성화한다 (선언이 없으면 예전 동작대로 전부 허용).
+  function syncTabs(available) {
+    var tabs = document.querySelectorAll('.chart-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      var enabled = !available.length || available.indexOf(tabs[i].dataset.period) >= 0;
+      tabs[i].disabled = !enabled;
+      tabs[i].setAttribute('aria-disabled', enabled ? 'false' : 'true');
+    }
+  }
+
   function setPeriod(period) {
     var tabs = document.querySelectorAll('.chart-tab');
     for (var i = 0; i < tabs.length; i++) {
@@ -248,7 +266,7 @@
     if (chartSlug) loadChart(chartSlug, period);
   }
 
-  function openChart(slug, title) {
+  function openChart(slug, title, periodsRaw) {
     var modal = document.getElementById('chart-modal');
     if (!modal || !CHART_KEY_RE.test(slug + '_1d')) return;
     lastFocused = document.activeElement;
@@ -258,7 +276,10 @@
     modal.hidden = false;
     var closeBtn = document.getElementById('chart-close');
     if (closeBtn) closeBtn.focus();
-    setPeriod('1d');
+    // 1D 데이터가 없는 심볼도 있다. 사용 가능한 첫 기간으로 연다.
+    var available = parsePeriods(periodsRaw);
+    syncTabs(available);
+    setPeriod(available.length ? available[0] : '1d');
   }
 
   function closeChart() {
@@ -275,12 +296,15 @@
     for (var i = 0; i < cards.length; i++) {
       cards[i].addEventListener('click', function (e) {
         var el = e.currentTarget;
-        openChart(el.dataset.chartSlug, el.dataset.name);
+        openChart(el.dataset.chartSlug, el.dataset.name, el.dataset.chartPeriods);
       });
     }
     var tabs = document.querySelectorAll('.chart-tab');
     for (var j = 0; j < tabs.length; j++) {
-      tabs[j].addEventListener('click', function (e) { setPeriod(e.currentTarget.dataset.period); });
+      tabs[j].addEventListener('click', function (e) {
+        if (e.currentTarget.disabled) return;
+        setPeriod(e.currentTarget.dataset.period);
+      });
     }
     var closeBtn = document.getElementById('chart-close');
     if (closeBtn) closeBtn.addEventListener('click', closeChart);
@@ -349,12 +373,16 @@
 
   function highlight(root, tokens) {
     if (!root || !tokens.length) return 0;
-    var pattern = new RegExp('(' + tokens.map(escapeRegExp).join('|') + ')', 'gi');
+    var source = '(' + tokens.map(escapeRegExp).join('|') + ')';
+    var pattern = new RegExp(source, 'gi');
+    // 필터에는 'g' 없는 별도 정규식을 쓴다. g 플래그 정규식의 test()는 lastIndex를 전진시켜
+    // 매칭되는 텍스트 노드를 하나 걸러 하나씩 탈락시킨다 (상태를 공유하면 안 된다).
+    var testPattern = new RegExp(source, 'i');
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
       acceptNode: function (node) {
         var tag = node.parentNode && node.parentNode.nodeName;
         if (tag === 'SCRIPT' || tag === 'STYLE' || tag === 'MARK') return NodeFilter.FILTER_REJECT;
-        return pattern.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+        return testPattern.test(node.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
     });
     var targets = [];
@@ -558,13 +586,14 @@
   }
 
   // 테스트/디버깅 편의를 위한 최소 노출 (전역 오염 최소화)
-  window.mbrief = { escapeHtml: escapeHtml, formatPrice: formatPrice, lang: LANG };
+  window.mbrief = { formatPrice: formatPrice, lang: LANG };
 })();
 
 /* --------------------------------------------------
    Security Checklist
    Applied:
-     - XSS: 동적 문자열은 textContent 또는 escapeHtml()만 사용. innerHTML로 사용자 데이터 미삽입
+     - XSS: innerHTML 싱크가 하나도 없다. 동적 문자열은 textContent / createTextNode로만 삽입하므로
+            HTML 이스케이프 단계 자체가 불필요하다 (이스케이프 누락 실수의 여지를 제거)
      - Code Injection: eval / new Function / setTimeout(문자열) 미사용
      - Path Traversal: 차트 키를 /^[a-z0-9]+_(1d|5d|1mo)$/ 로 검증한 뒤에만 경로에 사용
      - SSRF / Open Redirect: fetch는 BASE(상대 경로) 하위로만 요청. 외부 URL을 코드에서 조립하지 않음

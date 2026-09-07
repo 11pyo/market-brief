@@ -2,7 +2,7 @@
    서비스워커 — 정적 사이트 v2
 
    캐시 이름에 빌드 ID를 포함시켜 배포마다 새 캐시를 쓰고 옛 캐시를 지운다.
-   `f6ed0d0401`는 빌더(mbrief/site/builder.py)가 빌드 시점에 치환한다.
+   `7df05f50cd`는 빌더(mbrief/site/builder.py)가 빌드 시점에 치환한다.
 
    전략
      - HTML(navigate)  : 네트워크 우선 → 실패 시 캐시 → 그래도 없으면 시작 페이지
@@ -15,7 +15,7 @@
    ========================================================================= */
 'use strict';
 
-var BUILD_ID = 'f6ed0d0401';
+var BUILD_ID = '7df05f50cd';
 var CACHE_NAME = 'mbrief-' + BUILD_ID;
 var DATA_TIMEOUT_MS = 5000;
 
@@ -86,8 +86,10 @@ function networkFirst(request, timeoutMs) {
   });
 }
 
+// ignoreSearch: 정적 자산은 `?v=<build_id>`가 붙어 요청된다. 프리캐시는 쿼리 없는 './css/style.css'로
+// 저장되므로 쿼리를 무시하지 않으면 캐시가 절대 히트하지 않는다 (오프라인에서 스타일이 사라진다).
 function staleWhileRevalidate(request) {
-  return caches.match(request).then(function (cached) {
+  return caches.match(request, { ignoreSearch: true }).then(function (cached) {
     var network = fetch(request)
       .then(function (response) { return putInCache(request, response); })
       .catch(function (err) {
@@ -113,8 +115,13 @@ self.addEventListener('fetch', function (event) {
 
   if (request.mode === 'navigate') {
     event.respondWith(
+      // caches.match는 Promise를 돌려주므로 `A || B`로는 폴백이 동작하지 않는다 (Promise는 항상 truthy).
+      // 반드시 then 체인으로 풀어서 확인한다.
       networkFirst(request, 0).then(function (response) {
-        return response || caches.match(SCOPE_ROOT + 'index.html') || caches.match('./');
+        if (response) return response;
+        return caches.match(SCOPE_ROOT + 'index.html').then(function (cached) {
+          return cached || caches.match('./');
+        });
       })
     );
     return;
@@ -139,6 +146,8 @@ self.addEventListener('fetch', function (event) {
      - Improper Exception Handling: 모든 catch가 경고 로깅 또는 폴백을 수행한다 (빈 catch 없음)
      - Unencrypted Sensitive Data: 개인 데이터를 캐시하지 않는다. 공개 정적 산출물만 대상
      - Race Condition: 캐시 이름에 빌드 ID를 포함해 배포 간 캐시 혼선을 제거
+     - Missing Error Handling: navigate 폴백을 Promise 체인으로 풀어 실제로 동작하게 한다
+       (`A || B` 형태는 Promise가 항상 truthy라 폴백이 죽은 코드였다)
    Not Applied:
      - [WARN] POST/PUT 등 비-GET 요청은 처리하지 않는다 (정적 사이트라 필요 없음).
      - [WARN] 캐시 용량 상한이 없다. 아카이브가 매우 커지면 오래된 항목 정리 로직을 추가할 것.

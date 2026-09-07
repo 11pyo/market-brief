@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-09-07T17:46:11+09:00",
+ "updatedAt": "2026-09-07T18:21:00+09:00",
  "quotes": {
   "S&P 500": {
    "price": 7718.6001,
@@ -22,9 +22,9 @@
    "changePercent": 0.462
   },
   "Dollar Index (DXY)": {
-   "price": 98.857,
-   "change": -0.3,
-   "changePercent": -0.3025
+   "price": 98.934,
+   "change": -0.223,
+   "changePercent": -0.2249
   },
   "Crude Oil (WTI)": {
    "price": 91.48,
@@ -42,14 +42,14 @@
    "changePercent": -0.8241
   },
   "EUR/USD": {
-   "price": 1.1629,
-   "change": 0.0008,
-   "changePercent": 0.0698
+   "price": 1.1624,
+   "change": 0.0003,
+   "changePercent": 0.0232
   },
   "BTC/USD": {
-   "price": 79465.4609,
-   "change": -873.8594,
-   "changePercent": -1.0877
+   "price": 79501.1172,
+   "change": -838.2031,
+   "changePercent": -1.0433
   },
   "KOSPI": {
    "price": 6995.3901,
@@ -57,9 +57,9 @@
    "changePercent": 4.6085
   },
   "USD/KRW": {
-   "price": 1344.6,
-   "change": -1.39,
-   "changePercent": -0.1033
+   "price": 1344.71,
+   "change": -1.28,
+   "changePercent": -0.0951
   }
  },
  "sectors": {
