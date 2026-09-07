@@ -1,0 +1,62 @@
+{
+ "S&P 500": {
+  "price": 7718.6001,
+  "change": -29.1099,
+  "changePercent": -0.3757
+ },
+ "NASDAQ": {
+  "price": 26506.9902,
+  "change": -77.0698,
+  "changePercent": -0.2899
+ },
+ "Dow Jones": {
+  "price": 53414.25,
+  "change": -271.86,
+  "changePercent": -0.5064
+ },
+ "US 10Y Yield": {
+  "price": 4.784,
+  "change": 0.022,
+  "changePercent": 0.462
+ },
+ "Dollar Index (DXY)": {
+  "price": 99.089,
+  "change": -0.068,
+  "changePercent": -0.0686
+ },
+ "Crude Oil (WTI)": {
+  "price": 91.48,
+  "change": -0.54,
+  "changePercent": -0.5868
+ },
+ "VIX": {
+  "price": 15.03,
+  "change": 0.51,
+  "changePercent": 3.5124
+ },
+ "Gold": {
+  "price": 4476.6001,
+  "change": -37.1997,
+  "changePercent": -0.8241
+ },
+ "EUR/USD": {
+  "price": 1.162,
+  "change": -0.0001,
+  "changePercent": -0.0116
+ },
+ "BTC/USD": {
+  "price": 79249.7031,
+  "change": -1089.6172,
+  "changePercent": -1.3563
+ },
+ "KOSPI": {
+  "price": 6995.3901,
+  "change": 308.1801,
+  "changePercent": 4.6085
+ },
+ "USD/KRW": {
+  "price": 1343.79,
+  "change": -2.2,
+  "changePercent": -0.1634
+ }
+}

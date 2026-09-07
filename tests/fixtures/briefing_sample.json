@@ -1,0 +1,658 @@
+{
+  "id": "2026-09-07-ko-a1b2c3",
+  "date": "2026-09-07",
+  "lang": "ko",
+  "generatedAt": "2026-09-07T07:04:33+09:00",
+  "provider": "mock",
+  "model": "mock-fixture",
+  "generationTimeMs": 1234,
+  "newsCount": 50,
+  "tierCounts": {
+    "t1": 8,
+    "t2": 29,
+    "t3": 13
+  },
+  "headline": "파월 잭슨홀 발언 후 10년물 4.78% 재상승, S&P 500 7,718로 0.4% 반락 — 반도체 차익실현",
+  "structured": {
+    "headline": "파월 잭슨홀 발언 후 10년물 4.78% 재상승, S&P 500 7,718로 0.4% 반락 — 반도체 차익실현",
+    "overnight": "어젯밤 **파월 연준 의장**이 잭슨홀 연설에서 \"인플레이션이 목표를 향해 가고 있으나 서두를 이유는 없다\"고 발언하며 9월 인하 기대를 낮췄다. 미 10년물 금리는 **4.784%**로 재상승했고 S&P 500은 **7,718.60(-0.41%)**, 나스닥은 **26,506.99(-0.63%)**로 마감했다.\n\n- **엔비디아(NVDA)**: 젠슨 황이 차세대 Rubin 출하 일정을 재확인했으나 차익실현으로 -1.8%. 반도체 전반 약세를 주도했다.\n- **원유(WTI)**: OPEC+ 증산 유지 소식에 배럴당 61달러대로 하락, 에너지 섹터(XLE) 약세.\n- **달러/원**: 1,392원으로 소폭 상승. 외국인 수급에 부담 요인이다.\n\nCNN 공포·탐욕 지수는 **41.9(공포)**로 전일 대비 하락, 위험선호가 약해진 국면이다.",
+    "direction": {
+      "up": 30,
+      "flat": 40,
+      "down": 30,
+      "rationaleUp": "금리 재상승이 이미 반영됐고 실적 시즌 가이던스가 견조하면 기술적 반등 가능.",
+      "rationaleFlat": "FOMC(D-10)까지 방향성 베팅 자제, 국채 입찰과 CPI 대기로 좁은 박스권 확률이 가장 높다.",
+      "rationaleDown": "10년물 4.8% 돌파 시 성장주 밸류에이션 압박, 반도체 차익실현 연장 위험."
+    },
+    "sectorLeaders": [
+      {
+        "name": "유틸리티",
+        "etf": "XLU",
+        "reason": "금리 민감 방어주 로테이션, 전력 수요 테마 지속"
+      },
+      {
+        "name": "헬스케어",
+        "etf": "XLV",
+        "reason": "경기 방어 + 실적 안정성으로 자금 유입"
+      },
+      {
+        "name": "필수소비재",
+        "etf": "XLP",
+        "reason": "변동성 확대 국면 방어적 선호"
+      }
+    ],
+    "sectorLaggards": [
+      {
+        "name": "테크/반도체",
+        "etf": "XLK",
+        "reason": "NVDA 차익실현, 금리 상승에 밸류에이션 부담"
+      },
+      {
+        "name": "에너지",
+        "etf": "XLE",
+        "reason": "OPEC+ 증산 유지로 WTI 61달러대 하락"
+      }
+    ],
+    "risks": [
+      {
+        "title": "10년물 4.8% 상향 돌파",
+        "detail": "성장주 할인율 상승, 나스닥 추가 조정 트리거",
+        "severity": "high"
+      },
+      {
+        "title": "FOMC(9/16~17) 매파 서프라이즈",
+        "detail": "점도표 인하 횟수 축소 시 달러 강세·원화 약세 심화",
+        "severity": "high"
+      },
+      {
+        "title": "반도체 수급 이벤트",
+        "detail": "AVGO 실적 가이던스 실망 시 섹터 추가 매도",
+        "severity": "medium"
+      },
+      {
+        "title": "원/달러 1,400원 재접근",
+        "detail": "외국인 순매도 전환 가능성",
+        "severity": "medium"
+      }
+    ],
+    "trades": [
+      {
+        "asset": "XLU (유틸리티 ETF)",
+        "side": "long",
+        "entry": "84.0~84.5",
+        "target": "88.0",
+        "stop": "82.3",
+        "rr": "1:2.1",
+        "rationale": "방어주 로테이션 + 전력 수요 테마, 20일선 지지"
+      },
+      {
+        "asset": "QQQ",
+        "side": "short",
+        "entry": "612~615",
+        "target": "595",
+        "stop": "622",
+        "rr": "1:2.4",
+        "rationale": "10년물 4.8% 돌파 시 성장주 압박, 반도체 약세 연장"
+      },
+      {
+        "asset": "GLD (금 ETF)",
+        "side": "long",
+        "entry": "330~332",
+        "target": "345",
+        "stop": "323",
+        "rr": "1:1.9",
+        "rationale": "공포 국면 안전자산 수요, 실질금리 정점 인식"
+      }
+    ],
+    "dashboard": [
+      {
+        "label": "S&P 500",
+        "value": "7,718.60 (-0.41%)",
+        "comment": "7,700 지지 여부"
+      },
+      {
+        "label": "나스닥",
+        "value": "26,506.99 (-0.63%)",
+        "comment": "반도체 차익실현"
+      },
+      {
+        "label": "미 10년물",
+        "value": "4.784%",
+        "comment": "4.8% 돌파 경계"
+      },
+      {
+        "label": "달러 인덱스",
+        "value": "97.9",
+        "comment": "보합"
+      },
+      {
+        "label": "WTI",
+        "value": "$61.4",
+        "comment": "OPEC+ 증산"
+      },
+      {
+        "label": "VIX",
+        "value": "15.9",
+        "comment": "낮은 변동성, 헤지 저렴"
+      },
+      {
+        "label": "BTC",
+        "value": "$103,900",
+        "comment": "위험선호 약화"
+      },
+      {
+        "label": "공포·탐욕",
+        "value": "42 (공포)",
+        "comment": "전일 대비 하락"
+      }
+    ],
+    "portfolioNote": null
+  },
+  "contentMarkdown": "",
+  "market": {
+    "updatedAt": "2026-09-07T07:02:11+09:00",
+    "quotes": {
+      "S&P 500": {
+        "price": 7718.6001,
+        "change": -29.1099,
+        "changePercent": -0.3757
+      },
+      "NASDAQ": {
+        "price": 26506.9902,
+        "change": -77.0698,
+        "changePercent": -0.2899
+      },
+      "Dow Jones": {
+        "price": 53414.25,
+        "change": -271.86,
+        "changePercent": -0.5064
+      },
+      "US 10Y Yield": {
+        "price": 4.784,
+        "change": 0.022,
+        "changePercent": 0.462
+      },
+      "Dollar Index (DXY)": {
+        "price": 99.089,
+        "change": -0.068,
+        "changePercent": -0.0686
+      },
+      "Crude Oil (WTI)": {
+        "price": 91.48,
+        "change": -0.54,
+        "changePercent": -0.5868
+      },
+      "VIX": {
+        "price": 15.03,
+        "change": 0.51,
+        "changePercent": 3.5124
+      },
+      "Gold": {
+        "price": 4476.6001,
+        "change": -37.1997,
+        "changePercent": -0.8241
+      },
+      "EUR/USD": {
+        "price": 1.162,
+        "change": -0.0001,
+        "changePercent": -0.0116
+      },
+      "BTC/USD": {
+        "price": 79249.7031,
+        "change": -1089.6172,
+        "changePercent": -1.3563
+      },
+      "KOSPI": {
+        "price": 6995.3901,
+        "change": 308.1801,
+        "changePercent": 4.6085
+      },
+      "USD/KRW": {
+        "price": 1343.79,
+        "change": -2.2,
+        "changePercent": -0.1634
+      }
+    },
+    "sectors": {
+      "Technology": {
+        "symbol": "XLK",
+        "price": 187.28,
+        "changePercent": 0.77
+      },
+      "Financials": {
+        "symbol": "XLF",
+        "price": 58.1,
+        "changePercent": -0.6
+      },
+      "Energy": {
+        "symbol": "XLE",
+        "price": 64.06,
+        "changePercent": -0.93
+      },
+      "Healthcare": {
+        "symbol": "XLV",
+        "price": 171.45,
+        "changePercent": -0.88
+      },
+      "Industrials": {
+        "symbol": "XLI",
+        "price": 175.27,
+        "changePercent": 0.01
+      },
+      "Cons. Discretionary": {
+        "symbol": "XLY",
+        "price": 114.91,
+        "changePercent": -1.28
+      },
+      "Cons. Staples": {
+        "symbol": "XLP",
+        "price": 84.58,
+        "changePercent": -0.73
+      },
+      "Communication": {
+        "symbol": "XLC",
+        "price": 112.03,
+        "changePercent": -1.51
+      },
+      "Materials": {
+        "symbol": "XLB",
+        "price": 52.44,
+        "changePercent": 0.21
+      },
+      "Real Estate": {
+        "symbol": "XLRE",
+        "price": 43.93,
+        "changePercent": -0.91
+      }
+    },
+    "fearGreed": {
+      "score": 41.9,
+      "rating": "fear",
+      "rating_ko": "fear",
+      "color": "#eab308",
+      "previous_close": 35.2,
+      "previous_1week": 52.3,
+      "previous_1month": 60.0,
+      "timestamp": "2026-09-04T23:59:43+00:00"
+    },
+    "calendar": {
+      "economic": [],
+      "earnings": [
+        {
+          "symbol": "MU",
+          "company": "MU",
+          "date": "2026-09-30",
+          "hour": "amc",
+          "epsEstimate": 32.2138,
+          "revenueEstimate": 52101559912,
+          "isMajor": true
+        },
+        {
+          "symbol": "GS",
+          "company": "GS",
+          "date": "2026-10-13",
+          "hour": "bmo",
+          "epsEstimate": 16.8366,
+          "revenueEstimate": 17864586399,
+          "isMajor": true
+        },
+        {
+          "symbol": "JPM",
+          "company": "JPM",
+          "date": "2026-10-13",
+          "hour": "",
+          "epsEstimate": 5.8957,
+          "revenueEstimate": 51500360176,
+          "isMajor": true
+        },
+        {
+          "symbol": "BAC",
+          "company": "BAC",
+          "date": "2026-10-14",
+          "hour": "bmo",
+          "epsEstimate": 1.2047,
+          "revenueEstimate": 31642468588,
+          "isMajor": true
+        },
+        {
+          "symbol": "NFLX",
+          "company": "NFLX",
+          "date": "2026-10-19",
+          "hour": "amc",
+          "epsEstimate": 0.8379,
+          "revenueEstimate": 13138294569,
+          "isMajor": true
+        },
+        {
+          "symbol": "TSLA",
+          "company": "TSLA",
+          "date": "2026-10-20",
+          "hour": "amc",
+          "epsEstimate": 0.4451,
+          "revenueEstimate": 28290861820,
+          "isMajor": true
+        },
+        {
+          "symbol": "INTC",
+          "company": "INTC",
+          "date": "2026-10-21",
+          "hour": "amc",
+          "epsEstimate": 0.3918,
+          "revenueEstimate": 16720929186,
+          "isMajor": true
+        }
+      ],
+      "fomc": [
+        {
+          "start": "2026-07-28",
+          "end": "2026-07-29",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": true,
+          "isLive": false,
+          "daysUntil": -41
+        },
+        {
+          "start": "2026-09-15",
+          "end": "2026-09-16",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 8
+        },
+        {
+          "start": "2026-10-27",
+          "end": "2026-10-28",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 50
+        },
+        {
+          "start": "2026-12-08",
+          "end": "2026-12-09",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 92
+        },
+        {
+          "start": "2027-01-26",
+          "end": "2027-01-27",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 141
+        },
+        {
+          "start": "2027-03-16",
+          "end": "2027-03-17",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 190
+        },
+        {
+          "start": "2027-04-27",
+          "end": "2027-04-28",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 232
+        }
+      ],
+      "indicators": [
+        {
+          "series": "CES0000000001",
+          "label": "비농업 고용 (Nonfarm Payrolls)",
+          "impact": "high",
+          "period": "2026 August",
+          "kind": "level",
+          "value": 159075.0,
+          "prevValue": 158913.0,
+          "display": 162.0,
+          "displayUnit": "천명",
+          "isDelta": true,
+          "changeNote": "이전 158913 → 159075",
+          "direction": "up"
+        },
+        {
+          "series": "LNS14000000",
+          "label": "실업률 (Unemployment Rate)",
+          "impact": "high",
+          "period": "2026 August",
+          "kind": "rate",
+          "value": 4.1,
+          "prevValue": 4.1,
+          "display": 4.1,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 4.1 → 4.1",
+          "direction": "flat"
+        },
+        {
+          "series": "CUUR0000SA0",
+          "label": "소비자물가 CPI",
+          "impact": "high",
+          "period": "2026 July",
+          "kind": "index",
+          "value": 333.918,
+          "prevValue": 333.952,
+          "display": -0.01,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 333.952 → 333.918",
+          "direction": "down"
+        },
+        {
+          "series": "CUUR0000SA0L1E",
+          "label": "근원 CPI (Core CPI)",
+          "impact": "high",
+          "period": "2026 July",
+          "kind": "index",
+          "value": 337.133,
+          "prevValue": 336.882,
+          "display": 0.07,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 336.882 → 337.133",
+          "direction": "up"
+        },
+        {
+          "series": "WPUFD4",
+          "label": "생산자물가 PPI",
+          "impact": "high",
+          "period": "2026 July",
+          "kind": "index",
+          "value": 156.927,
+          "prevValue": 157.083,
+          "display": -0.1,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 157.083 → 156.927",
+          "direction": "down"
+        },
+        {
+          "series": "PRS85006092",
+          "label": "비농업 생산성 (Nonfarm Productivity)",
+          "impact": "high",
+          "period": "2026 2nd Quarter",
+          "kind": "pct",
+          "value": 1.4,
+          "prevValue": 0.8,
+          "display": 1.4,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 0.8 → 1.4",
+          "direction": "up"
+        },
+        {
+          "series": "PRS85006112",
+          "label": "단위노동비용 (Unit Labor Costs)",
+          "impact": "medium",
+          "period": "2026 2nd Quarter",
+          "kind": "pct",
+          "value": 1.2,
+          "prevValue": 1.3,
+          "display": 1.2,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 1.3 → 1.2",
+          "direction": "down"
+        },
+        {
+          "series": "CES0500000003",
+          "label": "시간당 평균임금 (Avg Hourly Earnings)",
+          "impact": "medium",
+          "period": "2026 August",
+          "kind": "index",
+          "value": 37.75,
+          "prevValue": 37.65,
+          "display": 0.27,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 37.65 → 37.75",
+          "direction": "up"
+        },
+        {
+          "series": "LNS11300000",
+          "label": "경제활동참가율 (Participation Rate)",
+          "impact": "medium",
+          "period": "2026 August",
+          "kind": "rate",
+          "value": 61.6,
+          "prevValue": 61.4,
+          "display": 61.6,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 61.4 → 61.6",
+          "direction": "up"
+        }
+      ]
+    },
+    "chartKeys": [
+      "sp500_1d",
+      "sp500_5d",
+      "sp500_1mo"
+    ]
+  },
+  "topNews": [
+    {
+      "headline": "What are the main events for today?",
+      "source": "Forexlive",
+      "tier": 3,
+      "url": "https://investinglive.com/news/what-are-the-main-events-for-today-36/",
+      "time": "2026-09-07 06:34 UTC",
+      "category": "forex"
+    },
+    {
+      "headline": "The Pentagon Doubled Down on Its Anthropic Blacklist. Why Amazon and Alphabet Investors Should Care",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=8cde0bc3f47096b0460460de64d08d21e54af110d2ebae6d11dbf2bd3e54bb30",
+      "time": "2026-09-07 03:44 UTC",
+      "category": "company"
+    },
+    {
+      "headline": "Nvidia (NVDA)’s First-Ever Year-Ahead Forecast Puts It on a Path to Pass Apple and Alphabet",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=0af492eafa8a1c2529e56b7c222f60c50e17739840635565e17003628c39c2fd",
+      "time": "2026-09-06 23:31 UTC",
+      "category": "company"
+    },
+    {
+      "headline": "What to Expect in Markets This Week: Fresh Inflation Data; Apple’s Fall Launch Event and Oracle Earnings",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=a876fa71b6bc53ea066d0e2325f8fbe65043d92090aa2308363b37b4080eeba9",
+      "time": "2026-09-06 12:00 UTC",
+      "category": "company"
+    },
+    {
+      "headline": "Inflation data, Oracle earnings, and an energy supply crunch: What to watch this week",
+      "source": "Yahoo Finance S&P 500",
+      "tier": 2,
+      "url": "https://finance.yahoo.com/economy/article/inflation-data-oracle-earnings-and-an-energy-supply-crunch-what-to-watch-this-week-120429533.html?.tsrc=rss",
+      "time": "2026-09-06 12:04 UTC",
+      "category": "general"
+    },
+    {
+      "headline": "Can Nvidia (NVDA) Prove it Doesn’t Live or Die by a Handful of Hyperscalers?",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=bb778d9eb180c7bcb18e5ce8f837dfc5465ee61464aa9559b4c0f9af1e0ab636",
+      "time": "2026-09-06 21:21 UTC",
+      "category": "company"
+    },
+    {
+      "headline": "Nvidia’s Hugging Face Deal Is a Hedge against Broadcom’s Custom Silicon Threat",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=c698c3cd5183f58ca14f21253e285b623a7df657507fa969a2b9c0d7fa94ce0e",
+      "time": "2026-09-06 11:51 UTC",
+      "category": "company"
+    },
+    {
+      "headline": "Musk Moves Up SpaceX (SPCX)’s Orbital Data Center Timeline, Again",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=b5e65c7deb988b3f6874b472ff1560018a67fba0764fa660c647fc3bb4427fc4",
+      "time": "2026-09-06 21:41 UTC",
+      "category": "company"
+    },
+    {
+      "headline": "Amounts Outstanding in the Call Money Market (Aug.)",
+      "source": "Bank of Japan",
+      "tier": 1,
+      "url": "http://www.boj.or.jp/en/statistics/market/short/call/call.xlsx",
+      "time": "2026-09-07 06:00 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "Consumption Activity Index",
+      "source": "Bank of Japan",
+      "tier": 1,
+      "url": "http://www.boj.or.jp/en/research/research_data/cai/index.htm",
+      "time": "2026-09-07 05:00 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "Major Economic Indicators Latest Numbers",
+      "source": "US Bureau of Labor Statistics",
+      "tier": 1,
+      "url": "https://www.bls.gov/bls/",
+      "time": "2026-09-04 12:32 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "Apple (AAPL)’s New Mac Mini and Studio Bet Big on On-Device AI",
+      "source": "Yahoo",
+      "tier": 2,
+      "url": "https://finnhub.io/api/news?id=2b957ca41b2c23aecb883a704f63e36262ddf10475597d2f80d09a61aa6e8145",
+      "time": "2026-09-06 21:16 UTC",
+      "category": "company"
+    }
+  ],
+  "translatedFrom": null
+}

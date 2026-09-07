@@ -1,0 +1,52 @@
+{
+ "Technology": {
+  "symbol": "XLK",
+  "price": 187.28,
+  "changePercent": 0.77
+ },
+ "Financials": {
+  "symbol": "XLF",
+  "price": 58.1,
+  "changePercent": -0.6
+ },
+ "Energy": {
+  "symbol": "XLE",
+  "price": 64.06,
+  "changePercent": -0.93
+ },
+ "Healthcare": {
+  "symbol": "XLV",
+  "price": 171.45,
+  "changePercent": -0.88
+ },
+ "Industrials": {
+  "symbol": "XLI",
+  "price": 175.27,
+  "changePercent": 0.01
+ },
+ "Cons. Discretionary": {
+  "symbol": "XLY",
+  "price": 114.91,
+  "changePercent": -1.28
+ },
+ "Cons. Staples": {
+  "symbol": "XLP",
+  "price": 84.58,
+  "changePercent": -0.73
+ },
+ "Communication": {
+  "symbol": "XLC",
+  "price": 112.03,
+  "changePercent": -1.51
+ },
+ "Materials": {
+  "symbol": "XLB",
+  "price": 52.44,
+  "changePercent": 0.21
+ },
+ "Real Estate": {
+  "symbol": "XLRE",
+  "price": 43.93,
+  "changePercent": -0.91
+ }
+}

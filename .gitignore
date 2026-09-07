@@ -1,15 +1,40 @@
+# 비밀·환경
 .env
+.env.*
+*.bak
 .claude/
+.omc/
 server.log
+
+# 로그 (실행 로그에는 오류 상세가 담긴다)
+logs/
+
+# 빌드 결과 (gh-pages 브랜치로 배포되므로 master에는 두지 않는다)
+site/
+
+# 런타임 데이터
+# 시세·차트 스냅샷 (재생성 가능)
+data/cache/
+# 생성된 브리핑 레코드 (portfolioNote 원본 포함 - 절대 커밋 금지, 공개본은 gh-pages로 배포)
+data/briefings/
+# 소유자 포트폴리오 (비공개)
+data/portfolio.json
+data/scorecard.json
+data/.daily.lock
+data/stats.json
+data/settings.json
+
+# 파이썬
 __pycache__/
 *.pyc
 *.pyo
 .venv/
 venv/
-data/briefings/
-data/portfolio.json
-data/settings.json
 *.egg-info/
 dist/
 build/
 .pytest_cache/
+
+# 프로젝트와 무관한 로컬 문서
+PrimeSteel_*.md
+SAP_Screenshots/

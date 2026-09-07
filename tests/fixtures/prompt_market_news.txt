@@ -1,0 +1,267 @@
+🏛️ TIER 1 — OFFICIAL ECONOMIC CALENDAR (schedule & released results)
+*** AUTHORITATIVE: FOMC dates come from the Federal Reserve's official calendar; indicator results come directly from the U.S. Bureau of Labor Statistics. Use these exact figures. Do NOT invent or alter them. ***
+
+[FOMC MEETINGS]
+  - 2026-07-28 ~ 2026-07-29 [most recent (concluded)]
+  - 2026-09-15 ~ 2026-09-16 [upcoming in 8 days] + SEP/dot plot
+  - 2026-10-27 ~ 2026-10-28 [upcoming in 50 days]
+  - 2026-12-08 ~ 2026-12-09 [upcoming in 92 days] + SEP/dot plot
+  - 2027-01-26 ~ 2027-01-27 [upcoming in 141 days]
+
+[LATEST RELEASED U.S. INDICATORS — source: BLS]
+  - 비농업 고용 (Nonfarm Payrolls): +162천명 vs prior period | period 2026 August, prior 158913
+  - 실업률 (Unemployment Rate): 4.1% | period 2026 August, prior 4.1
+  - 소비자물가 CPI: -0.01% vs prior period | period 2026 July, prior 333.952
+  - 근원 CPI (Core CPI): +0.07% vs prior period | period 2026 July, prior 336.882
+  - 생산자물가 PPI: -0.1% vs prior period | period 2026 July, prior 157.083
+  - 비농업 생산성 (Nonfarm Productivity): 1.4% | period 2026 2nd Quarter, prior 0.8
+  - 단위노동비용 (Unit Labor Costs): 1.2% | period 2026 2nd Quarter, prior 1.3
+  - 시간당 평균임금 (Avg Hourly Earnings): +0.27% vs prior period | period 2026 August, prior 37.65
+  - 경제활동참가율 (Participation Rate): 61.6% | period 2026 August, prior 61.4
+
+[MAJOR EARNINGS AHEAD]
+  - 2026-09-30 MU (after close)
+  - 2026-10-13 GS (before open)
+  - 2026-10-13 JPM
+  - 2026-10-14 BAC (before open)
+  - 2026-10-19 NFLX (after close)
+  - 2026-10-20 TSLA (after close)
+  - 2026-10-21 INTC (after close)
+
+---
+
+=== CURRENT MARKET DATA ===
+S&P 500: 7,718.60 ▼ 29.11 (-0.38%)
+NASDAQ: 26,506.99 ▼ 77.07 (-0.29%)
+Dow Jones: 53,414.25 ▼ 271.86 (-0.51%)
+US 10Y Yield: 4.78 ▲ 0.02 (+0.46%)
+Dollar Index (DXY): 99.09 ▼ 0.07 (-0.07%)
+Crude Oil (WTI): 91.48 ▼ 0.54 (-0.59%)
+VIX: 15.03 ▲ 0.51 (+3.51%)
+Gold: 4,476.60 ▼ 37.20 (-0.82%)
+EUR/USD: 1.16 ▼ 0.00 (-0.01%)
+BTC/USD: 79,249.70 ▼ 1089.62 (-1.36%)
+KOSPI: 6,995.39 ▲ 308.18 (+4.61%)
+USD/KRW: 1,343.79 ▼ 2.20 (-0.16%)
+
+=== CNN FEAR & GREED INDEX (Source: CNN Markets) ===
+Score: 41.9 / 100 — fear (fear)
+Previous Close: 35.2 | 1 Week Ago: 52.3 | 1 Month Ago: 60.0
+
+⚡ BREAKING: HIGH-IMPACT OVERNIGHT DEVELOPMENTS (last 12h)
+*** CRITICAL INSTRUCTION TO LLM ***
+These are the most important recent events. PART 1 MUST open by naming the specific person/company and their exact action. Do NOT write vague summaries. Prioritize ANY presidential announcement, major company earnings/product launch, or Fed statement listed here.
+Each line is tagged with its source tier — T1=official primary source, T2=verified newswire, T3=realtime wire (fast but unconfirmed).
+
+▶ [06:34 UTC] (T3 Forexlive) What are the main events for today?
+   <p>EUROPEAN SESSION</p><p>In the European session, we have the Swiss unemployment rate and the final Eurozone Q2 GDP report. The data won't change anything for the respective central banks, so the market reaction will likely be muted. </p><p>As a rem
+▶ [03:44 UTC] (T2 Yahoo) [GOOGL] The Pentagon Doubled Down on Its Anthropic Blacklist. Why Amazon and Alphabet Investors Should Care
+   A senior Pentagon official said on September 3 that the Pentagon still considers Anthropic a supply-chain risk, despite comments that had suggested the dispute might ease. The military had already announced classified-AI arrangements with eight techn
+▶ [23:31 UTC] (T2 Yahoo) [NVDA] Nvidia (NVDA)’s First-Ever Year-Ahead Forecast Puts It on a Path to Pass Apple and Alphabet
+   CNBC reported that NVIDIA Corporation (NASDAQ:NVDA) CFO Colette Kress told investors on August 26 that fiscal 2028 revenue growth will reach 70%, far above the 44% average analyst estimate tracked by LSEG, marking the company’s first-ever year-ahead 
+▶ [21:21 UTC] (T2 Yahoo) [NVDA] Can Nvidia (NVDA) Prove it Doesn’t Live or Die by a Handful of Hyperscalers?
+   NVIDIA Corporation (NASDAQ:NVDA) biggest lingering investor concern was customer concentration, CNBC reported. Nvidia relies on hyperscalers Amazon, Google, and Microsoft, along with major buyers Meta and SpaceX, for an outsized share of revenue, and
+▶ [21:41 UTC] (T2 Yahoo) [NVDA] Musk Moves Up SpaceX (SPCX)’s Orbital Data Center Timeline, Again
+   Bloomberg reported that Elon Musk said Space Exploration Technologies Corp. (NASDAQ:SPCX) first AI satellites, powered exclusively by NVIDIA Corporation (NASDAQ:NVDA) chips, will launch in the fourth quarter of 2027 and reach “significant scale” in 2
+▶ [06:00 UTC] (T1 Bank of Japan) Amounts Outstanding in the Call Money Market (Aug.)
+
+---
+
+🏛️ TIER 1 — OFFICIAL PRIMARY SOURCES (central banks & government statistics)
+*** AUTHORITATIVE: these are original statements/releases, not press interpretation. ***
+When any news item below conflicts with a media report, follow THESE. Quote their exact figures and wording for policy rates, CPI/PCE, and employment data.
+
+◆ [2026-09-07 06:00 UTC] Bank of Japan: Amounts Outstanding in the Call Money Market (Aug.)
+◆ [2026-09-07 05:00 UTC] Bank of Japan: Consumption Activity Index
+◆ [2026-09-06 23:50 UTC] Bank of Japan: Monetary Base and the Bank of Japan's Transactions (Aug.)
+◆ [2026-09-06 23:50 UTC] Bank of Japan: Bank of Japan's Transactions with the Government (Aug.)
+◆ [2026-09-06 23:50 UTC] Bank of Japan: Market Operations by the Bank of Japan (Aug.)
+◆ [2026-09-04 15:00 UTC] Federal Reserve: Federal Reserve Board announces termination of enforcement actions with United Texas Bank, Quontic Bank Acquisition Corp., and Quontic Bank Holdings Corp.
+   Federal Reserve Board announces termination of enforcement actions with United Texas Bank, Quontic Bank Acquisition Corp., and Quontic Bank Holdings Corp.
+◆ [2026-09-04 12:32 UTC] US Bureau of Labor Statistics: Major Economic Indicators Latest Numbers
+   Consumer Price Index (CPI): +0.1% in Jul 2026 News Release Historical Data Unemployment Rate: 4.1% in Aug 2026 News Release Historical Data Payroll Employment: +162,000(p) in Aug 2026 News Release Historical Data Average Hourly Earnings: +$0.10(p) in
+◆ [2026-09-04 09:10 UTC] ECB: Philip R. Lane: Diversity at the European Central Bank
+
+---
+
+=== TODAY'S KEY FINANCIAL & GEOPOLITICAL NEWS ===
+Tier legend: T1=official primary source | T2=verified newswire/major financial media | T3=realtime wire, unconfirmed
+
+[1] (T3) What are the main events for today?
+    Source: Forexlive | Time: 2026-09-07 06:34 | Category: forex
+    Summary: <p>EUROPEAN SESSION</p><p>In the European session, we have the Swiss unemployment rate and the final Eurozone Q2 GDP report. The data won't change anything for the respective central banks, so the mar...
+
+[2] (T2) The Pentagon Doubled Down on Its Anthropic Blacklist. Why Amazon and Alphabet Investors Should Care
+    Source: Yahoo | Time: 2026-09-07 03:44 | Category: company
+    Summary: A senior Pentagon official said on September 3 that the Pentagon still considers Anthropic a supply-chain risk, despite comments that had suggested the dispute might ease. The military had already ann...
+
+[3] (T2) Nvidia (NVDA)’s First-Ever Year-Ahead Forecast Puts It on a Path to Pass Apple and Alphabet
+    Source: Yahoo | Time: 2026-09-06 23:31 | Category: company
+    Summary: CNBC reported that NVIDIA Corporation (NASDAQ:NVDA) CFO Colette Kress told investors on August 26 that fiscal 2028 revenue growth will reach 70%, far above the 44% average analyst estimate tracked by ...
+
+[4] (T2) What to Expect in Markets This Week: Fresh Inflation Data; Apple’s Fall Launch Event and Oracle Earnings
+    Source: Yahoo | Time: 2026-09-06 12:00 | Category: company
+    Summary: The CPI inflation report will influence the Federal Reserve’s decision on interest rates.
+
+[5] (T2) Inflation data, Oracle earnings, and an energy supply crunch: What to watch this week
+    Source: Yahoo Finance S&P 500 | Time: 2026-09-06 12:04 | Category: general
+    Summary: Two questions are set to lead the week: Will the data push the Fed toward a rate hike, and what can Oracle tell Wall Street about the state of Big Tech's AI debt load?
+
+[6] (T2) Can Nvidia (NVDA) Prove it Doesn’t Live or Die by a Handful of Hyperscalers?
+    Source: Yahoo | Time: 2026-09-06 21:21 | Category: company
+    Summary: NVIDIA Corporation (NASDAQ:NVDA) biggest lingering investor concern was customer concentration, CNBC reported. Nvidia relies on hyperscalers Amazon, Google, and Microsoft, along with major buyers Meta...
+
+[7] (T2) Nvidia’s Hugging Face Deal Is a Hedge against Broadcom’s Custom Silicon Threat
+    Source: Yahoo | Time: 2026-09-06 11:51 | Category: company
+    Summary: NVIDIA Corporation (NASDAQ:NVDA) has officially committed billions on AI developer platform Hugging Face for a $12.9 billion. The deal signifies the chipmaker’s move beyond hardware and up the AI stac...
+
+[8] (T2) Musk Moves Up SpaceX (SPCX)’s Orbital Data Center Timeline, Again
+    Source: Yahoo | Time: 2026-09-06 21:41 | Category: company
+    Summary: Bloomberg reported that Elon Musk said Space Exploration Technologies Corp. (NASDAQ:SPCX) first AI satellites, powered exclusively by NVIDIA Corporation (NASDAQ:NVDA) chips, will launch in the fourth ...
+
+[9] (T1) Amounts Outstanding in the Call Money Market (Aug.)
+    Source: Bank of Japan | Time: 2026-09-07 06:00 | Category: official
+
+[10] (T1) Consumption Activity Index
+    Source: Bank of Japan | Time: 2026-09-07 05:00 | Category: official
+
+[11] (T1) Major Economic Indicators Latest Numbers
+    Source: US Bureau of Labor Statistics | Time: 2026-09-04 12:32 | Category: official
+    Summary: Consumer Price Index (CPI): +0.1% in Jul 2026 News Release Historical Data Unemployment Rate: 4.1% in Aug 2026 News Release Historical Data Payroll Employment: +162,000(p) in Aug 2026 News Release His...
+
+[12] (T2) Apple (AAPL)’s New Mac Mini and Studio Bet Big on On-Device AI
+    Source: Yahoo | Time: 2026-09-06 21:16 | Category: company
+    Summary: CNBC reported that Apple Inc. (NASDAQ:AAPL) announced new Mac Mini and Mac Studio models with updated chips built for AI workloads. The Mac Mini now offers Apple’s new M6 chip, its first built on a 2-...
+
+[13] (T1) Federal Reserve Board announces termination of enforcement actions with United Texas Bank, Quontic Bank Acquisition Corp., and Quontic Bank Holdings Corp.
+    Source: Federal Reserve | Time: 2026-09-04 15:00 | Category: official
+    Summary: Federal Reserve Board announces termination of enforcement actions with United Texas Bank, Quontic Bank Acquisition Corp., and Quontic Bank Holdings Corp.
+
+[14] (T2) Broadcom And 2 Top Growth Stocks To Watch
+    Source: Yahoo | Time: 2026-09-06 13:10 | Category: company
+    Summary: Strong US jobs data has kept the prospect of further Federal Reserve rate hikes firmly on the table, which keeps pressure on companies that rely too heavily on cheap borrowing. That is exactly why inv...
+
+[15] (T1) Philip R. Lane: Diversity at the European Central Bank
+    Source: ECB | Time: 2026-09-04 09:10 | Category: official
+
+[16] (T2) Dow Jones Futures Fall With Iran, Apple, Inflation In Focus; Nvidia, Micron, Sandisk Flash Buy Signals
+    Source: Yahoo Finance S&P 500 | Time: 2026-09-07 03:06 | Category: general
+    Summary: Dow Jones futures: The U.S. and Iran exchanged attacks. Nvidia, Micron, Sandisk are buys, but for how long? Apple, inflation data loom.
+
+[17] (T1) Monetary Base and the Bank of Japan's Transactions (Aug.)
+    Source: Bank of Japan | Time: 2026-09-06 23:50 | Category: official
+
+[18] (T1) Bank of Japan's Transactions with the Government (Aug.)
+    Source: Bank of Japan | Time: 2026-09-06 23:50 | Category: official
+
+[19] (T1) Market Operations by the Bank of Japan (Aug.)
+    Source: Bank of Japan | Time: 2026-09-06 23:50 | Category: official
+
+[20] (T2) Treasury yields face 4.8% test as fiscal risks threaten to spill into other assets
+    Source: CNBC | Time: 2026-09-07 02:01 | Category: general
+    Summary: Treasury yields face a test at 4.8%, with a sustained move above that potentially creating "meaningful problems" for other asset classes, said Miller Tabak.
+
+[21] (T2) Nvidia CEO Jensen Huang Says AGI Has Arrived With OpenAI's GPT-6 Astra
+    Source: Yahoo | Time: 2026-09-06 22:39 | Category: company
+    Summary: Jensen Huang says AGI has arrived after OpenAI's newest model trained on NVIDIA chips. OpenAI has not said it.
+
+[22] (T2) Apple (AAPL) Sets iPhone Launch Event. The First Under New CEO John Ternus
+    Source: Yahoo | Time: 2026-09-06 23:12 | Category: company
+    Summary: CNBC and Reuters reported that Apple Inc. (NASDAQ:AAPL) will hold its next product launch event on September 9 at Apple Park in Cupertino, marking incoming CEO John Ternus’s first major event since ta...
+
+[23] (T2) 5 Dead in Amazon Cargo Plane Crash at Miami International Airport
+    Source: Yahoo | Time: 2026-09-06 22:33 | Category: company
+    Summary: Officials said five people have died and five more were injured after an Amazon cargo flight overran the runway at Miami International Airport and crashed after landing there in the afternoon.  "We ca...
+
+[24] (T2) The Amazon Service Bezos Nicknamed “Artificial Artificial Intelligence” is Closing for Good
+    Source: Yahoo | Time: 2026-09-06 20:21 | Category: company
+    Summary: CNBC reported that Amazon.com, Inc. (NASDAQ:AMZN) is shutting down Mechanical Turk, its 21-year-old crowdsourced work platform, effective September 30. A notice on the site said, “We regularly evaluat...
+
+[25] (T2) U.S. Energy Secretary Wright says Iran nuclear deal may never happen
+    Source: CNBC | Time: 2026-09-07 07:35 | Category: general
+    Summary: Iran warned of faster, heavier retaliation against U.S. attacks while acknowledging the war’s mounting toll on its economy.
+
+[26] (T3) S. Korea central bank: sells 91-day monetary stabilisation bonds at 3.040% yield
+    Source: FinancialJuice | Time: 2026-09-07 01:40 | Category: wire
+
+[27] (T2) Stock Market Week Ahead: Week Of The Big Bond Scheme
+    Source: Yahoo | Time: 2026-09-06 16:39 | Category: company
+    Summary: A short week on the stock market sees the start of the Treasury's yield-management strategy, along with news from Apple, Oracle and Adobe.
+
+[28] (T2) Morning Bid: Diesel the real spoiler for US inflation doves
+    Source: Reuters | Time: 2026-09-07 04:34 | Category: general
+
+[29] (T2) Another rate hike, just for insurance: Five questions for the ECB
+    Source: Reuters | Time: 2026-09-07 04:03 | Category: general
+
+[30] (T2) Taiwan flexes chip diplomacy muscles as it faces pressure to share AI wealth with allies
+    Source: Reuters | Time: 2026-09-07 02:26 | Category: general
+
+[31] (T2) Breakingviews - COMMENTARY: China's AI dragons breathe fire on Nvidia's moat
+    Source: Reuters | Time: 2026-09-07 02:53 | Category: general
+
+[32] (T2) North Korea adds its 2nd naval destroyer as US, South Korea and Japan hold military exercise
+    Source: AP News | Time: 2026-09-07 07:33 | Category: general
+
+[33] (T2) Stock Market Investors Just Got a Warning From the Federal Reserve. History Says This Will Happen Next.
+    Source: Yahoo Finance S&P 500 | Time: 2026-09-06 09:04 | Category: general
+    Summary: The Federal Reserve recently warned investors that the S&P 500's equity risk premium was near its lowest level in decades.
+
+[34] (T2) Treasurys are losing foreign appeal in a historic capital flow reversal — and here's one trade investors favor instead
+    Source: CNBC | Time: 2026-09-07 05:00 | Category: general
+    Summary: U.S. bonds are losing their appeal among overseas investors in what strategists say is a historic capital reversal.
+
+[35] (T3) China PBOC seen setting yuan reference at 6.7086 per dollar: estimate
+    Source: FinancialJuice | Time: 2026-09-07 00:16 | Category: wire
+
+[36] (T3) Oil up, bitcoin down as U.S. strikes Iranian crude carriers
+    Source: CoinDesk | Time: 2026-09-07 04:44 | Category: crypto
+
+[37] (T2) Asia tech shares rally, others hesitate as oil climbs
+    Source: Reuters | Time: 2026-09-07 01:06 | Category: general
+    Summary: Asia tech shares rally, others hesitate as oil climbs  Reuters
+
+[38] (T2) Asia tech shares rally, others hesitate as oil climbs
+    Source: Reuters | Time: 2026-09-07 01:06 | Category: general
+
+[39] (T2) UK's finance minister Healey walks fiscal tightrope before first budget
+    Source: Reuters | Time: 2026-09-07 05:21 | Category: general
+
+[40] (T2) Inflation, Apple, Adobe, Oracle, Macy’s, and More to Watch This Week
+    Source: Yahoo Finance S&P 500 | Time: 2026-09-06 18:00 | Category: general
+    Summary: The consumer price index release on Friday could be the most consequential economic data release in many years. Apple will hold an event, and we’ll see earnings from Casey’s General, Krogers, Academy ...
+
+[41] (T2) Dollar barely gets lift from boost in Fed hike expectations
+    Source: Reuters | Time: 2026-09-07 01:20 | Category: general
+
+[42] (T3) Swiss Unemployment Rate Adjusted Actual 3.1% (Forecast 3.1%, Previous 3.1%)
+    Source: FinancialJuice | Time: 2026-09-07 07:00 | Category: wire
+
+[43] (T3) Swiss Unemployment Rate Unadjusted Actual 3% (Forecast 3%, Previous 3.0%)
+    Source: FinancialJuice | Time: 2026-09-07 07:00 | Category: wire
+
+[44] (T3) Currency Strength Chart: Strongest: JPY, AUD, GBP, CAD, EUR, USD, CHF, NZD - Weakest
+    Source: FinancialJuice | Time: 2026-09-07 07:00 | Category: wire
+
+[45] (T3) French Finance Minister Lescure: If there is no budget, interest rates will go up markedly.
+    Source: FinancialJuice | Time: 2026-09-07 05:53 | Category: wire
+
+[46] (T3) Bitcoin sidechain Liquid pauses after purported ‘white hats’ withdraw $320M in BTC
+    Source: Cointelegraph | Time: 2026-09-07 05:40 | Category: crypto
+    Summary: The actors told Blockstream they would return most of the 4,000 BTC after the Elements vulnerability is patched across the network.
+
+[47] (T3) Harmony proposes shutting down layer 1, migrating ONE to Ethereum
+    Source: Cointelegraph | Time: 2026-09-07 05:00 | Category: crypto
+    Summary: Harmony proposed sunsetting its layer-1 blockchain and migrating ONE to Ethereum, weeks after an exploit led to plans to discard 109,000 transactions.
+
+[48] (T3) Bitcoin network used by exchanges hit by $320 million exploit. Hackers claim they're the 'good guys'
+    Source: CoinDesk | Time: 2026-09-07 03:43 | Category: crypto
+
+[49] (T3) Mise à jour sur le plan d'arrangement – Résolution des actionnaires de CAML adoptée
+    Source: GlobalNewswire | Time: 2026-09-07 00:27 | Category: merger
+    Summary: Bell Potter retenue pour fournir de l'aide à l'égard des comptes CREST Bell Potter retenue pour fournir de l'aide à l'égard des comptes CREST
+
+[50] (T3) Scheme Update – CAML Shareholder Resolution Passed
+    Source: GlobalNewswire | Time: 2026-09-07 00:27 | Category: merger
+    Summary: Bell Potter Engaged to Assist with CREST Accounts Bell Potter Engaged to Assist with CREST Accounts
+

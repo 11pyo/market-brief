@@ -1,9 +1,35 @@
-fastapi==0.135.1
-uvicorn[standard]==0.41.0
-pydantic-settings==2.13.1
-httpx==0.28.1
-yfinance==1.2.0
-openai==2.24.0
+# ===== required =====
+# v2 = local Claude Code CLI + static site. FastAPI/uvicorn/APScheduler/Redis are gone.
+pydantic-settings==2.15.0   # .env loading (installs pydantic v2). >=2.14.2 fixes GHSA-4xgf-cpjx-pc3j
+httpx==0.28.1               # news / calendar / fear-greed / telegram HTTP client
+yfinance==1.7.0             # quotes, sector ETFs, candles (1.7 allows patched curl_cffi >=0.15)
+jinja2==3.1.6               # static site templates
+defusedxml==0.7.1           # RSS parsing (XXE / entity-expansion safe)
+
+# ===== transitive pins raised for security advisories (pulled in by yfinance) =====
+requests==2.34.2            # >=2.33.0: CVE-2024-47081, CVE-2026-25645
+urllib3==2.7.0              # >=2.7.0: CVE-2026-44431, CVE-2026-44432
+curl_cffi==0.16.3           # >=0.15.0: PYSEC-2026-2431 (redirect SSRF)
+soupsieve==2.9.2            # >=2.8.4: CVE-2026-49476/49477
+
+# ===== optional: API fallback providers =====
+# Primary generation is the local `claude -p` (subscription quota, no API key).
+# These are only imported when LLM_FALLBACK_PROVIDERS names the provider and its key is set.
 google-genai==1.66.0
+openai==2.24.0
 anthropic==0.84.0
-apscheduler==3.11.2
+
+# ===== dev / test =====
+pytest==9.0.2
+
+# --------------------------------------------------
+# Security Checklist
+# Applied:
+#   - Use of Vulnerable API: every dependency pinned; transitive packages with known advisories pinned to fixed versions
+#   - XXE: defusedxml is a hard requirement (xml.etree is never used on untrusted input)
+#   - Attack surface: no server framework or in-process scheduler
+# Not Applied:
+#   - [WARN] Code Download Without Integrity Check: no --require-hashes lock file yet.
+#     Generate one with `pip-compile --generate-hashes` for supply-chain integrity.
+#   - [WARN] Run `PYTHONUTF8=1 pip-audit -r requirements.txt` periodically; there is no CI.
+# --------------------------------------------------
