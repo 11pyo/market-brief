@@ -10,6 +10,7 @@ daily    : 요일 게이트 + 단일 실행 lock → refresh → score → gener
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -107,9 +108,46 @@ def _offline_bundle() -> tuple[MarketBundle, dict[str, list[dict]]]:
 
 
 # ===== refresh =====
+async def record_sector_valuation(bundle: MarketBundle) -> int:
+    """오늘의 섹터 PER/PBR을 append-only 기록에 남기고 bundle.sectorValuation을 채운다.
+
+    '저평가/고평가'는 과거 분포 없이 말할 수 없다. 오늘은 관측치 한 줄을 더 쌓는 날이고,
+    백분위(pePercentile)는 MIN_VALUATION_DAYS일이 모인 뒤에야 채워진다.
+    이 단계가 실패해도 refresh 전체를 중단시키지 않는다 (시세·차트는 이미 유효하다).
+
+    Returns: 이번 실행에서 새로 기록된 줄 수 (중복 실행이면 0).
+    """
+    try:
+        fundamentals = await market_data.get_sector_fundamentals()
+    except Exception as e:
+        # [SECURE] 외부 라이브러리 예외 계층을 알 수 없어 광범위하게 잡되 반드시 로깅 (Category 4)
+        logger.exception("[Pipeline] 섹터 밸류에이션 수집 실패(계속 진행): %s", e)
+        return 0
+
+    written = 0
+    try:
+        rows = market_data.valuation_rows(fundamentals, today_str())
+        written = store.append_valuation(rows)
+    except (store.StoreError, ValueError, TypeError) as e:
+        # 기록에 실패해도 오늘 수치는 화면에 보여 준다 (분포만 하루치 비게 된다).
+        logger.warning("[Pipeline] 밸류에이션 기록 실패(계속 진행): %s", e)
+
+    try:
+        history_rows = store.load_valuation()
+        bundle.sectorValuation = market_data.build_sector_valuation(fundamentals, history_rows)
+    except (store.StoreError, ValueError, TypeError) as e:
+        logger.warning("[Pipeline] 밸류에이션 구성 실패(계속 진행): %s", e)
+    return written
+
+
 async def refresh(*, offline: bool = False) -> MarketBundle:
-    """시세 스냅샷 + 차트를 갱신해 data/cache/에 저장하고 번들을 반환한다."""
+    """시세 스냅샷 + 차트를 갱신해 data/cache/에 저장하고 번들을 반환한다.
+
+    offline 모드는 네트워크를 전혀 쓰지 않으므로 밸류에이션 기록도 하지 않는다
+    (픽스처 값을 실제 기록에 섞으면 분포가 오염된다).
+    """
     started = time.time()
+    recorded = 0
 
     if offline:
         bundle, charts = _offline_bundle()
@@ -117,6 +155,7 @@ async def refresh(*, offline: bool = False) -> MarketBundle:
     else:
         bundle = await market_data.build_market_bundle()
         charts = await market_data.get_all_charts()
+        recorded = await record_sector_valuation(bundle)
 
     saved_keys: list[str] = []
     for key, candles in charts.items():
@@ -130,8 +169,9 @@ async def refresh(*, offline: bool = False) -> MarketBundle:
     bundle.chartKeys = sorted(saved_keys)
     store.save_market(bundle)
     logger.info(
-        "[Pipeline] refresh 완료 %.1fs (시세 %d, 섹터 %d, 차트 %d)",
+        "[Pipeline] refresh 완료 %.1fs (시세 %d, 섹터 %d, 차트 %d, 과열도 %d, 밸류에이션 %d/신규기록 %d)",
         time.time() - started, len(bundle.quotes), len(bundle.sectors), len(saved_keys),
+        len(bundle.sectorHeat), len(bundle.sectorValuation), recorded,
     )
     return bundle
 
@@ -149,10 +189,21 @@ def _market_clock() -> marketclock.MarketClock:
 
 
 def _market_text(bundle: MarketBundle) -> str:
-    """캘린더(T1) + 시세 텍스트."""
+    """캘린더(T1) + 시세 + 계산된 섹터 지표(T1) 텍스트.
+
+    섹터 과열도/밸류에이션은 파이썬이 이미 계산한 값이다. 모델에는 캘린더와 같은 T1 프레이밍으로
+    '인용할 사실'로만 넘기며, 다시 판정하거나 지어내지 말라고 명시한다 (prompts.format_sector_context).
+    """
     snapshot = {name: quote.model_dump() for name, quote in bundle.quotes.items()}
     fear_greed = bundle.fearGreed.model_dump() if bundle.fearGreed else None
-    return calendar_service.format_for_llm(bundle.calendar) + market_data.format_for_llm(snapshot, fear_greed)
+    text = (
+        calendar_service.format_for_llm(bundle.calendar)
+        + market_data.format_for_llm(snapshot, fear_greed)
+    )
+    sector_context = prompts.format_sector_context(
+        bundle.sectorHeat, bundle.sectorValuation, market_data.MIN_VALUATION_DAYS,
+    )
+    return f"{text}\n{sector_context}" if sector_context else text
 
 
 async def _collect_news(offline: bool) -> list[dict]:
@@ -629,6 +680,80 @@ def run_daily(
 ) -> int:
     """동기 진입점 (CLI용)."""
     return asyncio.run(daily(no_publish=no_publish, mock=mock, offline=offline, force=force))
+
+
+# ===== tick (장중 시세 갱신) =====
+# 이 사이트는 정적 파일이라 차트가 실시간이 아니라 '파이프라인이 돌 때의 스냅샷'이다.
+# 미국 지수는 07시 브리핑 시점에 이미 장이 끝나 완결된 데이터지만, 한국 낮에 열려 있는
+# 코스피·원달러·비트코인은 그 스냅샷이 몇 시간씩 낡는다. tick이 그 간극을 메운다.
+#
+# 브리핑 본문은 건드리지 않는다 (LLM 호출 없음). 시세·차트만 다시 받고,
+# 값이 실제로 바뀐 경우에만 빌드·배포해 불필요한 배포를 만들지 않는다.
+def market_fingerprint(bundle: MarketBundle, charts: dict[str, list[dict]]) -> str:
+    """시세 스냅샷의 내용 지문. updatedAt처럼 매번 바뀌는 값은 제외한다."""
+    parts: list[str] = []
+    for name in sorted(bundle.quotes):
+        q = bundle.quotes[name]
+        parts.append(f"q|{name}|{q.price}|{q.change}|{q.changePercent}")
+    for name in sorted(bundle.sectors):
+        s = bundle.sectors[name]
+        parts.append(f"s|{name}|{s.price}|{s.changePercent}")
+    for key in sorted(charts):
+        candles = charts[key] or []
+        last = candles[-1] if candles else {}
+        parts.append(f"c|{key}|{len(candles)}|{last.get('time')}|{last.get('close')}")
+    return hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+
+
+def _current_fingerprint() -> str | None:
+    """직전 스냅샷의 지문. 캐시가 없으면 None."""
+    bundle = store.load_market()
+    if bundle is None:
+        return None
+    return market_fingerprint(bundle, store.load_charts())
+
+
+async def tick(*, force: bool = False, no_publish: bool = False) -> int:
+    """장중 시세·차트만 갱신하고, 값이 바뀐 경우에만 빌드·배포한다."""
+    window = marketclock.parse_window(settings.intraday_window)
+    if not force and not marketclock.in_intraday_window(window=window):
+        logger.info("[Tick] 장중 시간대가 아님 (%s) - 건너뜀", settings.intraday_window)
+        return EXIT_SKIPPED
+
+    # daily와 같은 lock을 쓴다. 브리핑 생성 중에 시세를 갈아끼우지 않기 위함이다.
+    with _DailyLock(paths.LOCK_FILE) as lock:
+        if not lock.acquired:
+            logger.info("[Tick] 다른 실행이 진행 중 - 건너뜀")
+            return EXIT_SKIPPED
+
+        before = _current_fingerprint()
+        try:
+            bundle = await refresh()
+        except Exception as e:
+            logger.exception("[Tick] 시세 갱신 실패: %s", e)
+            return EXIT_FAILED
+
+        after = market_fingerprint(bundle, store.load_charts())
+        if before is not None and before == after:
+            logger.info("[Tick] 시세 변동 없음 - 빌드·배포 건너뜀")
+            return EXIT_OK
+
+        if not build_site():
+            return EXIT_FAILED
+        if no_publish or not settings.publish_enabled:
+            logger.info("[Tick] publish 건너뜀 (no_publish=%s)", no_publish)
+            return EXIT_OK
+
+        from mbrief import publish as publish_mod
+        if not publish_mod.publish_site(message=f"tick: {now_iso()[:16]} 시세 갱신"):
+            return EXIT_FAILED
+        logger.info("[Tick] 완료 - 시세 갱신 배포됨")
+        return EXIT_OK
+
+
+def run_tick(*, force: bool = False, no_publish: bool = False) -> int:
+    """동기 진입점 (CLI용)."""
+    return asyncio.run(tick(force=force, no_publish=no_publish))
 
 
 # --------------------------------------------------

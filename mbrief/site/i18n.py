@@ -78,6 +78,34 @@ LABELS: dict[str, dict[str, str]] = {
         # 섹터 리더십
         "leadersTitle": "주도 섹터",
         "laggardsTitle": "약세 섹터",
+        # 섹터 과열도 · 밸류에이션 (v2.2)
+        # 과열도는 가격만으로 계산하는 '스트레치' 지표다. 가치 판정 어휘(싸다/비싸다)는 쓰지 않는다.
+        "sectorHeatTitle": "🌡️ 섹터 과열도",
+        "sectorValuationTitle": "🧾 섹터 밸류에이션",
+        "heatHot": "과열",
+        "heatWarm": "다소 과열",
+        "heatNeutral": "중립",
+        "heatCool": "다소 침체",
+        "heatCold": "침체",
+        "heatGap": "200일선 이격",
+        "heatPercentile": "분포 백분위",
+        "heatRsi": "RSI(14)",
+        "heatRel3m": "3개월 상대",
+        "heatNote": (
+            "가격만으로 계산한 '얼마나 달아올랐나' 지표입니다. 가치 판단이 아닙니다. "
+            "등급은 오늘의 200일선 이격이 그 섹터 자체의 과거 이격 분포에서 어디에 있는지"
+            "(백분위)만으로 정합니다. RSI와 3개월 상대수익률은 참고 수치입니다."
+        ),
+        "heatSampleDays": "관측 {n}일",
+        "valuationPer": "PER",
+        "valuationPbr": "PBR",
+        "valuationYield": "배당수익률",
+        "valuationAccruing": "기록 중",
+        "valuationAccruingDays": "기록 중 ({n}일)",
+        "valuationNote": (
+            "현재 PER·PBR 수치만 표시합니다. 자체 기록이 충분히 쌓이기 전에는 백분위를 계산하지 않으며, "
+            "어떤 가치 판정도 내리지 않습니다."
+        ),
         # 리스크
         "riskHigh": "높음",
         "riskMedium": "보통",
@@ -228,6 +256,33 @@ LABELS: dict[str, dict[str, str]] = {
         "dirRationale": "Rationale",
         "leadersTitle": "Leaders",
         "laggardsTitle": "Laggards",
+        "sectorHeatTitle": "🌡️ Sector Heat",
+        "sectorValuationTitle": "🧾 Sector Valuation",
+        "heatHot": "Hot",
+        "heatWarm": "Warm",
+        "heatNeutral": "Neutral",
+        "heatCool": "Cool",
+        "heatCold": "Cold",
+        "heatGap": "Gap to 200DMA",
+        "heatPercentile": "Percentile",
+        "heatRsi": "RSI(14)",
+        "heatRel3m": "3M relative",
+        "heatNote": (
+            "How stretched each sector's price is right now, computed from price alone. "
+            "This is not a valuation judgement. The label comes only from where today's gap to the "
+            "200-day average sits in that sector's own historical gap distribution (percentile). "
+            "RSI and 3-month relative return are supporting context."
+        ),
+        "heatSampleDays": "{n} observed days",
+        "valuationPer": "P/E",
+        "valuationPbr": "P/B",
+        "valuationYield": "Dividend yield",
+        "valuationAccruing": "Accruing",
+        "valuationAccruingDays": "Accruing ({n}d)",
+        "valuationNote": (
+            "Current P/E and P/B only. Until enough of our own history has accumulated, no percentile "
+            "is computed and no valuation verdict is given."
+        ),
         "riskHigh": "High",
         "riskMedium": "Medium",
         "riskLow": "Low",
@@ -365,6 +420,31 @@ LABELS: dict[str, dict[str, str]] = {
         "dirRationale": "依据",
         "leadersTitle": "领涨板块",
         "laggardsTitle": "落后板块",
+        "sectorHeatTitle": "🌡️ 板块过热度",
+        "sectorValuationTitle": "🧾 板块估值",
+        "heatHot": "过热",
+        "heatWarm": "偏热",
+        "heatNeutral": "中性",
+        "heatCool": "偏冷",
+        "heatCold": "低迷",
+        "heatGap": "200日均线乖离",
+        "heatPercentile": "分布百分位",
+        "heatRsi": "RSI(14)",
+        "heatRel3m": "3个月相对",
+        "heatNote": (
+            "仅用价格计算的“热度”指标，衡量板块当前被推得有多远，并非价值判断。"
+            "等级只取决于今日相对200日均线的乖离在该板块自身历史乖离分布中的百分位。"
+            "RSI 与 3 个月相对收益仅作参考。"
+        ),
+        "heatSampleDays": "观测 {n} 天",
+        "valuationPer": "市盈率",
+        "valuationPbr": "市净率",
+        "valuationYield": "股息率",
+        "valuationAccruing": "记录中",
+        "valuationAccruingDays": "记录中（{n}天）",
+        "valuationNote": (
+            "仅显示当前市盈率与市净率。在自有记录积累足够之前不计算百分位，也不给出任何价值判断。"
+        ),
         "riskHigh": "高",
         "riskMedium": "中",
         "riskLow": "低",
@@ -500,6 +580,32 @@ LABELS: dict[str, dict[str, str]] = {
         "dirRationale": "根拠",
         "leadersTitle": "主導セクター",
         "laggardsTitle": "劣後セクター",
+        "sectorHeatTitle": "🌡️ セクター過熱度",
+        "sectorValuationTitle": "🧾 セクターバリュエーション",
+        "heatHot": "過熱",
+        "heatWarm": "やや過熱",
+        "heatNeutral": "中立",
+        "heatCool": "やや低調",
+        "heatCold": "低調",
+        "heatGap": "200日線乖離",
+        "heatPercentile": "分布パーセンタイル",
+        "heatRsi": "RSI(14)",
+        "heatRel3m": "3か月相対",
+        "heatNote": (
+            "価格だけで算出した「どれだけ過熱しているか」の指標です。価値の判断ではありません。"
+            "ラベルは、本日の200日線乖離がそのセクター自身の過去の乖離分布のどこに位置するか"
+            "（パーセンタイル）だけで決まります。RSIと3か月相対リターンは参考値です。"
+        ),
+        "heatSampleDays": "観測 {n} 日",
+        "valuationPer": "PER",
+        "valuationPbr": "PBR",
+        "valuationYield": "配当利回り",
+        "valuationAccruing": "記録中",
+        "valuationAccruingDays": "記録中（{n}日）",
+        "valuationNote": (
+            "現在のPER・PBRのみを表示します。自前の記録が十分に蓄積されるまでパーセンタイルは算出せず、"
+            "いかなる価値判定も行いません。"
+        ),
         "riskHigh": "高",
         "riskMedium": "中",
         "riskLow": "低",

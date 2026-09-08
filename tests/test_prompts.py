@@ -12,6 +12,8 @@ from mbrief.schemas import (
     KeyActor,
     Risk,
     SectorCall,
+    SectorHeat,
+    SectorValuation,
     SessionRecap,
     StructuredBriefing,
     TradeIdea,
@@ -372,6 +374,135 @@ def test_render_markdown_public_output_survives_the_stripper(fixture_json):
     assert "SECRET" not in prompts.strip_portfolio_section(private)
 
 
+# ===== 계산된 섹터 지표 블록 (Feature 3) =====
+HOT = SectorHeat(symbol="XLK", name="Technology", gapPct=8.4, gapPercentile=91.2,
+                 rsi14=68.3, rel3m=6.1, label="hot", sampleDays=504)
+COLD = SectorHeat(symbol="XLRE", name="Real Estate", gapPct=-7.5, gapPercentile=8.1,
+                  rsi14=32.6, rel3m=-8.2, label="cold", sampleDays=504)
+UNKNOWN = SectorHeat(symbol="XLU", name="Utilities")          # 표본 부족 - sampleDays=0
+VAL_NEW = SectorValuation(symbol="XLK", name="Technology", trailingPE=33.15,
+                          priceToBook=1.25, dividendYield=0.0043, recordedDays=1)
+VAL_READY = SectorValuation(symbol="XLK", name="Technology", trailingPE=33.15,
+                            priceToBook=1.25, dividendYield=0.0043,
+                            pePercentile=77.4, recordedDays=120)
+
+
+def test_sector_heat_block_is_labelled_as_computed_and_not_valuation():
+    text = prompts.format_sector_heat({"Technology": HOT})
+    assert "SECTOR HEAT" in text
+    assert "NOT valuation" in text
+    assert "COMPUTED, NOT JUDGED" in text
+    # 모델이 다시 판정하거나 지어내지 못하게 못 박는다.
+    assert "Do NOT recompute" in text
+    assert "invent" in text
+
+
+def test_sector_heat_block_states_that_heat_is_not_cheapness():
+    text = prompts.format_sector_heat({"Technology": HOT})
+    assert "MOMENTUM/STRETCH, NOT VALUE" in text
+    assert "does NOT mean expensive" in text
+    assert "저평가/고평가" in text
+
+
+def test_sector_heat_block_spells_out_the_threshold_rule():
+    text = prompts.format_sector_heat({"Technology": HOT})
+    for label, floor in prompts.indicators.HEAT_THRESHOLDS:
+        assert f"{label} >= {floor:g}" in text
+    assert "cold < 15" in text
+
+
+def test_sector_heat_block_lists_every_computed_metric():
+    text = prompts.format_sector_heat({"Technology": HOT})
+    assert "Technology (XLK): HOT" in text
+    assert "+8.40%" in text          # gapPct
+    assert "91.2" in text            # gapPercentile
+    assert "68.3" in text            # rsi14
+    assert "+6.10%p" in text         # rel3m
+    assert "sample 504d" in text
+
+
+def test_sector_heat_block_sorts_hottest_first():
+    text = prompts.format_sector_heat({"Real Estate": COLD, "Technology": HOT})
+    assert text.index("Technology") < text.index("Real Estate")
+
+
+def test_sector_heat_block_marks_unknown_sectors_explicitly():
+    text = prompts.format_sector_heat({"Technology": HOT, "Utilities": UNKNOWN})
+    assert "sample 0d" in text
+    assert "UNKNOWN" in text
+    assert "n/a" in text             # 결측 수치를 지어내지 않도록 명시한다
+
+
+def test_sector_heat_block_omits_the_unknown_note_when_everything_is_known():
+    text = prompts.format_sector_heat({"Technology": HOT})
+    assert "sample 0d" not in text
+
+
+def test_sector_heat_block_is_empty_without_data():
+    assert prompts.format_sector_heat({}) == ""
+    assert prompts.format_sector_heat(None) == ""
+
+
+def test_valuation_block_forbids_a_verdict_while_the_baseline_accumulates():
+    text = prompts.format_sector_valuation({"Technology": VAL_NEW}, min_days=60)
+    assert "BASELINE STILL ACCUMULATING" in text
+    assert "MUST NOT call any sector cheap, expensive, undervalued or overvalued" in text
+    assert "60 recorded observations" in text
+    assert "recorded 1d" in text
+    assert "PER percentile" not in text        # 없는 값을 열로 보여 주지 않는다
+
+
+def test_valuation_block_shows_percentiles_once_they_exist():
+    text = prompts.format_sector_valuation({"Technology": VAL_READY}, min_days=60)
+    assert "PER percentile 77.4" in text
+    assert "BASELINE STILL ACCUMULATING" not in text
+    assert "trailing PER 33.15" in text
+    assert "dividend yield 0.43%" in text       # 0.0043 → 0.43%
+
+
+def test_valuation_block_is_empty_without_data():
+    assert prompts.format_sector_valuation({}) == ""
+    assert prompts.format_sector_valuation(None) == ""
+
+
+def test_sector_context_joins_both_blocks():
+    text = prompts.format_sector_context({"Technology": HOT}, {"Technology": VAL_NEW}, 60)
+    assert "SECTOR HEAT" in text and "SECTOR VALUATION" in text
+    assert text.index("SECTOR HEAT") < text.index("SECTOR VALUATION")
+
+
+def test_sector_context_is_empty_when_both_are_empty():
+    assert prompts.format_sector_context({}, {}) == ""
+    assert prompts.format_sector_context(None) == ""
+
+
+def test_market_text_carries_the_sector_blocks_into_the_prompt():
+    """pipeline이 실제로 이 블록을 시세 텍스트에 붙여 프롬프트로 넘기는지."""
+    from mbrief import pipeline
+    from mbrief.sources import market_data
+
+    bundle = market_data.to_bundle(
+        {}, {}, None, {},
+        sector_heat={"Technology": HOT},
+        sector_valuation={"Technology": VAL_NEW},
+    )
+    market_text = pipeline._market_text(bundle)
+    assert "SECTOR HEAT" in market_text
+    assert "SECTOR VALUATION" in market_text
+
+    prompt = prompts.build_user_prompt("news", market_text)
+    assert "Technology (XLK): HOT" in prompt
+    assert "MUST NOT call any sector cheap" in prompt
+
+
+def test_market_text_without_sector_data_is_unchanged():
+    from mbrief import pipeline
+    from mbrief.sources import market_data
+
+    bundle = market_data.to_bundle({}, {}, None, {})
+    assert "SECTOR HEAT" not in pipeline._market_text(bundle)
+
+
 # --------------------------------------------------
 # Security Checklist
 # Applied:
@@ -379,6 +510,8 @@ def test_render_markdown_public_output_survives_the_stripper(fixture_json):
 #     (경로 형태 문자열 "../etc/passwd" 포함)
 #   - Improper Authorization: include_portfolio=False일 때 비공개 PART 7이 렌더되지 않는지 검증
 #   - Unsafe Deserialization: 스키마와 pydantic 모델의 필드 일치를 회귀 테스트로 고정
+#   - Improper Input for Security Decision: 섹터 과열도/밸류에이션 블록이 '계산된 값이며 재판정 금지',
+#     '과열도는 밸류에이션이 아님', '백분위가 없으면 저평가/고평가 판정 금지'를 명시하는지 고정
 # Not Applied:
 #   - [WARN] 해당 없음 - 순수 함수 테스트, 외부 입출력 없음
 # --------------------------------------------------

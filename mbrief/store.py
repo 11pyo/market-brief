@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import secrets
@@ -248,6 +249,162 @@ def load_scorecard() -> Scorecard | None:
         return None
 
 
+# ===== 섹터 밸류에이션 일별 기록 (append-only JSONL) =====
+# 현재 PER/PBR은 매일 받을 수 있지만 '저평가/고평가'는 과거 분포 없이 말할 수 없다.
+# 그래서 오늘부터 한 줄씩 쌓는다. 한 줄 = 하루 x 한 심볼:
+#     {"date": "2026-09-08", "symbol": "XLK", "trailingPE": 33.15, "priceToBook": 1.25,
+#      "dividendYield": 0.0043}
+# 재생성이 불가능한 유일한 파일이므로 절대 덮어쓰지 않는다 (append 전용).
+
+# [SECURE] 심볼 화이트리스트 정규식 - 임의 문자열이 기록 파일과 조회 경로에 섞이는 것 방지 (Category 1)
+VALUATION_SYMBOL_RE = re.compile(r"^[A-Z0-9][A-Z0-9.\-]{0,11}$")
+# [SECURE] 기록 파일 크기 상한 - 손상·폭주 파일에 의한 메모리 고갈 방지 (Category 1)
+_MAX_VALUATION_BYTES = 32 * 1024 * 1024
+VALUATION_FIELDS: tuple[str, ...] = ("trailingPE", "priceToBook", "dividendYield")
+
+
+def _valuation_number(value: object) -> float | None:
+    """숫자로 변환 가능한 유한값만 남긴다. None/문자열/NaN/inf/bool은 전부 None.
+
+    [SECURE] yfinance가 돌려주는 결측·비정상 값을 저장 전에 제거 - 잘못된 입력 저장 방지 (Category 1)
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None  # [SECURE] 빈 except 없음 - 변환 불가는 결측으로 확정 (Category 4)
+    if not math.isfinite(number):
+        return None
+    return round(number, 6)
+
+
+def _normalize_valuation_row(row: object) -> dict | None:
+    """입력 dict → 기록 형식 dict. 날짜·심볼 형식이 어긋나면 None (기록하지 않는다)."""
+    if not isinstance(row, dict):
+        return None
+    date_str = str(row.get("date") or "")
+    symbol = str(row.get("symbol") or "").strip().upper()
+    # [SECURE] 날짜·심볼을 정규식 화이트리스트로 검증 - 임의 데이터 주입 방지 (Category 1)
+    if not _DATE_RE.match(date_str) or not VALUATION_SYMBOL_RE.match(symbol):
+        return None
+    normalized: dict = {"date": date_str, "symbol": symbol}
+    for field in VALUATION_FIELDS:
+        normalized[field] = _valuation_number(row.get(field))
+    return normalized
+
+
+def append_valuation(rows: list[dict]) -> int:
+    """섹터 밸류에이션 관측치를 JSONL에 덧붙이고 실제로 기록한 줄 수를 반환한다.
+
+    이미 기록된 (date, symbol) 쌍은 건너뛴다 — 같은 날 `daily`를 두 번 돌려도 분포가
+    이중 계상되지 않는다. 형식이 어긋난 행은 기록하지 않고 경고만 남긴다.
+    """
+    normalized: list[dict] = []
+    seen: set[tuple[str, str]] = set()
+    rejected = 0
+    for raw in rows or []:
+        row = _normalize_valuation_row(raw)
+        if row is None:
+            rejected += 1
+            continue
+        key = (row["date"], row["symbol"])
+        if key in seen:      # 같은 배치 안의 중복도 제거
+            continue
+        seen.add(key)
+        normalized.append(row)
+
+    if rejected:
+        logger.warning("[Store] 밸류에이션 형식 불일치 %d건 제외", rejected)
+    if not normalized:
+        return 0
+
+    recorded = {(r["date"], r["symbol"]) for r in load_valuation()}
+    fresh = [r for r in normalized if (r["date"], r["symbol"]) not in recorded]
+    if not fresh:
+        logger.info("[Store] 밸류에이션: 이미 기록된 관측치뿐 - 추가 없음 (%d건 검사)", len(normalized))
+        return 0
+
+    path = paths.VALUATION_FILE
+    payload = "".join(
+        json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
+        for row in fresh
+    )
+    try:
+        _ensure_dir(path.parent)
+        # append 모드 + 단일 write + fsync. 덮어쓰기가 없으므로 기존 기록은 어떤 실패에도 남는다.
+        # [SECURE] Improper Resource Release: context manager로 파일 핸들 확실히 해제 (Category 5)
+        with path.open("a", encoding="utf-8", newline="\n") as f:
+            f.write(payload)
+            f.flush()
+            os.fsync(f.fileno())  # [SECURE] 전원 차단 시 기록 유실 방지 (Category 3)
+    except OSError as e:
+        # [SECURE] 상세 오류는 로컬 로그에만, 호출자에는 요약 메시지 (Category 4)
+        logger.error("[Store] 밸류에이션 기록 실패 %s: %s", path.name, e)
+        raise StoreError("밸류에이션 기록에 실패했습니다.") from e
+
+    logger.info("[Store] 밸류에이션 %d건 기록 (%s)", len(fresh), path.name)
+    return len(fresh)
+
+
+def load_valuation(symbol: str | None = None, limit_days: int | None = None) -> list[dict]:
+    """기록된 밸류에이션 관측치를 파일 순서(오래된 것부터)로 반환한다.
+
+    symbol을 주면 그 심볼만, limit_days를 주면 가장 최근 N개 '날짜'의 행만 남긴다.
+    손상된 줄은 건너뛰고 개수만 경고한다 — 한 줄이 깨져도 나머지 기록은 살린다.
+    """
+    path = paths.VALUATION_FILE
+    try:
+        if not path.is_file():
+            return []
+        if path.stat().st_size > _MAX_VALUATION_BYTES:
+            logger.warning("[Store] 밸류에이션 파일 크기 상한 초과 - 건너뜀: %s", path.name)
+            return []
+    except OSError as e:
+        logger.warning("[Store] 밸류에이션 파일 확인 실패: %s", e)
+        return []
+
+    wanted: str | None = None
+    if symbol is not None:
+        wanted = str(symbol).strip().upper()
+        # [SECURE] 조회 심볼도 화이트리스트 검증 - 신뢰 경계 밖 값의 무제한 통과 방지 (Category 1)
+        if not VALUATION_SYMBOL_RE.match(wanted):
+            logger.warning("[Store] 밸류에이션 조회 심볼 형식 불일치: %r", str(symbol)[:16])
+            return []
+
+    rows: list[dict] = []
+    skipped = 0
+    try:
+        with path.open("r", encoding="utf-8") as f:  # [SECURE] context manager로 핸들 해제 (Category 5)
+            for line in f:
+                text = line.strip()
+                if not text:
+                    continue
+                try:
+                    data = json.loads(text)
+                except json.JSONDecodeError:
+                    skipped += 1   # [SECURE] 손상 줄 격리 - 전체 조회 중단 방지 (Category 4)
+                    continue
+                row = _normalize_valuation_row(data)
+                if row is None:
+                    skipped += 1
+                    continue
+                if wanted is not None and row["symbol"] != wanted:
+                    continue
+                rows.append(row)
+    except (OSError, UnicodeDecodeError) as e:
+        # 이미 읽은 만큼은 살려서 돌려준다 (부분 결과 보존).
+        logger.warning("[Store] 밸류에이션 읽기 중단 %s: %s", path.name, e)
+
+    if skipped:
+        logger.warning("[Store] 밸류에이션 손상 줄 %d개 건너뜀: %s", skipped, path.name)
+
+    if limit_days is not None and limit_days >= 0:
+        keep = set(sorted({r["date"] for r in rows}, reverse=True)[:limit_days])
+        rows = [r for r in rows if r["date"] in keep]
+    return rows
+
+
 # ===== 포트폴리오 (비공개, 선택) =====
 def load_portfolio() -> Portfolio | None:
     """data/portfolio.json. 없으면 None (PART 8을 생성하지 않는다).
@@ -377,16 +534,21 @@ def legacy_import() -> list[BriefingRecord]:
 # --------------------------------------------------
 # Security Checklist
 # Applied:
-#   - Path Traversal: 레코드 ID·차트 키를 정규식 화이트리스트로 검증한 뒤에만 경로를 조합
-#   - Race Condition (TOCTOU): mkstemp 임시 파일 + os.replace 원자적 교체, 마이그레이션도 os.replace 사용
+#   - Path Traversal: 레코드 ID·차트 키를 정규식 화이트리스트로 검증한 뒤에만 경로를 조합.
+#     밸류에이션 기록은 고정 파일명 하나만 쓰고 심볼·날짜는 정규식으로 검증한 뒤 내용에만 넣는다
+#   - Race Condition (TOCTOU): mkstemp 임시 파일 + os.replace 원자적 교체, 마이그레이션도 os.replace 사용.
+#     밸류에이션은 덮어쓰기 없이 append + fsync만 하므로 실패해도 기존 기록이 손상되지 않는다
 #   - Improper Random Value: 레코드 ID 접미사를 secrets.token_hex(CSPRNG)로 생성
 #   - Improper Resource Release: 모든 파일 입출력을 context manager로 처리, 실패 시 임시 파일 정리
-#   - Unsafe Deserialization: 읽어온 JSON을 pydantic model_validate로 검증한 뒤에만 사용
-#   - Missing Error Handling: 손상·구버전 파일은 경고 후 건너뛰고 전체 조회를 중단하지 않음
+#   - Unsafe Deserialization: 읽어온 JSON을 pydantic model_validate로 검증한 뒤에만 사용.
+#     JSONL 각 줄은 _normalize_valuation_row가 날짜·심볼 형식과 수치 유한성을 재검증한다
+#   - Missing Error Handling: 손상·구버전 파일과 JSONL 손상 줄은 경고 후 건너뛰고 전체 조회를 중단하지 않음
 #   - Improper Exception Handling: 빈 except 없음, 모든 실패 경로에서 로깅
 #   - Error Message Information Exposure: 상세 예외는 로컬 로그에만, 호출자에는 요약 메시지
-#   - 자원 고갈 방지: 단일 파일 8MB 상한 검사
+#   - 자원 고갈 방지: 단일 레코드 파일 8MB, 밸류에이션 JSONL 32MB 상한 검사
 # Not Applied:
+#   - [WARN] 밸류에이션 append는 한 번의 write + fsync지만 OS가 쓰기를 쪼개면 마지막 줄이
+#     잘릴 수 있다. load_valuation이 손상 줄을 건너뛰도록 만들어 가용성으로 흡수했다.
 #   - [WARN] Incorrect Permission on Critical Resource: data/portfolio.json은 OS 기본 권한으로 저장된다.
 #     비공개 정보이므로 다중 사용자 PC에서는 파일 ACL을 사용자 전용으로 좁힐 것.
 #   - [WARN] Unencrypted Sensitive Data: 포트폴리오는 평문 JSON이다. 공용 PC 사용 금지.

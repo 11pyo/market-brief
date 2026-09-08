@@ -9,13 +9,22 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import math
 import time
 from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 import yfinance as yf
 
-from mbrief.schemas import FearGreed, MarketBundle, Quote, SectorQuote
+from mbrief import indicators
+from mbrief.schemas import (
+    FearGreed,
+    MarketBundle,
+    Quote,
+    SectorHeat,
+    SectorQuote,
+    SectorValuation,
+)
 from mbrief.sources import httpguard
 from mbrief.timeutil import now_iso
 
@@ -210,6 +219,7 @@ SECTOR_SYMBOLS: dict[str, str] = {
     "Communication":       "XLC",
     "Materials":           "XLB",
     "Real Estate":         "XLRE",
+    "Utilities":           "XLU",
 }
 
 _sector_cache: tuple[float, dict] | None = None
@@ -250,6 +260,292 @@ async def get_sector_snapshot() -> dict[str, dict]:
         result = await loop.run_in_executor(None, _fetch_sector_sync)
     _sector_cache = (now, result)
     return result
+
+
+# ===== 섹터 기술적 과열도 (가격만으로 계산) =====
+# 이 블록의 수치는 전부 파이썬이 계산한다. LLM에게 "이 섹터 과열됐나?"를 묻지 않는다 —
+# 모델은 가격 시계열을 보지 못하므로 본 적 없는 백분위를 지어낼 수 있다.
+# 판정 규칙과 임계값은 mbrief/indicators.py 한 곳에만 있다.
+
+SECTOR_BENCHMARK = "^GSPC"        # 상대강도(rel3m) 기준 지수
+HISTORY_PERIOD = "2y"             # 200일 이동평균 + 1년 이상의 이격도 분포를 확보하는 최소 기간
+# [SECURE] 기간 문자열 화이트리스트 - 임의 값이 외부 API 인자로 전달되는 것 방지 (Category 1)
+HISTORY_PERIODS: tuple[str, ...] = ("1y", "2y", "5y", "10y", "max")
+REL_LOOKBACK_DAYS = 63            # 약 3개월 (거래일 기준)
+MIN_GAP_SAMPLE_DAYS = 60          # 이격도 백분위를 신뢰하기 위한 최소 관측일 수
+MIN_VALUATION_DAYS = 60           # PER 백분위를 채우기 위한 최소 기록일 수 (Feature 2)
+
+# [SECURE] 동시 수집 워커·전체 시간 상한 - 스레드/소켓 고갈과 무한 대기 방지 (Category 3)
+_HISTORY_MAX_WORKERS = 6
+_HISTORY_TOTAL_TIMEOUT = 300
+_FUNDAMENTALS_MAX_WORKERS = 4
+_FUNDAMENTALS_TOTAL_TIMEOUT = 180
+
+
+def _finite_float(value: object) -> float | None:
+    """숫자로 바꿀 수 있는 유한값만 남긴다. 그 외(None/문자열/NaN/inf/bool)는 None.
+
+    [SECURE] 외부 API의 결측·비정상 값을 계산 전에 제거 - 잘못된 입력 검증 (Category 1)
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    try:
+        number = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        return None  # [SECURE] 빈 except 없음 - 변환 실패는 결측으로 확정 (Category 4)
+    return number if math.isfinite(number) else None
+
+
+def _fetch_history_sync(symbol: str, period: str) -> list[float]:
+    """일봉 종가 목록 (동기, executor에서 실행). 빈 결과는 빈 리스트."""
+    hist = yf.Ticker(symbol).history(period=period, interval="1d")
+    if hist.empty or "Close" not in hist:
+        return []
+    closes: list[float] = []
+    for raw in hist["Close"].tolist():
+        number = _finite_float(raw)
+        if number is not None:
+            closes.append(number)
+    return closes
+
+
+async def get_sector_history(period: str = HISTORY_PERIOD) -> dict[str, list[float]]:
+    """11개 섹터 ETF + ^GSPC의 일봉 종가를 동시 수집한다.
+
+    Returns: {"XLK": [종가...], ..., "^GSPC": [...]} — 빈 결과는 키에 포함하지 않는다.
+    get_all_charts와 같은 방식으로 개별 실패를 격리하고, 전체 타임아웃이 걸려도
+    **완료된 심볼은 반드시 수확한다** (하나 때문에 전부 버리면 과열도가 통째로 빈다).
+    """
+    if period not in HISTORY_PERIODS:
+        logger.warning("[MarketData] 허용되지 않은 기간 %r - %s로 대체", str(period)[:10], HISTORY_PERIOD)
+        period = HISTORY_PERIOD
+
+    # dict.fromkeys로 순서를 유지하며 중복 제거 (섹터에 ^GSPC가 들어와도 두 번 받지 않는다)
+    symbols = list(dict.fromkeys([*SECTOR_SYMBOLS.values(), SECTOR_BENCHMARK]))
+    loop = asyncio.get_running_loop()
+
+    results: dict[str, list[float]] = {}
+    # [SECURE] context manager로 스레드풀 확실히 종료 - 리소스 누수 방지 (Category 5)
+    with ThreadPoolExecutor(max_workers=_HISTORY_MAX_WORKERS, thread_name_prefix="history") as pool:
+        tasks = [loop.run_in_executor(pool, _fetch_history_sync, symbol, period) for symbol in symbols]
+        done, pending = await asyncio.wait(tasks, timeout=_HISTORY_TOTAL_TIMEOUT)
+        if pending:
+            logger.warning(
+                "[MarketData] 섹터 시계열 타임아웃(%ss) - 완료 %d개는 사용, 미완 %d개 취소",
+                _HISTORY_TOTAL_TIMEOUT, len(done), len(pending),
+            )
+            for task in pending:
+                task.cancel()
+
+    for symbol, task in zip(symbols, tasks):
+        if task not in done or task.cancelled():
+            continue
+        outcome = task.exception()
+        if outcome is not None:
+            # [SECURE] 개별 실패 격리 후 로깅 - 빈 except 없음 (Category 4)
+            logger.warning("[MarketData] 시계열 실패 %s: %s", symbol, outcome)
+            continue
+        closes = task.result()
+        if closes:
+            results[symbol] = closes
+
+    logger.info("[MarketData] 섹터 시계열 %d/%d개 수집 (period=%s)", len(results), len(symbols), period)
+    return results
+
+
+def build_sector_heat(history: dict[str, list[float]] | None) -> dict[str, SectorHeat]:
+    """일봉 종가 → 섹터 과열도. 네트워크를 쓰지 않는 순수 변환이다.
+
+    - gapPct        : (마지막 종가 / SMA200 - 1) * 100
+    - gapPercentile : 그 이격도가 자기 자신의 과거 이격도 분포에서 차지하는 백분위
+    - rsi14         : 일봉 RSI(14), Wilder 평활
+    - rel3m         : 섹터 63거래일 수익률 - ^GSPC 63거래일 수익률 (%p)
+    - label         : gapPercentile 하나로만 결정 (indicators.heat_label)
+
+    관측치가 MIN_GAP_SAMPLE_DAYS 미만이면 gapPercentile을 채우지 않고 sampleDays=0으로 둔다.
+    이때 label은 "neutral"이지만 그것은 '중립'이 아니라 '모름'이며, sampleDays=0이 그 구분자다.
+    """
+    history = history or {}
+    benchmark = history.get(SECTOR_BENCHMARK) or []
+    benchmark_return = indicators.pct_return(benchmark, REL_LOOKBACK_DAYS)
+    if benchmark_return is None and benchmark:
+        logger.warning("[MarketData] 기준 지수(%s) 3개월 수익률 계산 불가 - rel3m 생략", SECTOR_BENCHMARK)
+
+    heat: dict[str, SectorHeat] = {}
+    for name, symbol in SECTOR_SYMBOLS.items():
+        closes = history.get(symbol) or []
+        if not closes:
+            logger.warning("[MarketData] 과열도 건너뜀 %s (%s): 종가 없음", name, symbol)
+            continue
+
+        gaps = indicators.ma_gap_series(closes, indicators.MA_WINDOW)
+        gap_pct = gaps[-1] if gaps else None
+
+        gap_percentile: float | None = None
+        sample_days = 0
+        if len(gaps) >= MIN_GAP_SAMPLE_DAYS:
+            gap_percentile = indicators.percentile_rank(gaps, gap_pct)
+            if gap_percentile is not None:
+                sample_days = len(gaps)
+
+        sector_return = indicators.pct_return(closes, REL_LOOKBACK_DAYS)
+        rel3m = (
+            sector_return - benchmark_return
+            if sector_return is not None and benchmark_return is not None
+            else None
+        )
+
+        try:
+            heat[name] = SectorHeat(
+                symbol=symbol,
+                name=name,
+                gapPct=None if gap_pct is None else round(gap_pct, 2),
+                gapPercentile=None if gap_percentile is None else round(gap_percentile, 1),
+                rsi14=_round_or_none(indicators.rsi(closes, indicators.RSI_PERIOD), 1),
+                rel3m=None if rel3m is None else round(rel3m, 2),
+                label=indicators.heat_label(gap_percentile),  # type: ignore[arg-type]
+                sampleDays=sample_days,
+            )
+        except (TypeError, ValueError) as e:
+            # [SECURE] 개별 섹터 변환 실패를 격리 - 전체 과열도 손실 방지 (Category 4)
+            logger.warning("[MarketData] 과열도 변환 실패 %s (%s): %s", name, symbol, e)
+
+    unknown = sum(1 for item in heat.values() if item.sampleDays == 0)
+    logger.info("[MarketData] 섹터 과열도 %d개 산출 (표본 부족 %d개)", len(heat), unknown)
+    return heat
+
+
+def _round_or_none(value: float | None, digits: int) -> float | None:
+    return None if value is None else round(value, digits)
+
+
+# ===== 섹터 밸류에이션 (PER/PBR 일별 기록) =====
+def _fetch_fundamentals_sync(symbol: str) -> dict:
+    """yf.Ticker(symbol).info에서 PER/PBR/배당수익률만 뽑는다 (동기, executor에서 실행).
+
+    ETF에 따라 값이 자주 비어 있다. 결측은 None으로 두고 예외로 만들지 않는다.
+    dividendYield는 ETF info의 `yield` 필드다 (0.0043 = 0.43%).
+    """
+    info = yf.Ticker(symbol).info
+    if not isinstance(info, dict):
+        return {"trailingPE": None, "priceToBook": None, "dividendYield": None}
+    return {
+        "trailingPE": _finite_float(info.get("trailingPE")),
+        "priceToBook": _finite_float(info.get("priceToBook")),
+        "dividendYield": _finite_float(info.get("yield")),
+    }
+
+
+async def get_sector_fundamentals() -> dict[str, dict]:
+    """11개 섹터 ETF의 PER/PBR/배당수익률을 동시 수집한다.
+
+    Returns: {"XLK": {"trailingPE": 33.15, "priceToBook": 1.25, "dividendYield": 0.0043}, ...}
+    개별 심볼 실패는 격리하고, 결측 필드 수를 집계해 한 줄로 로깅한다. 절대 전체를 실패시키지 않는다.
+    """
+    symbols = list(SECTOR_SYMBOLS.values())
+    loop = asyncio.get_running_loop()
+
+    results: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=_FUNDAMENTALS_MAX_WORKERS, thread_name_prefix="funda") as pool:
+        tasks = [loop.run_in_executor(pool, _fetch_fundamentals_sync, symbol) for symbol in symbols]
+        done, pending = await asyncio.wait(tasks, timeout=_FUNDAMENTALS_TOTAL_TIMEOUT)
+        if pending:
+            logger.warning(
+                "[MarketData] 밸류에이션 타임아웃(%ss) - 완료 %d개는 사용, 미완 %d개 취소",
+                _FUNDAMENTALS_TOTAL_TIMEOUT, len(done), len(pending),
+            )
+            for task in pending:
+                task.cancel()
+
+    missing = 0
+    for symbol, task in zip(symbols, tasks):
+        if task not in done or task.cancelled():
+            continue
+        outcome = task.exception()
+        if outcome is not None:
+            logger.warning("[MarketData] 밸류에이션 실패 %s: %s", symbol, outcome)
+            continue
+        data = task.result()
+        results[symbol] = data
+        missing += sum(1 for key in ("trailingPE", "priceToBook", "dividendYield") if data.get(key) is None)
+
+    logger.info("[MarketData] 섹터 밸류에이션 %d/%d개 수집 (결측 필드 %d개)",
+                len(results), len(symbols), missing)
+    return results
+
+
+def valuation_rows(fundamentals: dict[str, dict] | None, date_str: str) -> list[dict]:
+    """수집 결과 → store.append_valuation 입력 형식. 값이 하나도 없는 심볼은 기록하지 않는다."""
+    rows: list[dict] = []
+    for symbol, data in (fundamentals or {}).items():
+        data = data or {}
+        values = {key: _finite_float(data.get(key))
+                  for key in ("trailingPE", "priceToBook", "dividendYield")}
+        if all(v is None for v in values.values()):
+            continue  # 빈 관측치는 분포를 흐릴 뿐이라 기록하지 않는다
+        rows.append({"date": date_str, "symbol": symbol, **values})
+    return rows
+
+
+def build_sector_valuation(
+    fundamentals: dict[str, dict] | None,
+    history_rows: list[dict] | None,
+) -> dict[str, SectorValuation]:
+    """현재 PER/PBR + 누적 기록 → 섹터 밸류에이션. 네트워크를 쓰지 않는 순수 변환이다.
+
+    pePercentile은 그 심볼의 PER 관측치가 MIN_VALUATION_DAYS개 이상 쌓인 뒤에만 채운다.
+    그 전에는 None이고 recordedDays가 진척도를 보여 준다 — '저평가/고평가'를 말할 근거가
+    아직 없다는 사실 자체를 데이터로 표현한다.
+    """
+    fundamentals = fundamentals or {}
+
+    # 심볼별 PER 관측치 / 기록일 수를 한 번만 훑어 모은다.
+    pe_history: dict[str, list[float]] = {}
+    recorded_dates: dict[str, set[str]] = {}
+    for row in history_rows or []:
+        if not isinstance(row, dict):
+            continue
+        symbol = str(row.get("symbol") or "").strip().upper()
+        if not symbol:
+            continue
+        date_str = str(row.get("date") or "")
+        if date_str:
+            recorded_dates.setdefault(symbol, set()).add(date_str)
+        value = _finite_float(row.get("trailingPE"))
+        if value is not None:
+            pe_history.setdefault(symbol, []).append(value)
+
+    valuation: dict[str, SectorValuation] = {}
+    for name, symbol in SECTOR_SYMBOLS.items():
+        data = fundamentals.get(symbol)
+        recorded_days = len(recorded_dates.get(symbol, ()))
+        if data is None and recorded_days == 0:
+            continue  # 오늘 값도 없고 기록도 없다면 보여 줄 것이 없다
+        data = data or {}
+
+        trailing_pe = _finite_float(data.get("trailingPE"))
+        samples = pe_history.get(symbol, [])
+        pe_percentile: float | None = None
+        if trailing_pe is not None and len(samples) >= MIN_VALUATION_DAYS:
+            pe_percentile = indicators.percentile_rank(samples, trailing_pe)
+
+        try:
+            valuation[name] = SectorValuation(
+                symbol=symbol,
+                name=name,
+                trailingPE=_round_or_none(trailing_pe, 2),
+                priceToBook=_round_or_none(_finite_float(data.get("priceToBook")), 2),
+                dividendYield=_round_or_none(_finite_float(data.get("dividendYield")), 6),
+                pePercentile=_round_or_none(pe_percentile, 1),
+                recordedDays=recorded_days,
+            )
+        except (TypeError, ValueError) as e:
+            logger.warning("[MarketData] 밸류에이션 변환 실패 %s (%s): %s", name, symbol, e)
+
+    ready = sum(1 for item in valuation.values() if item.pePercentile is not None)
+    logger.info("[MarketData] 섹터 밸류에이션 %d개 구성 (백분위 확보 %d개, 기준 %d일)",
+                len(valuation), ready, MIN_VALUATION_DAYS)
+    return valuation
 
 
 # ===== 캔들 차트 =====
@@ -389,6 +685,8 @@ def to_bundle(
     fear_greed: dict | None,
     calendar: dict | None,
     chart_keys: list[str] | None = None,
+    sector_heat: dict[str, SectorHeat] | None = None,
+    sector_valuation: dict[str, SectorValuation] | None = None,
 ) -> MarketBundle:
     """원시 dict → MarketBundle (pydantic 검증 경유)."""
     quotes: dict[str, Quote] = {}
@@ -419,22 +717,26 @@ def to_bundle(
         fearGreed=fg,
         calendar=calendar or {},
         chartKeys=sorted(chart_keys or []),
+        sectorHeat=dict(sector_heat or {}),              # [SECURE] 호출자 dict를 복사해 보관 (Category 6)
+        sectorValuation=dict(sector_valuation or {}),    # [SECURE] 호출자 dict를 복사해 보관 (Category 6)
     )
 
 
 async def build_market_bundle() -> MarketBundle:
-    """스냅샷 + 섹터 + 공포탐욕 + 캘린더를 동시 수집해 MarketBundle 반환.
+    """스냅샷 + 섹터 + 공포탐욕 + 캘린더 + 섹터 시계열을 동시 수집해 MarketBundle 반환.
 
-    chartKeys는 차트를 실제로 저장하는 호출자(pipeline.refresh)가 채운다.
+    sectorHeat는 여기서 채운다 (가격만으로 계산하므로 추가 API 키가 필요 없다).
+    chartKeys와 sectorValuation은 파일 상태를 다루는 호출자(pipeline.refresh)가 채운다.
     개별 소스 실패는 해당 필드를 비우고 나머지는 유지한다.
     """
     from mbrief.sources import calendar_service  # 지연 임포트 — 모듈 간 순환 방지
 
-    snapshot, sectors, fear_greed, calendar = await asyncio.gather(
+    snapshot, sectors, fear_greed, calendar, history = await asyncio.gather(
         get_snapshot(),
         get_sector_snapshot(),
         get_cnn_fear_greed(),
         calendar_service.get_calendar(),
+        get_sector_history(),
         return_exceptions=True,
     )
 
@@ -448,8 +750,12 @@ async def build_market_bundle() -> MarketBundle:
     sectors = _ok(sectors, "섹터", {})
     fear_greed = _ok(fear_greed, "공포탐욕", None)
     calendar = _ok(calendar, "캘린더", {})
+    history = _ok(history, "섹터 시계열", {})
 
-    return to_bundle(snapshot, sectors, fear_greed, calendar)  # type: ignore[arg-type]
+    return to_bundle(
+        snapshot, sectors, fear_greed, calendar,  # type: ignore[arg-type]
+        sector_heat=build_sector_heat(history),   # type: ignore[arg-type]
+    )
 
 
 # --------------------------------------------------
@@ -458,16 +764,23 @@ async def build_market_bundle() -> MarketBundle:
 #   - SSRF: 외부 요청 URL과 심볼을 모두 소스 상수(화이트리스트)로 고정, 사용자 입력 URL 미사용.
 #     CNN 호출은 httpguard 응답 훅으로 리다이렉트 종착지의 스킴(https)·호스트까지 검증한다
 #   - Path Traversal: 차트 키는 SYMBOL_KEYS 슬러그 + 고정 기간 문자열로만 생성 (store가 재검증)
-#   - Infinite Loop: 모든 외부 호출에 asyncio.timeout 상한, 차트 전체 수집 300초 상한
+#   - Improper Input Validation: 시계열 기간(period)은 HISTORY_PERIODS 화이트리스트로 검증한 뒤에만
+#     외부 API에 전달하고, 외부에서 온 수치는 _finite_float로 NaN/inf/비수치를 걸러 계산에 넣는다
+#   - Infinite Loop: 모든 외부 호출에 asyncio.timeout 상한, 차트/시계열 전체 수집 300초·밸류에이션 180초 상한
 #     (상한 초과 시 asyncio.wait으로 완료분은 수확하고 미완 작업만 취소 - 부분 결과 보존)
 #   - Improper Resource Release: httpx.AsyncClient / ThreadPoolExecutor를 context manager로 사용
-#   - Missing Error Handling: 심볼·섹터·차트별 예외를 개별 격리하여 전체 수집 중단 방지
+#   - Missing Error Handling: 심볼·섹터·차트·시계열·밸류에이션별 예외를 개별 격리하여 전체 수집 중단 방지
 #   - Improper Exception Handling: 빈 except 없음, 모든 실패 경로에서 로깅
 #   - Error Message Information Exposure: 상세 오류는 로컬 로그에만 기록
 #   - Null Pointer Dereference: 결측 필드에 기본값 적용 후 None 검사
-#   - 자원 고갈 방지: 차트 동시 실행 워커 6개로 제한
+#   - Private Array Returned: to_bundle이 sector_heat/sector_valuation dict를 복사해 보관하여
+#     호출자가 나중에 원본을 변경해도 번들 내용이 바뀌지 않는다 (Category 6)
+#   - 자원 고갈 방지: 차트 동시 실행 워커 6개, 시계열 6개, 밸류에이션 4개로 제한
 # Not Applied:
 #   - [WARN] Improper Certificate Validation: httpx/yfinance 기본 TLS 검증에 의존 (핀닝 없음).
 #   - [WARN] Use of Vulnerable API: CNN Fear&Greed는 비공식 엔드포인트로 사전 통지 없이 변경될 수 있다.
 #     실패 시 None을 반환해 파이프라인은 계속 진행하지만 정기 점검이 필요하다.
+#   - [WARN] yf.Ticker(...).info는 스크래핑 성격이라 필드 구성이 예고 없이 바뀔 수 있다.
+#     결측은 None으로 흡수하지만, trailingPE가 장기간 전부 비면 밸류에이션 기록이 멈추므로
+#     data/valuation/sector_valuation.jsonl 의 증가 여부를 주기적으로 확인할 것.
 # --------------------------------------------------

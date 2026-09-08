@@ -7,6 +7,8 @@
   4. 루트 절대 경로(href="/", src="/")가 없다 — GitHub Pages 하위 경로 배포 전제
   5. data/index.json 이 SiteIndex 계약을 만족한다
   6. v2.1 신규 필드(sessionRecap / keyActors)가 있으면 렌더되고, 없으면 빈 섹션 마크업을 남기지 않는다
+  7. v2.2 신규 필드(sectorHeat / sectorValuation)도 같은 계약을 따르며,
+     밸류에이션 판정 어휘(저평가/고평가)가 산출물 어디에도 나오지 않는다
 """
 from __future__ import annotations
 
@@ -24,6 +26,8 @@ FIXTURES = Path(__file__).parent / "fixtures"
 SECRET = "SECRET-PART7"
 SECRET8 = "SECRET-PART8"          # v2.1 계약: 포트폴리오 파트가 PART 8로 번호가 바뀌었다
 XSS = "<script>alert(1)</script>"
+#: 섹터 과열도는 가격 스트레치 지표다. 밸류에이션 판정 어휘가 화면에 나오면 계약 위반이다.
+VALUATION_VERDICT_WORDS = ("저평가", "고평가")
 
 
 # ===== 픽스처 =====
@@ -123,6 +127,23 @@ def legacy_record(sample_record: BriefingRecord) -> BriefingRecord:
 
 
 @pytest.fixture
+def preheat_record(sample_record: BriefingRecord) -> BriefingRecord:
+    """v2.2 이전 레코드 — market.sectorHeat / sectorValuation 이 빈 dict.
+
+    실제 data/briefings/ 의 기존 레코드가 전부 이 형태다(필드 자체가 없어 기본값 {}로 채워진다).
+    새 섹션이 부재를 허용하지 못하면 과거 아카이브가 통째로 깨진다.
+    """
+    record = sample_record.model_copy(deep=True)
+    record.id = "2026-09-01-ko-a7b8c9"
+    record.date = "2026-09-01"
+    record.generatedAt = "2026-09-01T07:00:00+09:00"
+    record.headline = "구버전 레코드 — 과열도·밸류에이션 필드 없음"
+    record.market.sectorHeat = {}
+    record.market.sectorValuation = {}
+    return record
+
+
+@pytest.fixture
 def part8_record(sample_record: BriefingRecord) -> BriefingRecord:
     """v2.1 번호(PART 8)로 포트폴리오 파트를 쓴 텍스트 폴백 레코드."""
     return BriefingRecord(
@@ -189,6 +210,22 @@ def make_settings(**overrides):
     )
     base.update(overrides)
     return SimpleNamespace(**base)
+
+
+@pytest.fixture(autouse=True)
+def isolate_valuation_history(monkeypatch, tmp_path_factory):
+    """빌드가 개발 머신의 실제 data/valuation 기록을 집어삼키지 않게 격리한다.
+
+    paths.VALUATION_FILE 은 존재할 수도, 아직 없을 수도 있다(상류 에이전트 소관).
+    어느 쪽이든 테스트 산출물이 머신 상태에 좌우되면 안 되므로 없는 경로로 고정한다.
+    이 기능을 직접 검증하는 테스트는 나중에 다시 setattr 해서 덮어쓴다.
+    """
+    monkeypatch.setattr(
+        builder._paths,
+        "VALUATION_FILE",
+        tmp_path_factory.mktemp("no-valuation") / "sector_valuation.jsonl",
+        raising=False,
+    )
 
 
 @pytest.fixture
@@ -1069,6 +1106,232 @@ def test_schema_validators_strip_xml_illegal_control_chars():
     assert record.headline == "re c"
 
 
+# ===== 10. 섹터 과열도 · 밸류에이션 (v2.2) =====
+
+
+def test_sector_heat_section_renders_every_label_chip(built):
+    """다섯 등급 칩이 모두 나오고, 각 행이 백분위 바를 갖는다."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    assert "섹터 과열도" in html                                    # L.sectorHeatTitle
+    assert html.count('class="heat-row heat-row--') == 5
+    for label, text in (
+        ("hot", "과열"), ("warm", "다소 과열"), ("neutral", "중립"),
+        ("cool", "다소 침체"), ("cold", "침체"),
+    ):
+        assert f'class="heat-chip heat-chip--{label}">{text}</span>' in html, label
+    # 백분위 바는 판정축이므로 행마다 하나씩 있어야 한다
+    assert html.count('class="heat-fill"') == 5
+    for width in ("width:91%", "width:64%", "width:49%", "width:22%", "width:8%"):
+        assert width in html, width
+
+
+def test_sector_heat_rows_are_sorted_hottest_first(built):
+    """가장 달아오른 섹터가 먼저 읽혀야 한다 (gapPercentile 내림차순)."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    order = re.findall(r'class="heat-name">([^<]+)</span>', html)
+    assert order[:5] == ["Technology", "Energy", "Financials", "Utilities", "Real Estate"]
+    widths = [int(w) for w in re.findall(r'class="heat-fill" style="width:(\d+)%"', html)]
+    assert widths == sorted(widths, reverse=True), widths
+
+
+def test_sector_heat_rows_show_supporting_metrics(built):
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    for label in ("분포 백분위", "200일선 이격", "RSI(14)", "3개월 상대"):
+        assert label in html, label
+    # 판정축(백분위)은 바 옆에 한 번만 보인다 — 참고 수치 목록(dl)에서 중복하지 않는다
+    assert html.count('class="heat-meter-label">분포 백분위</span>') == 5
+    assert "<dt>분포 백분위</dt>" not in html
+    # 바에는 접근성 이름이 붙는다 (시각 라벨 + aria-label 이라 문자열 자체는 행마다 두 번 나온다)
+    assert html.count('aria-label="분포 백분위 ') == 5
+    assert "<dd>+8.4%</dd>" in html      # gapPct
+    assert "<dd>68.3</dd>" in html       # rsi14
+    assert "<dd>+6.1%p</dd>" in html     # rel3m 은 비율이 아니라 퍼센트 포인트다
+
+
+def test_sector_heat_note_frames_it_as_stretch_not_valuation(built):
+    """'밸류에이션 판정이 아니다 + 등급은 백분위에서 온다'가 화면에 보여야 한다."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    assert 'class="heat-note"' in html
+    assert "가치 판단이 아닙니다" in html
+    assert "백분위" in html
+
+
+def test_sector_valuation_shows_accruing_progress_instead_of_a_verdict(built):
+    """pePercentile 이 None 이면 판정 대신 '기록 중 (N일)' 진행 상태만 나온다."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    assert "섹터 밸류에이션" in html                                 # L.sectorValuationTitle
+    assert html.count("val-row--accruing") == 3
+    assert "기록 중 (1일)" in html
+    assert "PER" in html and "PBR" in html
+    assert "<dd>33.15</dd>" in html
+    # 백분위가 없으므로 백분위 바(판정 시각화)는 그리지 않는다
+    assert 'class="val-fill"' not in html
+
+
+@pytest.mark.parametrize("word", VALUATION_VERDICT_WORDS)
+def test_no_valuation_verdict_wording_anywhere_in_the_output(built, word):
+    """pePercentile 이 없는 레코드에서 '저평가/고평가'가 어떤 산출물에도 나오면 안 된다."""
+    hits = [
+        path.relative_to(built.out_dir).as_posix()
+        for path in built.out_dir.rglob("*")
+        if path.is_file() and path.suffix in {".html", ".json", ".xml", ".txt", ".js", ".css"}
+        and word in path.read_text(encoding="utf-8", errors="ignore")
+    ]
+    assert hits == [], f"근거 없는 밸류에이션 판정 어휘({word})가 있는 파일: {hits}"
+
+
+def test_record_without_sector_heat_leaves_no_empty_section_markup(
+    tmp_path, preheat_record, candles, scorecard
+):
+    """v2.2 이전 레코드(sectorHeat={}, sectorValuation={})도 모든 페이지가 정상 생성된다."""
+    result = builder.build(
+        [preheat_record], preheat_record.market, scorecard, {"sp500_1d": candles},
+        out_dir=tmp_path / "site", settings=make_settings(),
+    )
+    assert result.pages == 3          # index + archive/index + 레코드 1건
+    for relative in (
+        "index.html",
+        "archive/index.html",
+        f"archive/{preheat_record.id}.html",
+        "data/index.json",
+        "data/latest.json",
+        "feed.xml",
+    ):
+        assert (result.out_dir / relative).exists(), f"누락된 산출물: {relative}"
+
+    for path, html in read_rendered_pages(result.out_dir).items():
+        for leftover in (
+            "heat-list", "heat-row", "heat-note", "heat-chip", "heat-fill", "heat-metric",
+            "val-list", "val-row", "val-note", "val-metric", "val-state",
+            "섹터 과열도", "섹터 밸류에이션", "기록 중", 'id="h-heat"', 'id="h-val"',
+        ):
+            assert leftover not in html, f"빈 섹션 잔재: {path.name} → {leftover}"
+        for attr in ('href="/', "href='/", 'src="/', "src='/"):
+            assert attr not in html, f"루트 절대 경로 발견: {path.name} ({attr})"
+
+    # 관련 섹션(섹터 ETF 칩)과 본문 파트는 그대로 남는다
+    html = (result.out_dir / "index.html").read_text(encoding="utf-8")
+    assert "sector-chip" in html
+    for marker in ("PART 1", "PART 2", "PART 3", "PART 7"):
+        assert marker in html, f"컴포넌트 누락: {marker}"
+
+
+def test_sector_heat_view_puts_missing_percentiles_last(sample_record):
+    """백분위가 없는 섹터는 정렬 맨 뒤로 간다 (판정축이 없으므로 앞에 둘 근거가 없다)."""
+    from mbrief.site import i18n
+
+    market = sample_record.market.model_copy(deep=True)
+    market.sectorHeat["Technology"].gapPercentile = None
+    rows = builder._sector_heat_view(market, i18n.get_labels("ko"))
+    assert [r["name"] for r in rows][-1] == "Technology"
+    assert rows[-1]["percentile_text"] == "—"
+    assert rows[-1]["bar"] == 0
+
+
+def test_sector_heat_view_is_empty_for_a_record_without_the_field(preheat_record):
+    from mbrief.site import i18n
+
+    labels = i18n.get_labels("ko")
+    assert builder._sector_heat_view(preheat_record.market, labels) == []
+    assert builder._sector_valuation_view(preheat_record.market, labels) == []
+    assert builder._sector_heat_view(None, labels) == []
+    assert builder._sector_valuation_view(None, labels) == []
+
+
+# ----- 누적 밸류에이션 기록 게시 (오프머신 복구 경로) -----
+
+
+def _build_with_valuation_file(tmp_path, monkeypatch, record, candles, source):
+    # paths.VALUATION_FILE 은 상류 에이전트가 추가하는 상수다. 아직 없을 수 있으므로
+    # raising=False 로 주입한다 (빌더도 getattr 로 방어적으로 읽는다).
+    monkeypatch.setattr(builder._paths, "VALUATION_FILE", source, raising=False)
+    return builder.build(
+        [record], record.market, None, {"sp500_1d": candles},
+        out_dir=tmp_path / "site", settings=make_settings(),
+    )
+
+
+def test_valuation_history_is_published_as_a_json_array(
+    tmp_path, monkeypatch, sample_record, candles
+):
+    source = tmp_path / "valuation.json"
+    source.write_text(
+        json.dumps([
+            {"date": "2026-09-06", "XLK": {"trailingPE": 32.9}},
+            {"date": "2026-09-07", "XLK": {"trailingPE": 33.15}},
+        ]),
+        encoding="utf-8",
+    )
+    result = _build_with_valuation_file(tmp_path, monkeypatch, sample_record, candles, source)
+    payload = json.loads(
+        (result.out_dir / "data" / "sector_valuation.json").read_text(encoding="utf-8")
+    )
+    assert isinstance(payload, list)
+    assert [row["date"] for row in payload] == ["2026-09-06", "2026-09-07"]
+
+
+@pytest.mark.parametrize("body", [
+    # 날짜를 키로 갖는 객체
+    '{"2026-09-07": {"XLK": 33.15}, "2026-09-06": {"XLK": 32.9}}',
+    # 한 줄에 한 레코드 (JSONL)
+    '{"date": "2026-09-06", "XLK": 32.9}\n{"date": "2026-09-07", "XLK": 33.15}\n',
+])
+def test_valuation_history_normalizes_other_source_shapes(
+    tmp_path, monkeypatch, sample_record, candles, body
+):
+    """상류 파일 형식이 아직 고정되지 않았다 — 배열/객체/JSONL 어느 쪽이어도 배열로 게시한다."""
+    source = tmp_path / "valuation.json"
+    source.write_text(body, encoding="utf-8")
+    result = _build_with_valuation_file(tmp_path, monkeypatch, sample_record, candles, source)
+    payload = json.loads(
+        (result.out_dir / "data" / "sector_valuation.json").read_text(encoding="utf-8")
+    )
+    assert isinstance(payload, list)
+    assert [row["date"] for row in payload] == ["2026-09-06", "2026-09-07"]
+
+
+def test_valuation_history_is_skipped_when_the_source_is_missing(
+    tmp_path, monkeypatch, sample_record, candles
+):
+    result = _build_with_valuation_file(
+        tmp_path, monkeypatch, sample_record, candles, tmp_path / "nope.json"
+    )
+    assert not (result.out_dir / "data" / "sector_valuation.json").exists()
+
+
+def test_valuation_history_is_skipped_when_paths_has_no_constant(
+    tmp_path, monkeypatch, sample_record, candles
+):
+    """상류가 아직 VALUATION_FILE 을 추가하지 않았어도 빌드는 그대로 성공해야 한다."""
+    monkeypatch.delattr(builder._paths, "VALUATION_FILE", raising=False)
+    result = builder.build(
+        [sample_record], sample_record.market, None, {"sp500_1d": candles},
+        out_dir=tmp_path / "site", settings=make_settings(),
+    )
+    assert result.pages == 3
+    assert not (result.out_dir / "data" / "sector_valuation.json").exists()
+
+
+def test_valuation_history_is_skipped_when_the_source_is_empty_or_broken(
+    tmp_path, monkeypatch, sample_record, candles
+):
+    source = tmp_path / "valuation.json"
+    source.write_text("not json at all\n", encoding="utf-8")
+    result = _build_with_valuation_file(tmp_path, monkeypatch, sample_record, candles, source)
+    assert not (result.out_dir / "data" / "sector_valuation.json").exists()
+
+
+def test_valuation_history_is_skipped_when_the_source_is_too_large(
+    tmp_path, monkeypatch, sample_record, candles
+):
+    """비대한 기록이 정적 배포본을 망가뜨리지 않게 상한을 둔다."""
+    source = tmp_path / "valuation.json"
+    source.write_text(json.dumps([{"date": "2026-09-07"}]), encoding="utf-8")
+    monkeypatch.setattr(builder, "VALUATION_HISTORY_MAX_BYTES", 4)
+    result = _build_with_valuation_file(tmp_path, monkeypatch, sample_record, candles, source)
+    assert not (result.out_dir / "data" / "sector_valuation.json").exists()
+
+
 # --------------------------------------------------
 # Security Checklist
 # Applied:
@@ -1083,6 +1346,11 @@ def test_schema_validators_strip_xml_illegal_control_chars():
 #   - Input Validation: XML 비허용 제어문자가 스키마 단계에서 제거되어 feed/sitemap이 파싱되는지 검증
 #   - Path Traversal: 차트 키 정규식과 out_dir 삭제 화이트리스트를 직접 테스트
 #   - Open Redirect: 뉴스 외부 링크의 rel 속성과 javascript: href 부재 검증
+#   - Improper Input for Security Decision: 섹터 과열도 바의 인라인 width 가 0~100 정수인지,
+#     등급 클래스가 화이트리스트 다섯 값에 한정되는지 렌더 결과로 검증. 근거(pePercentile)가
+#     없을 때 판정 어휘(저평가/고평가)가 산출물 전체에서 검색되지 않음을 강제한다
+#   - Missing Error Handling: 누적 밸류에이션 기록의 부재·상수 미정의·파싱 실패·크기 초과가
+#     각각 빌드를 중단시키지 않고 게시만 건너뛰는지 검증
 # Not Applied:
 #   - [WARN] 브라우저 실행 검증(E2E)은 포함하지 않는다. 차트 모달·통화 전환 등 JS 동작은
 #            수동 프리뷰 또는 별도 E2E 러너로 확인해야 한다.

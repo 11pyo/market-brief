@@ -105,3 +105,29 @@ def test_format_always_includes_framing_instruction():
     for when in ("2026-09-07T23:40:00", "2026-09-09T00:30:00", "2026-09-06T12:00:00"):
         clock = mc.build_clock(_candles_for(["2026-09-04"]), now=_kst(when))
         assert "FRAMING:" in mc.format_for_llm(clock)
+
+
+# ===== 장중 갱신 창 =====
+def test_parse_window_accepts_valid_and_rejects_junk():
+    assert mc.parse_window("09:00-15:30") == (dt.time(9, 0), dt.time(15, 30))
+    for bad in ("", "09:00", "9-15", "25:00-15:30", "09:60-15:30", "a:b-c:d", "09:00-15:30-16:00"):
+        assert mc.parse_window(bad) is None, bad
+
+
+def test_intraday_window_covers_krx_session_on_weekdays():
+    assert mc.in_intraday_window(_kst("2026-09-08T09:00:00")) is True    # 화요일 개장
+    assert mc.in_intraday_window(_kst("2026-09-08T12:55:00")) is True
+    assert mc.in_intraday_window(_kst("2026-09-08T15:30:00")) is True    # 마감 시각 포함
+    assert mc.in_intraday_window(_kst("2026-09-08T08:59:00")) is False
+    assert mc.in_intraday_window(_kst("2026-09-08T15:31:00")) is False
+
+
+def test_intraday_window_is_false_on_weekend():
+    assert mc.in_intraday_window(_kst("2026-09-05T12:00:00")) is False   # 토요일
+    assert mc.in_intraday_window(_kst("2026-09-06T12:00:00")) is False   # 일요일
+
+
+def test_intraday_window_accepts_custom_range():
+    win = (dt.time(22, 30), dt.time(23, 59))
+    assert mc.in_intraday_window(_kst("2026-09-08T23:00:00"), win) is True
+    assert mc.in_intraday_window(_kst("2026-09-08T12:00:00"), win) is False

@@ -587,7 +587,88 @@
       "sp500_1d",
       "sp500_5d",
       "sp500_1mo"
-    ]
+    ],
+    "sectorHeat": {
+      "Technology": {
+        "symbol": "XLK",
+        "name": "Technology",
+        "gapPct": 8.4,
+        "gapPercentile": 91.2,
+        "rsi14": 68.3,
+        "rel3m": 6.1,
+        "label": "hot",
+        "sampleDays": 504
+      },
+      "Energy": {
+        "symbol": "XLE",
+        "name": "Energy",
+        "gapPct": 2.1,
+        "gapPercentile": 63.5,
+        "rsi14": 55.0,
+        "rel3m": 1.4,
+        "label": "warm",
+        "sampleDays": 504
+      },
+      "Financials": {
+        "symbol": "XLF",
+        "name": "Financials",
+        "gapPct": 0.3,
+        "gapPercentile": 48.7,
+        "rsi14": 50.2,
+        "rel3m": -0.6,
+        "label": "neutral",
+        "sampleDays": 504
+      },
+      "Utilities": {
+        "symbol": "XLU",
+        "name": "Utilities",
+        "gapPct": -3.2,
+        "gapPercentile": 22.4,
+        "rsi14": 41.8,
+        "rel3m": -3.9,
+        "label": "cool",
+        "sampleDays": 504
+      },
+      "Real Estate": {
+        "symbol": "XLRE",
+        "name": "Real Estate",
+        "gapPct": -7.5,
+        "gapPercentile": 8.1,
+        "rsi14": 32.6,
+        "rel3m": -8.2,
+        "label": "cold",
+        "sampleDays": 504
+      }
+    },
+    "sectorValuation": {
+      "Technology": {
+        "symbol": "XLK",
+        "name": "Technology",
+        "trailingPE": 33.15,
+        "priceToBook": 1.25,
+        "dividendYield": 0.0043,
+        "pePercentile": null,
+        "recordedDays": 1
+      },
+      "Energy": {
+        "symbol": "XLE",
+        "name": "Energy",
+        "trailingPE": 17.77,
+        "priceToBook": 1.23,
+        "dividendYield": 0.0237,
+        "pePercentile": null,
+        "recordedDays": 1
+      },
+      "Financials": {
+        "symbol": "XLF",
+        "name": "Financials",
+        "trailingPE": 16.47,
+        "priceToBook": 1.71,
+        "dividendYield": 0.014,
+        "pePercentile": null,
+        "recordedDays": 1
+      }
+    }
   },
   "topNews": [
     {

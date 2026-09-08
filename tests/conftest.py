@@ -23,7 +23,8 @@ def isolated_data_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     briefings = data / "briefings"
     cache = data / "cache"
     charts = cache / "charts"
-    for directory in (data, briefings, cache, charts):
+    valuation = data / "valuation"
+    for directory in (data, briefings, cache, charts, valuation):
         directory.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setattr(paths, "DATA_DIR", data, raising=True)
@@ -31,6 +32,9 @@ def isolated_data_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(paths, "CACHE_DIR", cache, raising=True)
     monkeypatch.setattr(paths, "CHARTS_DIR", charts, raising=True)
     monkeypatch.setattr(paths, "MARKET_JSON", cache / "market.json", raising=True)
+    # 밸류에이션 기록은 append-only라 격리하지 않으면 테스트가 실제 data/를 오염시킨다.
+    monkeypatch.setattr(paths, "VALUATION_DIR", valuation, raising=True)
+    monkeypatch.setattr(paths, "VALUATION_FILE", valuation / "sector_valuation.jsonl", raising=True)
     monkeypatch.setattr(paths, "SCORECARD_JSON", data / "scorecard.json", raising=True)
     monkeypatch.setattr(paths, "PORTFOLIO_JSON", data / "portfolio.json", raising=True)
     monkeypatch.setattr(paths, "LOCK_FILE", data / ".daily.lock", raising=True)

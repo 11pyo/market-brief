@@ -184,6 +184,16 @@ def cmd_notify(_args: argparse.Namespace) -> int:
     return EXIT_OK if sent else EXIT_FAILED
 
 
+def cmd_tick(args: argparse.Namespace) -> int:
+    """장중 시세·차트만 갱신 (브리핑 본문 미변경, LLM 호출 없음)."""
+    code = pipeline.run_tick(
+        force=bool(getattr(args, "force", False)),
+        no_publish=bool(getattr(args, "no_publish", False)),
+    )
+    _print_notices()
+    return code
+
+
 def cmd_daily(args: argparse.Namespace) -> int:
     code = pipeline.run_daily(
         no_publish=args.no_publish,
@@ -451,6 +461,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_daily.add_argument("--force", action="store_true",
                          help="오늘 브리핑이 이미 있어도 다시 생성 (기본은 build/publish만 재실행)")
     p_daily.set_defaults(func=cmd_daily)
+
+    p_tick = sub.add_parser("tick", help="장중 시세·차트만 갱신 후 변경 시에만 배포")
+    p_tick.add_argument("--force", action="store_true",
+                        help="장중 시간대가 아니어도 실행")
+    p_tick.add_argument("--no-publish", action="store_true", help="배포 단계 건너뜀")
+    p_tick.set_defaults(func=cmd_tick)
 
     p_show = sub.add_parser("show", help="저장된 브리핑 마크다운을 터미널에 출력")
     p_show.add_argument("--private", action="store_true",

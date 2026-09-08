@@ -300,10 +300,17 @@
     var heading = document.getElementById('chart-title');
     if (heading) heading.textContent = title || slug;
     // 시간축이 어느 표준시인지 명시한다 (일중 차트는 뷰어 로컬 시각으로 표시된다)
+    // 이 사이트는 정적 파일이라 차트는 실시간이 아니라 '갱신 시점의 스냅샷'이다.
+    // 어느 표준시로 그렸는지와, 언제 찍힌 데이터인지를 함께 밝힌다.
     var tzNote = document.getElementById('chart-tz');
     if (tzNote) {
+      var parts = [];
       var tz = viewerTimeZone();
-      tzNote.textContent = tz ? label('lChartTz', 'Times shown in') + ' ' + tz : '';
+      if (tz) parts.push(label('lChartTz', 'Times shown in') + ' ' + tz);
+      // 빌더가 이미 언어에 맞게 포맷한 문자열이라 그대로 쓴다 (재가공하면 로캘이 깨진다).
+      var basis = body ? body.dataset.chartsUpdated : '';
+      if (basis) parts.push(label('lMarketBasis', 'As of') + ' ' + basis);
+      tzNote.textContent = parts.join('  ·  ');
     }
     modal.hidden = false;
     var closeBtn = document.getElementById('chart-close');

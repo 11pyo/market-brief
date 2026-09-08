@@ -12,13 +12,18 @@
      포트폴리오 파트(portfolioNote)를 깊은 복사본에서 제거한 뒤에야 직렬화한다.
      제거 기준은 `mbrief.llm.prompts.strip_portfolio_section()`이 단일 정의처이며,
      빌더는 import 실패 시에만 동등 범위의 로컬 폴백을 쓴다. 입력 레코드는 변형하지 않는다.
-  4. **v2.1 신규 필드(sessionRecap / keyActors)는 항상 부재를 허용한다.** 구버전 레코드에는
-     아예 없으므로 뷰모델이 None / 빈 리스트를 돌려주고 템플릿은 섹션 자체를 그리지 않는다.
+  4. **신규 필드는 항상 부재를 허용한다.** v2.1의 sessionRecap / keyActors, v2.2의
+     sectorHeat / sectorValuation은 구버전 레코드에 아예 없으므로 뷰모델이 None / 빈 리스트를
+     돌려주고 템플릿은 섹션 자체를 그리지 않는다.
+  5. **섹터 과열도는 밸류에이션 판정이 아니다.** gapPercentile(그 섹터 자체의 과거 이격 분포에서
+     오늘의 위치) 하나로 등급이 정해지며, 빌더는 상류가 내린 등급을 표시만 한다. 밸류에이션 블록은
+     pePercentile이 없으면 '기록 중'만 보여주고 어떤 평가 결론도 만들지 않는다.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import shutil
 import tempfile
@@ -30,6 +35,7 @@ from typing import Any, Iterable
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
+from mbrief import paths as _paths
 from mbrief.config import settings as default_settings
 from mbrief.paths import ROOT, SITE_DIR, TEMPLATES_DIR, WEB_DIR
 from mbrief.schemas import (
@@ -54,6 +60,8 @@ try:
 except Exception:  # pragma: no cover - 순환/부분 설치 대비. 아래 로컬 정규식으로 폴백한다
     # [SECURE] import 실패를 조용히 무시하지 않고 폴백 상태를 명시 보관 (Category 4)
     _prompts = None
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "BuildResult",
@@ -102,6 +110,20 @@ _FG_ZONES: tuple[tuple[float, str, str], ...] = (
     (75.0, "fgRatingGreed", "#84cc16"),
     (100.1, "fgRatingExtremeGreed", "#22c55e"),
 )
+
+#: 섹터 과열도 등급 → 라벨 키. 등급 판정은 상류(indicators)가 gapPercentile 하나로만 내리며
+#: 빌더는 그 결과를 표시만 한다 (여기서 재판정하면 기준이 이원화된다).
+HEAT_LABEL_KEYS: dict[str, str] = {
+    "hot": "heatHot",
+    "warm": "heatWarm",
+    "neutral": "heatNeutral",
+    "cool": "heatCool",
+    "cold": "heatCold",
+}
+
+#: site/data/sector_valuation.json 로 옮길 수 있는 원본 파일의 최대 크기.
+#: 누적 기록이라 무한정 커질 수 있고, 정적 사이트에 통째로 실리면 첫 로딩을 망친다(가용성).
+VALUATION_HISTORY_MAX_BYTES = 8 * 1024 * 1024
 
 _RFC822_DAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 _RFC822_MONTHS = (
@@ -488,6 +510,107 @@ def _sector_chips(market: MarketBundle | None) -> list[dict]:
     return rows
 
 
+def _fmt_points(value: float | None, digits: int = 1) -> str:
+    """%p(퍼센트 포인트) 표기. 초과수익률은 비율이 아니라 차이라서 단위가 다르다."""
+    if value is None:
+        return ""
+    return f"{value:+.{digits}f}%p"
+
+
+def _fmt_plain(value: float | None, digits: int = 2) -> str:
+    if value is None:
+        return ""
+    return f"{value:.{digits}f}"
+
+
+def _sector_heat_view(market: MarketBundle | None, labels: dict[str, str]) -> list[dict]:
+    """섹터 과열도(기술적 스트레치) 뷰모델. v2.2 신규 필드라 구버전 레코드에는 아예 없다.
+
+    밸류에이션이 아니다 — 가격만으로 "얼마나 달아올랐나"를 본다. 판정축은 gapPercentile 하나이며
+    rsi14/rel3m은 참고 수치로만 나란히 표시한다. 정렬은 백분위 내림차순(없으면 뒤)이라
+    가장 달아오른 섹터가 먼저 읽힌다.
+    """
+    heat = getattr(market, "sectorHeat", None) if market is not None else None
+    if not heat:
+        return []
+
+    rows: list[dict] = []
+    for name, item in heat.items():
+        display = _clean_inline(getattr(item, "name", "") or name, 48)
+        if not display:
+            continue
+        pctile = getattr(item, "gapPercentile", None)
+        label = str(getattr(item, "label", "") or "neutral")
+        if label not in HEAT_LABEL_KEYS:
+            # [SECURE] 등급 문자열 화이트리스트 - 클래스명·라벨 조회에 예상 밖 값이 섞이지 않게 한다
+            label = "neutral"
+        sample_days = getattr(item, "sampleDays", 0)
+        rows.append(
+            {
+                "name": display,
+                "symbol": _clean_inline(getattr(item, "symbol", ""), 12),
+                "label": label,
+                "label_text": labels[HEAT_LABEL_KEYS[label]],
+                "percentile": pctile,
+                # 인라인 style 폭으로 들어가는 값 — 0~100 정수로 고정한다
+                "bar": 0 if pctile is None else max(0, min(100, int(round(float(pctile))))),
+                "percentile_text": "—" if pctile is None else f"{float(pctile):.0f}",
+                "gap_text": _fmt_pct(getattr(item, "gapPct", None), 1) or "—",
+                "rsi_text": _fmt_plain(getattr(item, "rsi14", None), 1) or "—",
+                "rel3m_text": _fmt_points(getattr(item, "rel3m", None)) or "—",
+                "sample_text": (
+                    labels["heatSampleDays"].format(n=int(sample_days))
+                    if isinstance(sample_days, (int, float)) and sample_days > 0
+                    else ""
+                ),
+            }
+        )
+    rows.sort(key=lambda r: (r["percentile"] is None, -(r["percentile"] or 0.0), r["name"]))
+    return rows
+
+
+def _sector_valuation_view(market: MarketBundle | None, labels: dict[str, str]) -> list[dict]:
+    """섹터 밸류에이션 스냅샷 뷰모델. v2.2 신규 필드라 구버전 레코드에는 아예 없다.
+
+    현재 PER/PBR은 매일 받을 수 있지만 그 수치가 높은지 낮은지는 자체 기록이 쌓여야 말할 수 있다.
+    pePercentile이 None이면 백분위 대신 '기록 중 (N일)' 진행 상태만 보여준다 —
+    근거 없는 평가 판정을 만들지 않기 위한 계약이다.
+    """
+    valuation = getattr(market, "sectorValuation", None) if market is not None else None
+    if not valuation:
+        return []
+
+    rows: list[dict] = []
+    for name, item in valuation.items():
+        display = _clean_inline(getattr(item, "name", "") or name, 48)
+        if not display:
+            continue
+        pctile = getattr(item, "pePercentile", None)
+        recorded = getattr(item, "recordedDays", 0)
+        recorded = int(recorded) if isinstance(recorded, (int, float)) and recorded > 0 else 0
+        dividend = getattr(item, "dividendYield", None)
+        rows.append(
+            {
+                "name": display,
+                "symbol": _clean_inline(getattr(item, "symbol", ""), 12),
+                "per_text": _fmt_plain(getattr(item, "trailingPE", None)) or "—",
+                "pbr_text": _fmt_plain(getattr(item, "priceToBook", None)) or "—",
+                "yield_text": "—" if dividend is None else f"{float(dividend) * 100:.2f}%",
+                # 백분위가 없으면 판정을 만들지 않는다. 진행 상태만 노출한다.
+                "accruing": pctile is None,
+                "percentile_text": "" if pctile is None else f"{float(pctile):.0f}",
+                "bar": 0 if pctile is None else max(0, min(100, int(round(float(pctile))))),
+                "accruing_text": (
+                    labels["valuationAccruingDays"].format(n=recorded)
+                    if recorded > 0
+                    else labels["valuationAccruing"]
+                ),
+                "recorded_days": recorded,
+            }
+        )
+    return rows
+
+
 def _fear_greed_view(market: MarketBundle | None, labels: dict[str, str], lang: str) -> dict | None:
     if market is None or market.fearGreed is None:
         return None
@@ -840,6 +963,85 @@ def _write_json(path: Path, payload: Any, *, indent: int | None = None) -> None:
     _write_text(path, json.dumps(payload, ensure_ascii=False, indent=indent, default=str))
 
 
+def _valuation_rows(text: str) -> list:
+    """누적 밸류에이션 기록 원문을 JSON 배열로 정규화한다.
+
+    상류(paths.VALUATION_FILE)의 파일 형식이 아직 고정되지 않았으므로 흔한 세 형태를 모두 받는다:
+    JSON 배열 / 날짜를 키로 갖는 JSON 객체 / 한 줄에 한 레코드(JSONL).
+    """
+    stripped = text.strip()
+    if not stripped:
+        return []
+    try:
+        payload = json.loads(stripped)
+    except (json.JSONDecodeError, ValueError):
+        payload = None
+    if isinstance(payload, list):
+        return payload
+    if isinstance(payload, dict):
+        for key in ("records", "entries", "rows", "history", "days"):
+            nested = payload.get(key)
+            if isinstance(nested, list):
+                return nested
+        if payload and all(isinstance(v, dict) for v in payload.values()):
+            # {"2026-09-08": {...}} 형태 → 날짜 필드를 살린 배열로 편다
+            return [{"date": k, **v} for k, v in sorted(payload.items())]
+        return [payload]
+    if payload is not None:
+        return []  # 스칼라 JSON은 기록이 아니다
+
+    # JSONL 폴백 — 깨진 줄은 버리고 읽을 수 있는 레코드만 살린다
+    rows: list = []
+    bad = 0
+    for line in stripped.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rows.append(json.loads(line))
+        except (json.JSONDecodeError, ValueError):
+            bad += 1
+    if bad:
+        # [SECURE] 파싱 실패를 조용히 삼키지 않고 서버 로그에만 남긴다 (Category 4)
+        logger.warning("[Builder] 밸류에이션 기록 %d줄을 해석하지 못해 제외했습니다", bad)
+    return rows
+
+
+def _publish_valuation_history(out_dir: Path) -> bool:
+    """누적 밸류에이션 기록을 site/data/sector_valuation.json 으로 공개한다.
+
+    이 기록은 로컬 data/ 에만 쌓이므로 PC가 죽으면 백분위 산출 근거가 통째로 사라진다.
+    정적 산출물에 배열로 함께 올려 두면 배포본에서 복구할 수 있다.
+    원본이 없으면(=상류가 아직 기록을 시작하지 않았으면) 조용히 건너뛴다.
+    """
+    source = getattr(_paths, "VALUATION_FILE", None)
+    if not source:
+        return False
+    path = Path(source)
+    if not path.is_file():
+        return False
+    try:
+        size = path.stat().st_size
+        if size > VALUATION_HISTORY_MAX_BYTES:
+            # [SECURE] 크기 상한 - 비대한 기록이 정적 배포본을 망가뜨리지 않게 한다 (가용성)
+            logger.warning(
+                "[Builder] 밸류에이션 기록이 상한(%d바이트)을 넘어 게시하지 않습니다: %d바이트",
+                VALUATION_HISTORY_MAX_BYTES, size,
+            )
+            return False
+        # [SECURE] 컨텍스트 매니저로 핸들 해제 보장 (Category 5)
+        with path.open("r", encoding="utf-8") as fh:
+            rows = _valuation_rows(fh.read())
+    except OSError as exc:
+        # [SECURE] 예외를 삼키지 않고 서버 로그로만 남긴다 - 사이트 빌드는 계속 (Category 4)
+        logger.warning("[Builder] 밸류에이션 기록을 읽지 못했습니다: %s", exc)
+        return False
+    if not rows:
+        return False
+    _write_json(out_dir / "data" / "sector_valuation.json", rows, indent=1)
+    return True
+
+
 def _assert_safe_out_dir(out_dir: Path) -> Path:
     """산출물 디렉터리 삭제 전 안전성 검증.
 
@@ -1073,10 +1275,20 @@ def build(
             ),
             "cards": _market_cards(record_market, charts),
             "sectors": _sector_chips(record_market),
+            # v2.2 신규 필드. 기능 도입 이전 레코드에는 없으므로 빈 리스트가 정상값이며
+            # 템플릿은 두 경우 모두 섹션 마크업 자체를 만들지 않는다.
+            "sector_heat": _sector_heat_view(record_market, labels),
+            "sector_valuation": _sector_valuation_view(record_market, labels),
             "fg": _fear_greed_view(record_market, labels, record.lang),
             "calendar": _calendar_view(record_market, labels, record.lang, record.date),
             "market_updated": (
                 i18n.format_datetime(record_market.updatedAt, record.lang) if record_market else ""
+            ),
+            # 차트 JSON은 레코드 스냅샷이 아니라 '마지막 refresh/tick' 결과다.
+            # 장중 tick이 돌면 카드(브리핑이 인용한 시점)와 차트(최신)의 기준 시각이 갈라지므로
+            # 각각 자기 데이터의 시각을 따로 표기한다.
+            "charts_updated": (
+                i18n.format_datetime(market.updatedAt, record.lang) if market else ""
             ),
             "news": _news_view(record, labels),
             "scorecard": _scorecard_view(scorecard, labels, record.lang),
@@ -1191,6 +1403,8 @@ def build(
         _write_json(data_dir / "market.json", market.model_dump(mode="json"), indent=1)
     if scorecard is not None:
         _write_json(data_dir / "scorecard.json", scorecard.model_dump(mode="json"), indent=1)
+    # 누적 밸류에이션 기록(로컬 전용)을 배포본에도 실어 오프머신 복구 경로를 만든다. 없으면 건너뛴다.
+    _publish_valuation_history(out_dir)
     for key, candles in (charts or {}).items():
         # [SECURE] 차트 키 화이트리스트 검증 - Path Traversal 방지 (Category 1)
         if not CHART_KEY_RE.match(str(key)):
@@ -1277,8 +1491,14 @@ def build_from_data(out_dir: Path = SITE_DIR) -> BuildResult:
 #     정규화 키로만 시장 심볼 집합과 비교하며, 매칭돼도 링크는 만들지 않는다(외부 이동 경로 미증가)
 #   - Incorrect Permission on Critical Resource: 산출물 디렉터리 삭제는 ROOT/site 또는 임시 디렉터리로 제한
 #   - Improper Resource Release: 모든 파일 IO는 컨텍스트 매니저 사용
-#   - Improper Input for Security Decision: 색상값은 hex 정규식 검증 후에만 style 속성에 삽입
-#   - Missing Error Handling: 안전하지 않은 out_dir·web/ 부재는 예외로 즉시 중단
+#   - Improper Input for Security Decision: 색상값은 hex 정규식 검증 후에만 style 속성에 삽입.
+#     섹터 과열도/밸류에이션 바의 인라인 width는 0~100 정수로 클램프한 뒤에만 삽입하고,
+#     과열도 등급 문자열은 화이트리스트(HEAT_LABEL_KEYS)를 통과한 값만 클래스명·라벨 조회에 쓴다
+#   - Missing Error Handling: 안전하지 않은 out_dir·web/ 부재는 예외로 즉시 중단.
+#     밸류에이션 기록 게시는 파일 부재·크기 초과·파싱 실패를 각각 구분해 처리하고
+#     빈 except 없이 서버 로그에만 남긴 뒤 빌드를 계속한다
+#   - Unsafe Deserialization: 밸류에이션 기록은 로컬 data/ 파일이지만 크기 상한을 두고
+#     json.loads로만 해석한다 (pickle/eval 경로 없음). 내용은 사이트에 그대로 실린다
 # Not Applied:
 #   - [WARN] 차트 JSON 내용(캔들 값)은 스키마 검증 없이 그대로 복사한다. store가 신뢰 경계이며,
 #            브라우저에서는 숫자로만 사용되지만 상류에서 Candle 모델 검증을 유지해야 한다.
@@ -1289,4 +1509,7 @@ def build_from_data(out_dir: Path = SITE_DIR) -> BuildResult:
 #            오탐(공개 파트 일부 손실)보다 미탐(비공개 유출)이 위험하므로 의도한 선택이다.
 #   - [WARN] keyActors의 인물명·발언은 LLM 출력이며 사실 검증을 하지 않는다. 실명이 잘못된
 #            행위와 결합될 수 있으므로 면책 문구(disclaimer)가 같은 블록 안에 유지돼야 한다.
+#   - [WARN] site/data/sector_valuation.json 은 스키마 검증 없이 원본 배열을 그대로 옮긴다.
+#            상류(data/valuation)가 신뢰 경계이며, 이 파일은 백업·복구 목적의 원본 사본이다.
+#            브라우저에서 이 파일을 읽어 화면에 그리게 되면 그때는 필드 검증이 필요하다.
 # --------------------------------------------------

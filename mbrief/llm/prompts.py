@@ -15,7 +15,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from mbrief.schemas import StructuredBriefing
+from mbrief import indicators
+from mbrief.schemas import SectorHeat, SectorValuation, StructuredBriefing
 
 # ===== 시스템 프롬프트 =====
 SYSTEM_PROMPT = """You are a professional macro strategist and cross-asset trader writing a hedge-fund style morning note.
@@ -449,6 +450,122 @@ def strip_portfolio_section(markdown: str) -> str:
     return stripped + ("\n" if markdown.endswith("\n") else "")
 
 
+# ===== 계산된 섹터 지표 블록 (T1 데이터) =====
+# 과열도·밸류에이션은 파이썬이 계산해서 넘긴다. 모델은 '판정자'가 아니라 '인용자'다.
+# 캘린더(calendar_service.format_for_llm)와 같은 T1 프레이밍을 쓴다: 권위 있는 수치 + 변조 금지.
+
+SECTOR_HEAT_HEADER = "📊 TIER 1 — SECTOR HEAT (computed from price data, NOT valuation)"
+SECTOR_VALUATION_HEADER = "📊 TIER 1 — SECTOR VALUATION (PER/PBR, self-recorded daily)"
+
+_SECTOR_HEAT_DIRECTIVE = (
+    "*** COMPUTED, NOT JUDGED: every number below was calculated in Python from daily closing "
+    "prices before this prompt was assembled. Cite these values exactly as written. Do NOT "
+    "recompute, re-rank, re-label, round differently, or invent any of them, and do NOT declare a "
+    "sector overheated/oversold on any basis other than the label shown here. ***\n"
+    "*** HEAT IS MOMENTUM/STRETCH, NOT VALUE: 'hot' means the sector trades far above its own "
+    "200-day moving average by its own historical standard. It does NOT mean expensive, and 'cold' "
+    "does NOT mean cheap. Never translate these labels into 저평가/고평가 (under/over-valued). ***\n"
+)
+_SECTOR_HEAT_RULE_LINE = f"LABEL RULE: {indicators.HEAT_RULE_TEXT}.\n"
+_SECTOR_HEAT_UNKNOWN_NOTE = (
+    "NOTE: 'sample 0d' means there is not enough price history yet — the label is UNKNOWN, "
+    "not 'neutral'. Do not characterise those sectors at all.\n"
+)
+
+_VALUATION_ACCUMULATING_NOTE = (
+    "*** BASELINE STILL ACCUMULATING: fewer than "
+    f"{{min_days}} recorded observations exist for these ETFs, so no historical percentile is "
+    "available. State the current multiples as facts if useful, but you MUST NOT call any sector "
+    "cheap, expensive, undervalued or overvalued (저평가/고평가) — there is no distribution to "
+    "compare against yet. ***\n"
+)
+_VALUATION_PERCENTILE_NOTE = (
+    "*** pePercentile is this ETF's trailing PER ranked inside OUR OWN recorded history "
+    "(0 = cheapest observed, 100 = most expensive observed). It is a self-recorded baseline, not "
+    "an industry standard. Sectors without a percentile are still accumulating — do not judge "
+    "their valuation. ***\n"
+)
+
+
+def _num(value: float | None, fmt: str, suffix: str = "") -> str:
+    """수치 포맷. 값이 없으면 'n/a' (모델이 빈칸을 지어내지 않도록 명시한다)."""
+    if value is None:
+        return "n/a"
+    try:
+        return format(value, fmt) + suffix
+    except (TypeError, ValueError):
+        return "n/a"  # [SECURE] 빈 except 없음 - 포맷 실패는 결측으로 표기 (Category 4)
+
+
+def format_sector_heat(sector_heat: dict[str, SectorHeat] | None) -> str:
+    """계산된 섹터 과열도 → 프롬프트 텍스트. 데이터가 없으면 빈 문자열."""
+    items = list((sector_heat or {}).items())
+    if not items:
+        return ""
+
+    # 과열도가 높은 순으로 정렬 — 리더십 서술의 순서를 데이터가 정하게 한다.
+    items.sort(key=lambda kv: (kv[1].gapPercentile is None, -(kv[1].gapPercentile or 0.0)))
+
+    text = f"{SECTOR_HEAT_HEADER}\n{_SECTOR_HEAT_DIRECTIVE}{_SECTOR_HEAT_RULE_LINE}"
+    has_unknown = False
+    for name, heat in items:
+        if heat.sampleDays <= 0:
+            has_unknown = True
+        text += (
+            f"  - {name} ({heat.symbol}): {heat.label.upper()}"
+            f" | 200DMA gap {_num(heat.gapPct, '+.2f', '%')}"
+            f" | gap percentile {_num(heat.gapPercentile, '.1f')}"
+            f" | RSI(14) {_num(heat.rsi14, '.1f')}"
+            f" | 3m vs S&P 500 {_num(heat.rel3m, '+.2f', '%p')}"
+            f" | sample {heat.sampleDays}d\n"
+        )
+    if has_unknown:
+        text += _SECTOR_HEAT_UNKNOWN_NOTE
+    return text + "\n"
+
+
+def format_sector_valuation(
+    sector_valuation: dict[str, SectorValuation] | None,
+    min_days: int = 60,
+) -> str:
+    """섹터 PER/PBR → 프롬프트 텍스트. 백분위가 하나도 없으면 '판정 금지'를 명시한다."""
+    items = list((sector_valuation or {}).items())
+    if not items:
+        return ""
+
+    has_percentile = any(v.pePercentile is not None for _, v in items)
+    items.sort(key=lambda kv: (kv[1].trailingPE is None, kv[1].trailingPE or 0.0))
+
+    directive = (
+        _VALUATION_PERCENTILE_NOTE if has_percentile
+        else _VALUATION_ACCUMULATING_NOTE.format(min_days=min_days)
+    )
+    text = f"{SECTOR_VALUATION_HEADER}\n{directive}"
+    for name, val in items:
+        line = (
+            f"  - {name} ({val.symbol}): trailing PER {_num(val.trailingPE, '.2f')}"
+            f" | PBR {_num(val.priceToBook, '.2f')}"
+            f" | dividend yield {_num(None if val.dividendYield is None else val.dividendYield * 100, '.2f', '%')}"
+        )
+        if has_percentile:
+            line += f" | PER percentile {_num(val.pePercentile, '.1f')}"
+        line += f" | recorded {val.recordedDays}d\n"
+        text += line
+    return text + "\n"
+
+
+def format_sector_context(
+    sector_heat: dict[str, SectorHeat] | None,
+    sector_valuation: dict[str, SectorValuation] | None = None,
+    min_valuation_days: int = 60,
+) -> str:
+    """과열도 + 밸류에이션 블록을 이어 붙인다. 둘 다 비면 빈 문자열."""
+    return (
+        format_sector_heat(sector_heat)
+        + format_sector_valuation(sector_valuation, min_valuation_days)
+    )
+
+
 # ===== 사용자 프롬프트 =====
 _LENGTH_BUDGET = """
 OUTPUT LENGTH BUDGET (반드시 준수):
@@ -757,14 +874,21 @@ def render_markdown(
 #     (render_markdown), 텍스트 폴백 프롬프트에서도 PART 8 생성 자체를 요청하지 않는다 (build_text_prompt).
 #     이미 만들어진 마크다운에서 비공개 파트를 잘라내는 규칙은 strip_portfolio_section 한 곳에만 둔다
 #     (사이트 빌더·CLI가 같은 규칙을 공유해 분기 누락으로 인한 유출을 막는다)
-#   - Null Pointer Dereference: sessionRecap/portfolioNote 등 Optional 필드는 None 검사 후 사용
-#   - Infinite Loop: 모든 반복이 유한한 pydantic 리스트 필드 기반
+#   - Null Pointer Dereference: sessionRecap/portfolioNote 등 Optional 필드는 None 검사 후 사용.
+#     섹터 블록의 결측 수치는 _num이 'n/a'로 표기해 모델이 빈칸을 지어내지 않게 한다
+#   - Infinite Loop: 모든 반복이 유한한 pydantic 리스트/딕셔너리 필드 기반
+#   - Improper Input for Security Decision: 섹터 과열도·밸류에이션은 파이썬(mbrief/indicators.py)이
+#     계산한 값만 넣고 임계 규칙(HEAT_RULE_TEXT)을 함께 인용시킨다. 모델의 재판정을 근거로 삼지 않는다.
+#     백분위가 없으면 '판정 금지'를 명시해 근거 없는 저평가/고평가 서술을 차단한다
 # Not Applied:
 #   - [WARN] XSS: 렌더 결과는 마크다운 문자열이며 HTML 이스케이프를 하지 않는다.
 #     LLM 생성 텍스트가 섞이므로 브라우저 출력 시 mbrief/site의 안전 렌더러가 반드시 인코딩할 것.
 #   - [WARN] 프롬프트 인젝션(잔여 위험): 경계 선언·평탄화·구분자는 완화책이지 보증이 아니다.
 #     모델이 데이터 안의 지시를 따를 가능성은 남으며, 최종 방어선은 JSON 스키마 검증과
 #     공개 산출물 생성 직전의 strip_portfolio_section / builder.public_record다.
+#   - [WARN] 섹터 지표 블록도 첫 `---` 이후(데이터 영역)에 놓인다. 캘린더 T1 블록과 같은 위치이며,
+#     "이 값을 그대로 인용하라"는 지시가 데이터 영역에 있다는 점은 설계상 감수한 것이다.
+#     모델이 무시해도 손해는 '인용 누락'뿐이고, 수치 자체는 파이썬이 확정해 저장한다.
 #   - [WARN] strip_portfolio_section은 표식 문자열 매칭이다. 본문(PART 1~7)이 "Portfolio Advice" 같은
 #     표현을 쓰면 그 줄부터 잘릴 수 있다(과잉 차단). 비공개 유출보다 과잉 차단을 택한 설계다.
 # --------------------------------------------------

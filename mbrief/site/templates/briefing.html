@@ -1,11 +1,13 @@
 {#-
   briefing.html — index.html(최신) 및 archive/<id>.html 공용 템플릿.
 
-  구조: 히어로(헤드라인 + 방향성 + 공포탐욕) → 시장 스냅샷 → 섹터 → 본문(PART 1~8)
-        → 경제 캘린더 → 근거 뉴스 → 스코어카드 → 관심종목 렌즈 → 이전/다음
+  구조: 히어로(헤드라인 + 방향성 + 공포탐욕) → 시장 스냅샷 → 섹터 ETF → 섹터 과열도 →
+        섹터 밸류에이션 → 본문(PART 1~8) → 경제 캘린더 → 근거 뉴스 → 스코어카드
+        → 관심종목 렌즈 → 이전/다음
 
   PART 1(리캡)과 PART 2의 인물 카드는 v2.1 신규 필드다. 구버전 레코드에는 필드가 없으므로
   `recap`은 None, `actors`는 빈 리스트로 들어온다 — 두 경우 모두 섹션 마크업을 아예 만들지 않는다.
+  섹터 과열도(`sector_heat`)·밸류에이션(`sector_valuation`)은 v2.2 신규 필드로 같은 규칙을 따른다.
 -#}
 {% extends "base.html" %}
 
@@ -161,6 +163,90 @@
       <span class="sector-sym">{{ s.symbol }}</span>
       <span class="sector-name">{{ s.name }}</span>
       <span class="sector-pct">{{ s.pct_text }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{#-
+  ============ 3-b. 섹터 과열도 (v2.2) ============
+  바로 위 섹터 ETF 칩이 '오늘 얼마나 움직였나'라면 여기는 '지금 얼마나 달아올랐나'다.
+  밸류에이션 판정이 아니다 — 등급은 gapPercentile(그 섹터 자체의 과거 이격 분포에서 오늘의 위치)
+  하나로만 정해지고, RSI·3개월 상대는 참고 수치로 나란히 둔다.
+  sector_heat 는 기능 도입 이전 레코드에서 빈 리스트다 → 섹션 마크업 자체를 만들지 않는다.
+
+  [SECURE] 인라인 style 로 나가는 값은 빌더가 0~100 정수로 클램프한 h.bar / v.bar 뿐이고,
+  등급 클래스는 화이트리스트(builder.HEAT_LABEL_KEYS)를 통과한 다섯 값으로 한정된다.
+  나머지 문자열은 전부 Jinja autoescape 를 거치는 텍스트 노드다 - CSS/속성 인젝션 방지 (Category 1)
+-#}
+{% if sector_heat %}
+<section class="block block--tight" aria-labelledby="h-heat">
+  <div class="block-head"><h2 id="h-heat">{{ L.sectorHeatTitle }}</h2></div>
+  <p class="heat-note">{{ L.heatNote }}</p>
+  <ul class="heat-list">
+    {% for h in sector_heat %}
+    <li class="heat-row heat-row--{{ h.label }}">
+      <div class="heat-id">
+        <span class="heat-name">{{ h.name }}</span>
+        {% if h.symbol %}
+        <span class="heat-sym">{{ h.symbol }}</span>
+        {% endif %}
+        <span class="heat-chip heat-chip--{{ h.label }}">{{ h.label_text }}</span>
+      </div>
+      {#- 판정축은 백분위 하나다 → 바 + 숫자로 한 번만 보여주고 dl 에서는 중복하지 않는다 -#}
+      <div class="heat-meter">
+        <span class="heat-meter-label">{{ L.heatPercentile }}</span>
+        <span class="heat-track" role="img"
+              aria-label="{{ L.heatPercentile }} {{ h.percentile_text }}{% if h.sample_text %} · {{ h.sample_text }}{% endif %}">
+          <i class="heat-fill" style="width:{{ h.bar }}%"></i>
+        </span>
+        <span class="heat-pctile">{{ h.percentile_text }}</span>
+      </div>
+      <dl class="heat-metrics">
+        <div class="heat-metric"><dt>{{ L.heatGap }}</dt><dd>{{ h.gap_text }}</dd></div>
+        <div class="heat-metric"><dt>{{ L.heatRsi }}</dt><dd>{{ h.rsi_text }}</dd></div>
+        <div class="heat-metric"><dt>{{ L.heatRel3m }}</dt><dd>{{ h.rel3m_text }}</dd></div>
+      </dl>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{#-
+  ============ 3-c. 섹터 밸류에이션 (v2.2) ============
+  현재 PER/PBR 수치만 보여준다. pePercentile 이 없으면 '기록 중 (N일)' 진행 상태만 노출하고
+  어떤 평가 결론도 만들지 않는다 (근거가 될 과거 분포가 아직 없기 때문).
+-#}
+{% if sector_valuation %}
+<section class="block block--tight" aria-labelledby="h-val">
+  <div class="block-head"><h2 id="h-val">{{ L.sectorValuationTitle }}</h2></div>
+  <p class="val-note">{{ L.valuationNote }}</p>
+  <ul class="val-list">
+    {% for v in sector_valuation %}
+    <li class="val-row{{ ' val-row--accruing' if v.accruing }}">
+      <div class="val-id">
+        <span class="val-name">{{ v.name }}</span>
+        {% if v.symbol %}
+        <span class="val-sym">{{ v.symbol }}</span>
+        {% endif %}
+      </div>
+      <dl class="val-metrics">
+        <div class="val-metric"><dt>{{ L.valuationPer }}</dt><dd>{{ v.per_text }}</dd></div>
+        <div class="val-metric"><dt>{{ L.valuationPbr }}</dt><dd>{{ v.pbr_text }}</dd></div>
+        <div class="val-metric"><dt>{{ L.valuationYield }}</dt><dd>{{ v.yield_text }}</dd></div>
+      </dl>
+      {% if v.accruing %}
+      <p class="val-state val-state--accruing">
+        <span class="val-state-dot" aria-hidden="true"></span>{{ v.accruing_text }}
+      </p>
+      {% else %}
+      <p class="val-state">
+        <span class="val-track"><i class="val-fill" style="width:{{ v.bar }}%"></i></span>
+        <span class="val-pctile">{{ v.percentile_text }}</span>
+      </p>
+      {% endif %}
     </li>
     {% endfor %}
   </ul>

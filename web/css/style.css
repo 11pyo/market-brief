@@ -345,6 +345,77 @@ button { font: inherit; cursor: pointer; }
 .sector-chip--up .sector-pct { color: var(--green); }
 .sector-chip--down .sector-pct { color: var(--red); }
 
+/* ===== 8-b. SECTOR HEAT / VALUATION (v2.2) =====
+   과열도는 밸류에이션 판정이 아니다. 색은 '싸다/비싸다'가 아니라 '달아올랐다/식었다'를 뜻하므로
+   과열은 red/orange, 침체는 blue 계열, 중립은 무채색으로 둔다 (등락 색과 혼동되지 않게
+   상승=green을 쓰지 않는다). 판정축인 백분위 바가 행의 중심 시각 요소다. */
+.heat-note, .val-note {
+  margin-bottom: 10px; max-width: 76ch;
+  font-size: 0.74rem; line-height: 1.55; color: var(--text-muted);
+}
+.heat-list, .val-list { display: flex; flex-direction: column; gap: 6px; list-style: none; }
+.heat-row, .val-row {
+  display: grid; align-items: center; gap: 6px 14px;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(160px, 1.15fr) minmax(250px, 1.5fr);
+  padding: 9px 13px;
+  background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--flat); border-radius: var(--radius-md);
+}
+.heat-row--hot { border-left-color: var(--red); }
+.heat-row--warm { border-left-color: var(--yellow); }
+.heat-row--neutral { border-left-color: var(--flat); }
+.heat-row--cool { border-left-color: var(--cyan); }
+.heat-row--cold { border-left-color: var(--blue); }
+
+.heat-id, .val-id { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; min-width: 0; }
+.heat-name, .val-name { font-size: 0.82rem; font-weight: 600; color: var(--text-heading); }
+.heat-sym, .val-sym {
+  font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700;
+  color: var(--text-muted); letter-spacing: 0.03em;
+}
+.heat-chip {
+  padding: 2px 8px; border-radius: 20px; border: 1px solid currentColor;
+  font-size: 0.66rem; font-weight: 700; white-space: nowrap;
+}
+.heat-chip--hot { color: var(--red); background: var(--red-bg); }
+.heat-chip--warm { color: var(--yellow); background: var(--yellow-bg); }
+.heat-chip--neutral { color: var(--flat); background: rgba(148, 163, 184, 0.1); }
+.heat-chip--cool { color: var(--cyan); background: rgba(6, 182, 212, 0.1); }
+.heat-chip--cold { color: var(--blue); background: rgba(59, 130, 246, 0.12); }
+
+.heat-meter { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.heat-meter-label { font-size: 0.64rem; color: var(--text-muted); white-space: nowrap; }
+.heat-track, .val-track {
+  flex: 1; min-width: 60px; height: 7px; border-radius: 4px; overflow: hidden;
+  background: rgba(148, 163, 184, 0.16);
+}
+.heat-fill, .val-fill { display: block; height: 100%; border-radius: 4px; background: var(--flat); }
+.heat-row--hot .heat-fill { background: var(--red); }
+.heat-row--warm .heat-fill { background: var(--yellow); }
+.heat-row--cool .heat-fill { background: var(--cyan); }
+.heat-row--cold .heat-fill { background: var(--blue); }
+.heat-pctile, .val-pctile {
+  min-width: 26px; text-align: right;
+  font-family: var(--font-mono); font-size: 0.8rem; font-weight: 700; color: var(--text-heading);
+}
+
+.heat-metrics, .val-metrics { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.heat-metric, .val-metric { display: flex; align-items: baseline; gap: 5px; }
+.heat-metric dt, .val-metric dt { font-size: 0.66rem; color: var(--text-muted); white-space: nowrap; }
+.heat-metric dd, .val-metric dd {
+  font-family: var(--font-mono); font-size: 0.74rem; font-weight: 600; color: var(--text-secondary);
+}
+
+/* 밸류에이션: 백분위가 없으면 판정 대신 '기록 중' 진행 상태만 보여준다 */
+.val-row { grid-template-columns: minmax(150px, 1fr) minmax(230px, 1.6fr) minmax(120px, 0.9fr); }
+.val-row--accruing { border-left-color: var(--border-medium); }
+.val-state { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; }
+.val-state--accruing { color: var(--text-muted); font-style: italic; }
+.val-state-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  background: var(--accent-light); opacity: 0.75;
+}
+
 /* ===== 9. BRIEFING BODY ===== */
 .briefing {
   padding: var(--space-lg);
@@ -737,6 +808,9 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
   .briefing { padding: var(--space-md); }
   .actors { grid-template-columns: 1fr; }
   .dash-list { grid-template-columns: 1fr; }
+  /* 3열 그리드로는 200일선 이격·RSI가 뭉개진다 → 단일 열로 쌓는다 */
+  .heat-row, .val-row { grid-template-columns: 1fr; gap: 7px; }
+  .heat-metrics, .val-metrics { gap: 4px 12px; }
   .trade-grid-kv { grid-template-columns: repeat(2, 1fr); }
   .pager { grid-template-columns: 1fr; }
   .pager-link--next { text-align: left; }
@@ -760,9 +834,16 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
   .top-nav, .pwa-hint, .chart-modal, .toast-container, .lens, .pager, .skip-link, .card-hint { display: none !important; }
   .main { max-width: none; padding: 0; }
   .briefing, .signal, .card, .econ-block, .score-card,
-  .recap-drivers, .recap-item, .actor-card { background: #fff; border-color: #ccc; box-shadow: none; backdrop-filter: none; }
+  .recap-drivers, .recap-item, .actor-card,
+  .heat-row, .val-row { background: #fff; border-color: #ccc; box-shadow: none; backdrop-filter: none; }
   .hero-headline, .block-head h2, .prose, .card-price,
-  .recap-text, .actor-name, .actor-action { color: #111; }
+  .recap-text, .actor-name, .actor-action,
+  .heat-name, .val-name, .heat-pctile, .val-pctile { color: #111; }
+  /* 배경 잉크를 없애도 등급이 읽히도록 트랙·칩은 테두리 대비만 남긴다 */
+  .heat-note, .val-note, .heat-metric dd, .val-metric dd { color: #333; }
+  .heat-track, .val-track { background: #e5e5e5; }
+  .heat-chip { background: none; }
+  .heat-row, .val-row { break-inside: avoid; page-break-inside: avoid; }
   .prose a { color: #111; text-decoration: underline; }
   .prose a::after { content: " (" attr(href) ")"; font-size: 0.75em; color: #555; }
 }
@@ -776,6 +857,9 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
        빌더가 숫자/hex 정규식으로 검증한 값만 사용한다
      - Data Exposure: PART 1 리캡 · PART 2 인물 카드는 인라인 style을 전혀 쓰지 않는다.
        LLM 문자열은 전부 텍스트 노드로만 들어가며 CSS는 클래스 셀렉터로만 스타일을 건다
+     - Improper Input for Security Decision: 섹터 과열도/밸류에이션 바의 인라인 width는
+       빌더가 0~100 정수로 클램프한 값만 들어오고, 등급 색은 화이트리스트를 통과한 라벨
+       클래스(.heat-row--hot 등)로만 결정한다. 색상값이 데이터에서 오지 않는다
    Not Applied:
      - [WARN] 웹폰트를 Google Fonts에서 로드한다. 완전한 오프라인/무추적을 원하면 폰트를 자체 호스팅할 것.
      - [WARN] 다크 테마 단일 지원. prefers-color-scheme: light 대응은 별도 팔레트가 필요하다.

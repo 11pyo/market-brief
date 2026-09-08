@@ -30,6 +30,10 @@ AFTER_CLOSE = dt.time(20, 0)
 # 노동절처럼 개장 시간대에 걸친 휴장일을 장중으로 오판하지 않는다.
 _HOLIDAY_CONFIRM_TIME = dt.time(10, 0)
 
+# 한국 정규장 (KRX). 장중 시세 갱신(tick) 창을 정하는 데 쓴다.
+KRX_OPEN = dt.time(9, 0)
+KRX_CLOSE = dt.time(15, 30)
+
 State = Literal["pre_market", "open", "after_hours", "closed", "holiday", "weekend"]
 
 _STATE_KO: dict[str, str] = {
@@ -138,6 +142,40 @@ def build_clock(candles: Iterable[dict] | None = None,
         last_session=last_session,
         quotes_are_live=quotes_are_live,
     )
+
+
+def parse_window(text: str) -> tuple[dt.time, dt.time] | None:
+    """"09:00-15:30" → (time(9,0), time(15,30)). 형식이 어긋나면 None.
+
+    [SECURE] 설정 문자열을 신뢰하지 않고 엄격히 파싱한다 - Improper Input 방지 (Category 1).
+    """
+    parts = (text or "").strip().split("-")
+    if len(parts) != 2:
+        return None
+    bounds: list[dt.time] = []
+    for part in parts:
+        hm = part.strip().split(":")
+        if len(hm) != 2 or not all(x.isdigit() for x in hm):
+            return None
+        hour, minute = int(hm[0]), int(hm[1])
+        if not (0 <= hour <= 23 and 0 <= minute <= 59):
+            return None
+        bounds.append(dt.time(hour, minute))
+    return bounds[0], bounds[1]
+
+
+def in_intraday_window(now: dt.datetime | None = None,
+                       window: tuple[dt.time, dt.time] | None = None) -> bool:
+    """장중 갱신을 돌려야 하는 시각인지 (한국 평일 기준).
+
+    공휴일은 판별하지 않는다. 휴장일에는 시세가 그대로라 상위 호출부가 '변경 없음'으로
+    배포를 건너뛰므로, 여기서 달력을 들고 있을 이유가 없다.
+    """
+    now_kst = (now or dt.datetime.now(KST)).astimezone(KST)
+    if now_kst.weekday() >= 5:
+        return False
+    start, end = window or (KRX_OPEN, KRX_CLOSE)
+    return start <= now_kst.time() <= end
 
 
 def format_for_llm(clock: MarketClock) -> str:

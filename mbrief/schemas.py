@@ -55,6 +55,42 @@ class Candle(BaseModel):
     close: float
 
 
+HeatLabel = Literal["hot", "warm", "neutral", "cool", "cold"]
+
+
+class SectorHeat(BaseModel):
+    """섹터 기술적 과열도.
+
+    밸류에이션이 아니다. 가격만으로 계산하는 '얼마나 달아올랐나' 지표다.
+    판정의 주축은 gapPercentile 하나이며, rsi14/rel3m은 참고 수치로만 표시한다
+    (임의 가중치로 합성하면 근거를 설명할 수 없게 된다).
+    """
+    symbol: str                                     # 예: "XLK"
+    name: str = ""                                  # 예: "Technology"
+    gapPct: Optional[float] = None                  # 200일 이동평균 대비 이격도 (%)
+    gapPercentile: Optional[float] = None           # 최근 2년 이격도 분포에서의 백분위 (0~100)
+    rsi14: Optional[float] = None                   # 일봉 RSI(14)
+    rel3m: Optional[float] = None                   # S&P 500 대비 3개월 초과수익률 (%p)
+    label: HeatLabel = "neutral"                    # gapPercentile로만 결정
+    sampleDays: int = 0                             # 백분위 계산에 쓴 관측일 수
+
+
+class SectorValuation(BaseModel):
+    """섹터 밸류에이션 스냅샷.
+
+    현재 PER/PBR은 매일 받을 수 있지만 '저평가/고평가' 판정에는 과거 분포가 필요하다.
+    pePercentile은 data/valuation 기록이 MIN_VALUATION_DAYS 이상 쌓인 뒤에만 채운다.
+    그 전에는 None이며, 화면에는 '기록 중'으로 표시한다.
+    """
+    symbol: str
+    name: str = ""
+    trailingPE: Optional[float] = None
+    priceToBook: Optional[float] = None
+    dividendYield: Optional[float] = None           # 0.0043 = 0.43%
+    pePercentile: Optional[float] = None            # 자체 기록 분포에서의 백분위 (0~100)
+    recordedDays: int = 0                           # 지금까지 쌓인 관측일 수
+
+
 class MarketBundle(BaseModel):
     """data/cache/market.json 및 브리핑 레코드의 market 필드. 생성 시점 스냅샷."""
     updatedAt: str                                  # ISO 8601 (KST)
@@ -63,6 +99,9 @@ class MarketBundle(BaseModel):
     fearGreed: Optional[FearGreed] = None
     calendar: dict = Field(default_factory=dict)    # {"fomc": [...], "indicators": [...], "earnings": [...], "economic": [...]}
     chartKeys: list[str] = Field(default_factory=list)  # data/charts/<key>.json 목록 (예: "sp500_1d")
+    # v2.2 추가. 이전 레코드에는 없으므로 렌더 측은 항상 부재를 허용해야 한다.
+    sectorHeat: dict[str, SectorHeat] = Field(default_factory=dict)          # 섹터명 → 과열도
+    sectorValuation: dict[str, SectorValuation] = Field(default_factory=dict)  # 섹터명 → 밸류에이션
 
 
 # ===== 구조화 브리핑 (LLM 출력) =====
