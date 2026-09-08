@@ -1,9 +1,28 @@
 {
- "generatedAt": "2026-09-07T19:33:30+09:00",
+ "generatedAt": "2026-09-08T09:34:47+09:00",
  "languages": [
   "ko"
  ],
  "entries": [
+  {
+   "id": "2026-09-08-ko-0c14d7",
+   "date": "2026-09-08",
+   "lang": "ko",
+   "headline": "후티, 사우디 아람코 정유시설 공격에 WTI 92.52 급등…다우선물 -300p, 9월 인상 베팅 50%↑",
+   "generatedAt": "2026-09-08T09:34:46+09:00",
+   "model": "claude-sonnet-5",
+   "provider": "claude_cli",
+   "direction": {
+    "up": 25,
+    "flat": 20,
+    "down": 55,
+    "rationaleUp": "엔비디아 허깅페이스 인수와 OpenAI Astra 모델 출시로 반도체·AI 테마 모멘텀이 지속되며 저가 매수세 유입 가능.",
+    "rationaleFlat": "미 노동절 연휴로 거래가 얇아 방향성 확정이 어렵고, 9/16 FOMC까지 관망 심리가 우세할 수 있음.",
+    "rationaleDown": "다우선물 -300p, 사우디 아람코 정유시설 후티 공격발 유가 급등(WTI +0.54%), 美-캐나다 관세 격화, UBS의 2026년 Fed 2회 추가 인상 전망이 동시에 위험자산에 부담."
+   },
+   "fearGreedScore": 41.9,
+   "spxChangePercent": -0.3757
+  },
   {
    "id": "2026-09-07-ko-710ebc",
    "date": "2026-09-07",

@@ -2,7 +2,7 @@
    서비스워커 — 정적 사이트 v2
 
    캐시 이름에 빌드 ID를 포함시켜 배포마다 새 캐시를 쓰고 옛 캐시를 지운다.
-   `7df05f50cd`는 빌더(mbrief/site/builder.py)가 빌드 시점에 치환한다.
+   `4b0ed39b6f`는 빌더(mbrief/site/builder.py)가 빌드 시점에 치환한다.
 
    전략
      - HTML(navigate)  : 네트워크 우선 → 실패 시 캐시 → 그래도 없으면 시작 페이지
@@ -15,7 +15,7 @@
    ========================================================================= */
 'use strict';
 
-var BUILD_ID = '7df05f50cd';
+var BUILD_ID = '4b0ed39b6f';
 var CACHE_NAME = 'mbrief-' + BUILD_ID;
 var DATA_TIMEOUT_MS = 5000;
 

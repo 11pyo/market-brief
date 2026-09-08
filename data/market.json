@@ -1,5 +1,5 @@
 {
- "updatedAt": "2026-09-07T18:21:00+09:00",
+ "updatedAt": "2026-09-08T09:32:04+09:00",
  "quotes": {
   "S&P 500": {
    "price": 7718.6001,
@@ -22,44 +22,44 @@
    "changePercent": 0.462
   },
   "Dollar Index (DXY)": {
-   "price": 98.934,
-   "change": -0.223,
-   "changePercent": -0.2249
+   "price": 99.176,
+   "change": 0.019,
+   "changePercent": 0.0192
   },
   "Crude Oil (WTI)": {
-   "price": 91.48,
-   "change": -0.54,
-   "changePercent": -0.5868
+   "price": 92.52,
+   "change": 0.5,
+   "changePercent": 0.5434
   },
   "VIX": {
-   "price": 15.02,
-   "change": 0.5,
-   "changePercent": 3.4435
+   "price": 15.3,
+   "change": 0.78,
+   "changePercent": 5.3719
   },
   "Gold": {
-   "price": 4476.6001,
-   "change": -37.1997,
-   "changePercent": -0.8241
+   "price": 4472.7002,
+   "change": -41.0996,
+   "changePercent": -0.9105
   },
   "EUR/USD": {
-   "price": 1.1624,
+   "price": 1.1631,
    "change": 0.0003,
-   "changePercent": 0.0232
+   "changePercent": 0.0233
   },
   "BTC/USD": {
-   "price": 79501.1172,
-   "change": -838.2031,
-   "changePercent": -1.0433
+   "price": 79009.1562,
+   "change": -155.4844,
+   "changePercent": -0.1964
   },
   "KOSPI": {
-   "price": 6995.3901,
-   "change": 308.1801,
-   "changePercent": 4.6085
+   "price": 7037.2002,
+   "change": 62.0303,
+   "changePercent": 0.8893
   },
   "USD/KRW": {
-   "price": 1344.71,
-   "change": -1.28,
-   "changePercent": -0.0951
+   "price": 1341.55,
+   "change": -3.47,
+   "changePercent": -0.258
   }
  },
  "sectors": {
@@ -201,7 +201,7 @@
     "note": "성명서 + 파월 기자회견",
     "isPast": true,
     "isLive": false,
-    "daysUntil": -41
+    "daysUntil": -42
    },
    {
     "start": "2026-09-15",
@@ -212,7 +212,7 @@
     "note": "성명서 + 점도표(SEP) + 파월 기자회견",
     "isPast": false,
     "isLive": false,
-    "daysUntil": 8
+    "daysUntil": 7
    },
    {
     "start": "2026-10-27",
@@ -223,7 +223,7 @@
     "note": "성명서 + 파월 기자회견",
     "isPast": false,
     "isLive": false,
-    "daysUntil": 50
+    "daysUntil": 49
    },
    {
     "start": "2026-12-08",
@@ -234,7 +234,7 @@
     "note": "성명서 + 점도표(SEP) + 파월 기자회견",
     "isPast": false,
     "isLive": false,
-    "daysUntil": 92
+    "daysUntil": 91
    },
    {
     "start": "2027-01-26",
@@ -245,7 +245,7 @@
     "note": "성명서 + 파월 기자회견",
     "isPast": false,
     "isLive": false,
-    "daysUntil": 141
+    "daysUntil": 140
    },
    {
     "start": "2027-03-16",
@@ -256,7 +256,7 @@
     "note": "성명서 + 점도표(SEP) + 파월 기자회견",
     "isPast": false,
     "isLive": false,
-    "daysUntil": 190
+    "daysUntil": 189
    },
    {
     "start": "2027-04-27",
@@ -267,7 +267,7 @@
     "note": "성명서 + 파월 기자회견",
     "isPast": false,
     "isLive": false,
-    "daysUntil": 232
+    "daysUntil": 231
    }
   ],
   "indicators": [
