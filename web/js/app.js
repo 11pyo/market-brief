@@ -162,6 +162,25 @@
     }
   }
 
+  // Lightweight Charts는 시간축을 항상 UTC로 렌더한다. 뷰어가 보는 시각을 자신의
+  // 표준시로 맞추기 위해, 일중 차트에 한해 표시용으로만 오프셋을 더한다.
+  // 원본 data/charts/*.json 의 epoch는 손대지 않는다 (파일은 계속 UTC 기준 진실값).
+  //
+  // 1mo(일봉)는 제외한다. 일봉은 시각이 아니라 '거래일'이 의미이고, 미국 자정(04:00 UTC)에
+  // 찍혀 있어 서쪽 표준시 뷰어에서 오프셋을 빼면 날짜가 하루 밀린다.
+  function toViewerTime(ts, period) {
+    if (period === '1mo') return ts;
+    return ts - new Date(ts * 1000).getTimezoneOffset() * 60;
+  }
+
+  function viewerTimeZone() {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    } catch (err) {
+      return '';
+    }
+  }
+
   function loadChart(slug, period) {
     var key = slug + '_' + period;
     if (!CHART_KEY_RE.test(key)) { chartState(label('lChartError', 'Invalid chart')); return; }
@@ -210,7 +229,12 @@
             borderUpColor: '#10b981', borderDownColor: '#ef4444',
             wickUpColor: '#10b981', wickDownColor: '#ef4444'
           });
-          candleSeries.setData(candles);
+          candleSeries.setData(candles.map(function (c) {
+            return {
+              time: toViewerTime(c.time, period),
+              open: c.open, high: c.high, low: c.low, close: c.close
+            };
+          }));
         } else {
           var areaSeries = chartInstance.addAreaSeries({
             lineColor: '#6366f1',
@@ -220,7 +244,9 @@
             crosshairMarkerVisible: true,
             crosshairMarkerRadius: 4
           });
-          areaSeries.setData(candles.map(function (c) { return { time: c.time, value: c.close }; }));
+          areaSeries.setData(candles.map(function (c) {
+            return { time: toViewerTime(c.time, period), value: c.close };
+          }));
         }
         chartInstance.timeScale().fitContent();
       })
@@ -273,6 +299,12 @@
     chartSlug = slug;
     var heading = document.getElementById('chart-title');
     if (heading) heading.textContent = title || slug;
+    // 시간축이 어느 표준시인지 명시한다 (일중 차트는 뷰어 로컬 시각으로 표시된다)
+    var tzNote = document.getElementById('chart-tz');
+    if (tzNote) {
+      var tz = viewerTimeZone();
+      tzNote.textContent = tz ? label('lChartTz', 'Times shown in') + ' ' + tz : '';
+    }
     modal.hidden = false;
     var closeBtn = document.getElementById('chart-close');
     if (closeBtn) closeBtn.focus();

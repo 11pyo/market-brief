@@ -1087,3 +1087,15 @@ def test_schema_validators_strip_xml_illegal_control_chars():
 #   - [WARN] 브라우저 실행 검증(E2E)은 포함하지 않는다. 차트 모달·통화 전환 등 JS 동작은
 #            수동 프리뷰 또는 별도 E2E 러너로 확인해야 한다.
 # --------------------------------------------------
+
+def test_chart_timezone_label_is_passed_to_the_page(tmp_path, sample_record):
+    """차트 시간축 표준시 표기를 위해 body에 라벨이 실려야 한다.
+
+    회귀 배경: 라벨은 body의 data-l-* 속성으로만 JS에 전달된다. i18n에 키를 추가해도
+    base.html에 속성을 넣지 않으면 JS는 영어 폴백을 쓴다.
+    """
+    out = tmp_path / "site"
+    builder.build([sample_record], sample_record.market, None, {}, out_dir=out)
+    html = (out / "index.html").read_text(encoding="utf-8")
+    assert 'data-l-chart-tz="' in html
+    assert 'id="chart-tz"' in html
