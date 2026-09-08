@@ -1,7 +1,2 @@
-# 증시흐름 — AI 모닝 마켓 브리핑 (정적 사이트)
-# 전체 공개 콘텐츠. 비공개 데이터(포트폴리오 메모)는 애초에 빌드 산출물에 포함되지 않는다.
 User-agent: *
-Allow: /
-
-# 빌더가 site_url이 설정된 경우에만 아래 줄을 남긴다 (없으면 줄 자체를 제거).
-Sitemap: https://11pyo.github.io/market-brief/sitemap.xml
+Disallow: /
