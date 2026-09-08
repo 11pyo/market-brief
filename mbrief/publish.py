@@ -247,7 +247,6 @@ def publish_github(
 # 정적 디렉터리를 그대로 업로드한다 (Direct Upload). 저장소가 필요 없으므로
 # 소스를 비공개로 두면서 사이트만 공개할 수 있다.
 _WRANGLER_TIMEOUT = 600
-_WRANGLER_SPEC = "wrangler@4"
 # [SECURE] Pages 프로젝트명 화이트리스트 - argv 주입 방지 (Category 1)
 _CF_PROJECT_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,53}$")
 # 토큰이 stdout/stderr에 섞여 로그로 새지 않도록 마스킹한다
@@ -281,16 +280,35 @@ def _mask(text: str) -> str:
     return _CF_TOKEN_RE.sub("***", text or "")
 
 
+def _wrangler_argv() -> list[str]:
+    """wrangler 실행 argv 앞부분 (node + 스크립트 경로).
+
+    Windows에서 npx/wrangler는 배치 파일(.cmd)이라 shell=False로는 실행되지 않는다.
+    셸을 켜는 대신 로컬 설치본의 JS 엔트리를 node로 직접 실행한다
+    (셸 인용 규칙을 거치지 않으므로 인자 주입 여지가 없다).
+    """
+    script = paths.ROOT / "node_modules" / "wrangler" / "bin" / "wrangler.js"
+    if not script.is_file():
+        raise PublishError(
+            "wrangler가 설치되어 있지 않습니다. 프로젝트 루트에서 "
+            "`npm install --save-dev wrangler@4`를 실행하세요."
+        )
+    node = shutil.which("node")
+    if not node:
+        raise PublishError("node를 찾을 수 없습니다. Node.js를 설치하세요.")
+    return [node, str(script)]
+
+
 def _run_wrangler(args: list[str], timeout: int = _WRANGLER_TIMEOUT) -> subprocess.CompletedProcess:
     """[SECURE] shell=False + argv 리스트로 wrangler 실행 - OS Command Injection 방지 (Category 1)."""
-    argv = ["npx", "--yes", _WRANGLER_SPEC, *args]
+    argv = [*_wrangler_argv(), *args]
     try:
         return subprocess.run(
             argv, cwd=str(paths.ROOT), env=_cf_env(), capture_output=True,
             text=True, encoding="utf-8", errors="replace", timeout=timeout, shell=False,
         )
     except FileNotFoundError as e:
-        raise PublishError("npx를 찾을 수 없습니다. Node.js를 설치하세요.") from e
+        raise PublishError("node 실행에 실패했습니다. Node.js 설치를 확인하세요.") from e
     except subprocess.TimeoutExpired as e:
         raise PublishError(f"wrangler {args[0] if args else ''} 타임아웃({timeout}s)") from e
 
@@ -302,6 +320,21 @@ def cf_whoami() -> tuple[bool, str]:
     if proc.returncode == 0 and "not authenticated" not in out.lower():
         return True, out[-400:]
     return False, out[-400:]
+
+
+_MISSING_PROJECT_HINTS = (
+    "not found",
+    "does not exist",
+    "verify that the project name",
+    "pages project create",
+    "project not found",
+)
+
+
+def _looks_like_missing_project(output: str) -> bool:
+    """배포 실패 사유가 '프로젝트 없음'인지 판단."""
+    low = (output or "").lower()
+    return any(hint in low for hint in _MISSING_PROJECT_HINTS)
 
 
 def publish_cloudflare(
@@ -345,7 +378,8 @@ def publish_cloudflare(
     combined = _mask(f"{proc.stdout}\n{proc.stderr}")
 
     # 프로젝트가 아직 없으면 1회 생성 후 재시도한다 (최초 배포 경로).
-    if proc.returncode != 0 and "not found" in combined.lower():
+    # wrangler는 버전에 따라 문구가 달라 여러 표현을 함께 본다.
+    if proc.returncode != 0 and _looks_like_missing_project(combined):
         logger.info("[Publish] 프로젝트가 없어 새로 생성합니다: %s", name)
         created = _run_wrangler(
             ["pages", "project", "create", name, "--production-branch", "main"], timeout=180,

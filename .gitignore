@@ -28,6 +28,9 @@ data/.daily.lock
 data/stats.json
 data/settings.json
 
+# Node (wrangler - Cloudflare Pages 배포용)
+node_modules/
+
 # 파이썬
 __pycache__/
 *.pyc
