@@ -276,3 +276,28 @@ def test_cf_project_requires_a_value(monkeypatch):
     monkeypatch.setattr(publish.settings, "cloudflare_project", "")
     with pytest.raises(publish.PublishError):
         publish.resolve_cf_project("")
+
+
+# ===== 불완전한 디렉터리 배포 차단 =====
+def test_cloudflare_refuses_directory_that_is_not_a_built_site(tmp_path, monkeypatch):
+    """회귀: 테스트용 더미 사이트(index.html 한 장)가 운영 도메인에 배포된 사고를 막는다."""
+    fake = tmp_path / "fake_site"
+    fake.mkdir()
+    (fake / "index.html").write_text("<h1>증시흐름</h1>", encoding="utf-8")
+
+    monkeypatch.setattr(publish.settings, "cloudflare_project", "market-brief")
+    # cf_whoami까지 가기 전에 막혀야 한다 (네트워크 호출 없음)
+    assert publish.publish_cloudflare(fake) is False
+
+
+def test_cloudflare_accepts_a_real_built_site(tmp_path, monkeypatch):
+    real = tmp_path / "site"
+    (real / "data").mkdir(parents=True)
+    (real / "index.html").write_text("<html></html>", encoding="utf-8")
+    (real / "data" / "index.json").write_text("{}", encoding="utf-8")
+
+    monkeypatch.setattr(publish.settings, "cloudflare_project", "market-brief")
+    monkeypatch.setattr(publish, "cf_whoami", lambda: (False, "인증 없음"))
+    # 사이트 검증은 통과하고 그 다음 단계(인증)에서 멈춘다
+    assert publish.publish_cloudflare(real) is False
+    assert publish._looks_like_built_site(real) is True

@@ -331,6 +331,15 @@ _MISSING_PROJECT_HINTS = (
 )
 
 
+def _looks_like_built_site(source: Path) -> bool:
+    """빌더가 만든 사이트인지 최소 검증.
+
+    빈 디렉터리나 테스트용 더미(index.html 한 장)를 운영 도메인에 올리는 사고를 막는다.
+    builder는 항상 index.html과 data/index.json을 함께 쓴다.
+    """
+    return (source / "index.html").is_file() and (source / "data" / "index.json").is_file()
+
+
 def _looks_like_missing_project(output: str) -> bool:
     """배포 실패 사유가 '프로젝트 없음'인지 판단."""
     low = (output or "").lower()
@@ -347,6 +356,13 @@ def publish_cloudflare(
     source = Path(site_dir) if site_dir is not None else paths.SITE_DIR
     if not source.is_dir():
         logger.error("[Publish] 빌드 결과가 없습니다: %s (먼저 build 실행)", source)
+        return False
+    if not _looks_like_built_site(source):
+        # [SECURE] 불완전한 디렉터리를 공개 도메인에 올리지 않는다 - 의도치 않은 공개/삭제 방지
+        logger.error(
+            "[Publish] %s 가 빌드 산출물로 보이지 않습니다 (index.html + data/index.json 필요). "
+            "실수로 운영 사이트를 덮어쓰지 않도록 배포를 중단합니다.", source,
+        )
         return False
 
     try:
