@@ -1,0 +1,547 @@
+{#-
+  briefing.html — index.html(최신) 및 archive/<id>.html 공용 템플릿.
+
+  구조: 히어로(헤드라인 + 방향성 + 공포탐욕) → 시장 스냅샷 → 섹터 → 본문(PART 1~8)
+        → 경제 캘린더 → 근거 뉴스 → 스코어카드 → 관심종목 렌즈 → 이전/다음
+
+  PART 1(리캡)과 PART 2의 인물 카드는 v2.1 신규 필드다. 구버전 레코드에는 필드가 없으므로
+  `recap`은 None, `actors`는 빈 리스트로 들어온다 — 두 경우 모두 섹션 마크업을 아예 만들지 않는다.
+-#}
+{% extends "base.html" %}
+
+{% block page_title %}{{ headline or L.brandTitle }} · {{ site_name }}{% endblock %}
+{% block page_description %}{{ summary or site_description }}{% endblock %}
+{% block og_type %}article{% endblock %}
+
+{% block jsonld %}
+<script type="application/ld+json">{{ {
+  "@context": "https://schema.org",
+  "@type": "NewsArticle",
+  "headline": headline,
+  "description": summary,
+  "inLanguage": lang,
+  "datePublished": record.generatedAt,
+  "dateModified": record.generatedAt,
+  "articleSection": "Markets",
+  "isAccessibleForFree": true,
+  "mainEntityOfPage": ((site_url ~ "/" ~ canonical_path) if site_url else ""),
+  "image": ((site_url ~ "/icons/og-image.png") if site_url else ""),
+  "author": {"@type": "Organization", "name": site_name},
+  "publisher": {"@type": "Organization", "name": site_name}
+} | tojson }}</script>
+{% endblock %}
+
+{% block main %}
+
+{# ============ 1. 히어로 ============ #}
+<header class="hero">
+  <div class="hero-head">
+    <p class="hero-date">
+      <time datetime="{{ record.date }}">{{ date_text }}</time>
+      <span class="hero-badge hero-badge--live">{{ L.brandSubtitle }}</span>
+    </p>
+    <h1 class="hero-headline">{{ headline }}</h1>
+    <div class="hero-meta">
+      <span class="chip" title="{{ L.metaModel }}">🤖 {{ record.model or provider_label }}</span>
+      <span class="chip">{{ provider_label }}</span>
+      {% if gen_seconds %}<span class="chip" title="{{ L.metaGenTime }}">⚡ {{ gen_seconds }}</span>{% endif %}
+      {% if record.newsCount %}
+      <span class="chip" title="{{ L.newsTierLegend }}">
+        📰 {{ L.metaNews.format(n=record.newsCount) }}
+        {% if record.tierCounts %}
+        <span class="chip-tiers">
+          {%- for key in ['t1', 't2', 't3'] %}{% if record.tierCounts.get(key) %}<span class="tier tier--{{ key }}">{{ key | upper }} {{ record.tierCounts[key] }}</span>{% endif %}{% endfor -%}
+        </span>
+        {% endif %}
+      </span>
+      {% endif %}
+      <button type="button" class="chip chip--btn" id="share-btn"
+              data-share-title="{{ headline }}" aria-label="{{ L.shareBtn }}">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/>
+        </svg>
+        {{ L.shareBtn }}
+      </button>
+    </div>
+  </div>
+
+  <div class="hero-signals">
+    {% if direction %}
+    <section class="signal signal--dir" aria-label="{{ L.part3 }}">
+      <div class="signal-head">
+        <span class="signal-title">{{ L.dirCall }}</span>
+        <span class="signal-call signal-call--{{ direction.call }}">{{ direction.call_label }} {{ direction[direction.call] }}%</span>
+      </div>
+      <div class="dirbar" role="img"
+           aria-label="{{ L.dirUp }} {{ direction.up }}% / {{ L.dirFlat }} {{ direction.flat }}% / {{ L.dirDown }} {{ direction.down }}%">
+        {% for row in direction.rows %}
+        <span class="dirbar-seg dirbar-seg--{{ row.key }}{{ ' is-win' if row.active }}" style="width:{{ row.pct }}%">
+          <b>{{ row.pct }}%</b>
+        </span>
+        {% endfor %}
+      </div>
+      <ul class="dirbar-legend">
+        {% for row in direction.rows %}
+        <li class="dirbar-legend-item dirbar-legend-item--{{ row.key }}{{ ' is-win' if row.active }}">
+          <i aria-hidden="true"></i>{{ row.label }} <b>{{ row.pct }}%</b>
+        </li>
+        {% endfor %}
+      </ul>
+      {% for row in direction.rows if row.active and row.rationale %}
+      <p class="signal-note">{{ row.rationale | mdi }}</p>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {% if fg %}
+    <section class="signal signal--fg" aria-label="{{ L.fgTitle }}">
+      <div class="signal-head">
+        <span class="signal-title">{{ L.fgTitle }}</span>
+        <span class="fg-badge" style="color:{{ fg.color }};border-color:{{ fg.color }}66;background:{{ fg.color }}1a">{{ fg.rating }}</span>
+      </div>
+      <div class="fg-body">
+        <svg class="fg-gauge" viewBox="0 0 200 132" role="img" aria-label="{{ L.fgTitle }} {{ fg.score }}">{{ fg.gauge }}</svg>
+        <div class="fg-side">
+          <p class="fg-score" style="color:{{ fg.color }}">{{ fg.score }}</p>
+          <ul class="fg-rows">
+            {% for row in fg.rows %}
+            <li class="fg-row">
+              <span class="fg-row-label">{{ row.label }}</span>
+              <span class="fg-row-bar"><i style="width:{{ row.width }}%;background:{{ row.color }}"></i></span>
+              <span class="fg-row-val" style="color:{{ row.color }}">{{ row.arrow }} {{ row.value if row.value is not none else '—' }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          <p class="fg-note">{{ L.fgSource }}</p>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</header>
+
+{# ============ 2. 시장 스냅샷 ============ #}
+{% if cards %}
+<section class="block" aria-labelledby="h-market">
+  <div class="block-head">
+    <h2 id="h-market">{{ L.sectionMarket }}</h2>
+    {% if market_updated %}<span class="block-note">{{ L.marketBasis }}: {{ market_updated }}</span>{% endif %}
+  </div>
+  <div class="cards" id="market-cards" data-krw-rate="{{ krw_rate if krw_rate is not none else '' }}">
+    {% for c in cards %}
+    {% set card_attrs %}class="card card--{{ c.dir }}{{ ' card--chartable' if c.has_chart }}" data-name="{{ c.name }}"{% if c.convertible and c.price is not none %} data-usd="{{ c.price }}" data-usd-change="{{ c.change if c.change is not none else 0 }}"{% endif %}{% endset %}
+    {% set card_inner %}
+      <span class="card-label">{{ c.name }}</span>
+      <span class="card-price" data-role="price">{{ c.price_text }}</span>
+      <span class="card-change" data-role="change">{{ c.change_text }} <span class="card-pct">{{ c.pct_text }}</span></span>
+      {% if c.spark %}<span class="card-spark">{{ c.spark }}</span>{% endif %}
+    {% endset %}
+    {% if c.has_chart %}
+    <button type="button" {{ card_attrs }} data-chart-slug="{{ c.slug }}"
+            data-chart-periods="{{ c.chart_periods }}"
+            aria-label="{{ c.name }} {{ c.price_text }} — {{ L.chartHint }}">
+      {{ card_inner }}<span class="card-hint" aria-hidden="true">📈</span>
+    </button>
+    {% else %}
+    <div {{ card_attrs }}>{{ card_inner }}</div>
+    {% endif %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ============ 3. 섹터 ETF ============ #}
+{% if sectors %}
+<section class="block block--tight" aria-labelledby="h-sectors">
+  <div class="block-head"><h2 id="h-sectors">{{ L.sectionSectors }}</h2></div>
+  <ul class="sector-grid">
+    {% for s in sectors %}
+    <li class="sector-chip sector-chip--{{ s.dir }}">
+      <span class="sector-sym">{{ s.symbol }}</span>
+      <span class="sector-name">{{ s.name }}</span>
+      <span class="sector-pct">{{ s.pct_text }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{# ============ 4. 브리핑 본문 ============ #}
+<article class="block briefing" id="briefing-body" aria-labelledby="h-briefing">
+  <div class="block-head"><h2 id="h-briefing">{{ L.sectionBriefing }}</h2></div>
+
+  {% if s %}
+  {# ---- PART 1 · 전날 시장 리캡 (v2.1 신규. recap이 None이면 섹션을 만들지 않는다) ---- #}
+  {% if recap %}
+  <section class="part part--recap" aria-label="{{ L.partRecap }}">
+    <h3 class="part-title">{{ L.part1 }}</h3>
+    <div class="recap">
+      {% if recap.summary_html %}
+      <div class="recap-summary prose">{{ recap.summary_html }}</div>
+      {% endif %}
+      {% if recap.drivers %}
+      <div class="recap-drivers">
+        <h4 class="recap-drivers-title">{{ recap.drivers_label }}</h4>
+        <ol class="recap-list">
+          {% for driver in recap.drivers %}
+          <li class="recap-item">
+            <span class="recap-no" aria-hidden="true">{{ '%02d' | format(loop.index) }}</span>
+            <span class="recap-text">{{ driver | mdi }}</span>
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ---- PART 2 · 밤사이 이벤트 & 핵심 인물 ---- #}
+  {% if s.overnight or actors %}
+  <section class="part">
+    <h3 class="part-title">{{ L.part2 }}</h3>
+    {% if s.overnight %}
+    <div class="prose">{{ s.overnight | md }}</div>
+    {% endif %}
+    {% if actors %}
+    <div class="actors-wrap">
+      <h4 class="actors-title">{{ L.partActors }}</h4>
+      <div class="actors">
+        {% for a in actors %}
+        <article class="actor-card" data-lens="{{ a.lens }}">
+          <div class="actor-head">
+            <span class="actor-name">{{ a.name }}</span>
+            {% if a.role %}<span class="actor-role">{{ a.role }}</span>{% endif %}
+          </div>
+          {% if a.action %}<p class="actor-action">{{ a.action | mdi }}</p>{% endif %}
+          {% if a.impact %}
+          <p class="actor-impact">
+            <span class="actor-impact-label">{{ a.impact_label }}</span>
+            <span class="actor-impact-text">{{ a.impact | mdi }}</span>
+          </p>
+          {% endif %}
+          {% if a.assets %}
+          <ul class="actor-assets" aria-label="{{ a.assets_label }}">
+            {% for asset in a.assets %}
+            <li class="actor-pill{{ ' actor-pill--market' if asset.known }}">{{ asset.label }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {# ---- PART 3 · 오늘의 방향성 확률 ---- #}
+  {% if direction %}
+  <section class="part">
+    <h3 class="part-title">{{ L.part3 }}</h3>
+    <ul class="rationale-rows">
+      {% for row in direction.rows %}
+      <li class="rationale-row rationale-row--{{ row.key }}{{ ' is-win' if row.active }}">
+        <div class="rationale-top">
+          <span class="rationale-label">{{ row.label }}</span>
+          <span class="rationale-track"><i style="width:{{ row.pct }}%"></i></span>
+          <span class="rationale-pct">{{ row.pct }}%</span>
+        </div>
+        {% if row.rationale %}<p class="rationale-text">{{ row.rationale | mdi }}</p>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {# ---- PART 4 · 섹터 리더십 ---- #}
+  {% if s.sectorLeaders or s.sectorLaggards %}
+  <section class="part">
+    <h3 class="part-title">{{ L.part4 }}</h3>
+    <div class="lead-lag">
+      {% if s.sectorLeaders %}
+      <div class="lead-col">
+        <h4 class="lead-title lead-title--up">▲ {{ L.leadersTitle }}</h4>
+        {% for item in s.sectorLeaders %}
+        <div class="lead-card lead-card--up" data-lens="{{ item.name }} {{ item.etf }}">
+          <div class="lead-card-head"><span class="lead-name">{{ item.name }}</span>{% if item.etf %}<span class="lead-etf">{{ item.etf }}</span>{% endif %}</div>
+          {% if item.reason %}<p class="lead-reason">{{ item.reason | mdi }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if s.sectorLaggards %}
+      <div class="lead-col">
+        <h4 class="lead-title lead-title--down">▼ {{ L.laggardsTitle }}</h4>
+        {% for item in s.sectorLaggards %}
+        <div class="lead-card lead-card--down" data-lens="{{ item.name }} {{ item.etf }}">
+          <div class="lead-card-head"><span class="lead-name">{{ item.name }}</span>{% if item.etf %}<span class="lead-etf">{{ item.etf }}</span>{% endif %}</div>
+          {% if item.reason %}<p class="lead-reason">{{ item.reason | mdi }}</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ---- PART 5 · 핵심 리스크 ---- #}
+  {% if s.risks %}
+  <section class="part">
+    <h3 class="part-title">{{ L.part5 }}</h3>
+    <div class="risk-grid">
+      {% for r in s.risks %}
+      <div class="risk-card risk-card--{{ r.severity }}">
+        <div class="risk-head">
+          <span class="risk-sev risk-sev--{{ r.severity }}">{{ L['risk' ~ r.severity | capitalize] }}</span>
+          <span class="risk-title">{{ r.title | mdi }}</span>
+        </div>
+        {% if r.detail %}<p class="risk-detail">{{ r.detail | mdi }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ---- PART 6 · 트레이드 아이디어 ---- #}
+  {% if s.trades %}
+  <section class="part">
+    <h3 class="part-title">{{ L.part6 }}</h3>
+    <div class="trade-grid">
+      {% for t in s.trades %}
+      <div class="trade-card trade-card--{{ t.side }}" data-lens="{{ t.asset }}">
+        <div class="trade-head">
+          <span class="trade-asset">{{ t.asset }}</span>
+          <span class="pill pill--{{ t.side }}">{{ L.tradeLong if t.side == 'long' else L.tradeShort }}</span>
+        </div>
+        <dl class="trade-grid-kv">
+          <div><dt>{{ L.tradeEntry }}</dt><dd>{{ t.entry or '—' }}</dd></div>
+          <div><dt>{{ L.tradeTarget }}</dt><dd class="is-up">{{ t.target or '—' }}</dd></div>
+          <div><dt>{{ L.tradeStop }}</dt><dd class="is-down">{{ t.stop or '—' }}</dd></div>
+          <div><dt>{{ L.tradeRr }}</dt><dd>{{ t.rr or '—' }}</dd></div>
+        </dl>
+        {% if t.rationale %}<p class="trade-reason">{{ t.rationale | mdi }}</p>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {# ---- PART 7 · 10초 마켓 대시보드 ---- #}
+  {% if s.dashboard %}
+  <section class="part">
+    <h3 class="part-title">{{ L.part7 }}</h3>
+    <dl class="dash-list">
+      {% for d in s.dashboard %}
+      <div class="dash-row">
+        <dt class="dash-label">{{ d.label }}</dt>
+        <dd class="dash-value">{{ d.value }}{% if d.comment %}<span class="dash-comment">{{ d.comment | mdi }}</span>{% endif %}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+  </section>
+  {% endif %}
+
+  {# ---- PART 8 (settings.publish_portfolio_note 가 켜져 있을 때만 값이 남아 있다) ---- #}
+  {% if s.portfolioNote %}
+  <section class="part part--private">
+    <h3 class="part-title">{{ L.part8 }}</h3>
+    <div class="prose">{{ s.portfolioNote | md }}</div>
+  </section>
+  {% endif %}
+
+  {% else %}
+  {# ---- 구조화 출력이 없을 때: 안전 렌더된 마크다운 폴백 ---- #}
+  <div class="prose briefing-rendered">{{ body_html }}</div>
+  {% endif %}
+
+  <aside class="disclaimer" role="note">
+    <p class="disclaimer-head"><span aria-hidden="true">⚠️</span> <strong>{{ L.disclaimerTitle }}</strong></p>
+    <p class="disclaimer-body">{{ L.disclaimerBody }}</p>
+  </aside>
+</article>
+
+{# ============ 5. 경제 캘린더 ============ #}
+{% if calendar.fomc or calendar.indicators or calendar.days %}
+<section class="block" aria-labelledby="h-cal">
+  <div class="block-head">
+    <h2 id="h-cal">{{ L.sectionCalendar }}</h2>
+    <span class="block-note">{{ L.calSource }}</span>
+  </div>
+
+  {% if calendar.fomc %}
+  <div class="econ-block">
+    <h3 class="econ-title">🏛️ {{ L.fomcTitle }}</h3>
+    {% if calendar.fomc.lead %}
+    <p class="fomc-lead">
+      <span class="fomc-lead-label">{{ calendar.fomc.lead.label }}</span>
+      {% if calendar.fomc.lead.dday %}<span class="fomc-lead-dday">{{ calendar.fomc.lead.dday }}</span>{% endif %}
+      <span class="fomc-lead-note">{{ calendar.fomc.lead.note }}</span>
+    </p>
+    {% endif %}
+    <ul class="fomc-chips">
+      {% for chip in calendar.fomc.chips %}
+      <li class="fomc-chip{{ ' fomc-chip--' ~ chip.cls if chip.cls }}">
+        <span class="fomc-chip-date">{{ chip.range }}</span>
+        <span class="fomc-chip-badge">{{ chip.badge }}</span>
+        {% if chip.sep %}<span class="fomc-chip-sep" title="{{ L.fomcSepFull }}">{{ L.fomcSep }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% if calendar.indicators %}
+  <div class="econ-block">
+    <h3 class="econ-title">📈 {{ L.indicatorsTitle }}</h3>
+    <div class="ind-grid">
+      {% for ind in calendar.indicators %}
+      <div class="ind-card{{ ' ind-card--high' if ind.high }}">
+        <p class="ind-label">{{ ind.label }}</p>
+        <p class="ind-value ind-value--{{ ind.dir }}">{{ ind.value_text }}</p>
+        <p class="ind-meta"><span>{{ ind.period }}</span>{% if ind.change_note %}<span class="ind-change">{{ ind.change_note }}</span>{% endif %}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if calendar.days %}
+  <div class="econ-block">
+    <h3 class="econ-title">🗓️ {{ L.earningsTitle }}</h3>
+    <div class="cal-columns">
+      {% for day in calendar.days %}
+      <div class="cal-day{{ ' cal-day--today' if day.today }}">
+        <p class="cal-day-head">{{ '🔔 ' if day.today }}{{ day.label }}</p>
+        {% if day.economic %}
+        <ul class="cal-eco">
+          {% for ev in day.economic %}
+          <li><span aria-hidden="true">{{ ev.icon }}</span><span class="cal-eco-name">{{ ev.name }}</span>{% if ev.time %}<span class="cal-eco-time">{{ ev.time }}</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if day.earnings %}
+        <ul class="cal-earn">
+          {% for e in day.earnings %}
+          <li class="cal-chip{{ ' cal-chip--major' if e.major }}"><span class="cal-chip-sym">{{ e.symbol }}</span>{% if e.when %}<span class="cal-chip-when">{{ e.when }}</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ============ 6. 근거 뉴스 ============ #}
+{% if news %}
+<section class="block" aria-labelledby="h-news">
+  <div class="block-head">
+    <h2 id="h-news">{{ L.sectionNews }}</h2>
+    <span class="block-note">{{ L.newsTierLegend }}</span>
+  </div>
+  <ol class="news-list">
+    {% for n in news %}
+    <li class="news-item">
+      <span class="tier tier--t{{ n.tier }}">{{ n.tier_label }}</span>
+      <span class="news-body">
+        {% if n.url %}
+        <a class="news-headline" href="{{ n.url }}" target="_blank" rel="noopener noreferrer nofollow ugc">{{ n.headline }}</a>
+        {% else %}
+        <span class="news-headline">{{ n.headline }}</span>
+        {% endif %}
+        <span class="news-meta">{% if n.source %}{{ L.newsSource }}: {{ n.source }}{% endif %}{% if n.time %} · {{ n.time }}{% endif %}</span>
+      </span>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{# ============ 7. 스코어카드 ============ #}
+{% if scorecard %}
+<section class="block block--tight" aria-labelledby="h-score">
+  <div class="block-head"><h2 id="h-score">{{ L.sectionScorecard }}</h2></div>
+  <div class="score-card">
+    <p class="score-summary">{{ scorecard.summary }}</p>
+    <ul class="score-dots">
+      {% for dot in scorecard.dots %}
+      <li class="score-dot{{ ' score-dot--hit' if dot.hit else ' score-dot--miss' }}" title="{{ dot.tooltip }}">
+        <span class="sr-only">{{ dot.state }} — {{ dot.tooltip }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <p class="score-note">{{ scorecard.note }}</p>
+  </div>
+</section>
+{% endif %}
+
+{# ============ 8. 관심종목 렌즈 (클라이언트 전용) ============ #}
+<section class="block block--tight" aria-labelledby="h-lens">
+  <details class="lens" id="lens"
+           data-l-trades="{{ L.watchMatchTrades }}" data-l-sectors="{{ L.watchMatchSectors }}"{% if actors %} data-l-actors="{{ L.partActors }}"{% endif %}>
+    <summary class="lens-summary" id="h-lens">🔎 {{ L.watchToggle }}</summary>
+    <div class="lens-body">
+      <form class="lens-form" id="lens-form">
+        <label class="sr-only" for="lens-input">{{ L.watchTitle }}</label>
+        <input type="text" id="lens-input" name="watchlist" autocomplete="off" maxlength="200"
+               placeholder="{{ L.watchPlaceholder }}">
+        <button type="submit" class="btn btn--primary">{{ L.watchApply }}</button>
+        <button type="button" class="btn" id="lens-clear">{{ L.watchClear }}</button>
+      </form>
+      <p class="lens-hint">{{ L.watchHint }}</p>
+      <div class="lens-result" id="lens-result" aria-live="polite"></div>
+    </div>
+  </details>
+</section>
+
+{# ============ 9. 이전/다음 ============ #}
+<nav class="pager" aria-label="{{ L.archiveTitle }}">
+  {% if prev_href %}
+  <a class="pager-link pager-link--prev" href="{{ prev_href }}">
+    <span class="pager-dir">← {{ L.prevBriefing }}</span>
+    <span class="pager-title">{{ prev_record.headline }}</span>
+  </a>
+  {% else %}<span class="pager-link is-disabled"></span>{% endif %}
+  <a class="pager-all" href="{{ base }}archive/index.html">{{ L.archiveAll }}</a>
+  {% if next_href %}
+  <a class="pager-link pager-link--next" href="{{ next_href }}">
+    <span class="pager-dir">{{ L.nextBriefing }} →</span>
+    <span class="pager-title">{{ next_record.headline }}</span>
+  </a>
+  {% else %}<span class="pager-link is-disabled"></span>{% endif %}
+</nav>
+
+{# ============ 차트 모달 ============ #}
+<div class="chart-modal" id="chart-modal" hidden>
+  <div class="chart-dialog" role="dialog" aria-modal="true" aria-labelledby="chart-title">
+    <div class="chart-head">
+      <h3 id="chart-title"></h3>
+      <div class="chart-tabs" role="tablist">
+        <button type="button" class="chart-tab is-active" data-period="1d" role="tab" aria-selected="true">1D</button>
+        <button type="button" class="chart-tab" data-period="5d" role="tab" aria-selected="false">5D</button>
+        <button type="button" class="chart-tab" data-period="1mo" role="tab" aria-selected="false">1M</button>
+      </div>
+      <button type="button" class="chart-close" id="chart-close" aria-label="{{ L.chartClose }}">{{ L.chartClose }}</button>
+    </div>
+    <div class="chart-body"><div id="chart-container"></div></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{#-
+  [SECURE] SRI(Subresource Integrity) - CDN 침해·변조 스크립트 실행 방지
+  (Category 2: Code Download Without Integrity Check).
+  integrity 해시는 lightweight-charts 4.1.3 파일 내용의 sha384다. 버전을 올리면
+  반드시 해시도 함께 갱신해야 하며, 불일치 시 브라우저가 로드를 거부한다(차트만 비고 페이지는 동작).
+  crossorigin="anonymous": SRI 검증에 필요한 CORS 응답 요구. 쿠키·자격증명은 전송하지 않는다.
+  referrerpolicy="no-referrer": 열람 중인 브리핑 URL이 CDN 로그로 새지 않게 한다.
+-#}
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"
+        integrity="sha384-JZigAjwiaZtkUbA44CWkPaT3iBb/mU5pO6QOANp+OqHd4q+1+7MG1kzp2OOP9ZfP"
+        crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+{% endblock %}

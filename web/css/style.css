@@ -378,7 +378,65 @@ button { font: inherit; cursor: pointer; }
 .prose a { color: var(--accent-light); text-decoration: underline; text-underline-offset: 2px; }
 .prose mark, .briefing mark { background: rgba(245, 158, 11, 0.28); color: #fde68a; border-radius: 3px; padding: 0 2px; }
 
-/* PART 2 확률 바 (텍스트 폴백 렌더 전용) */
+/* PART 1 전날 시장 리캡 — 히어로 바로 아래 첫 블록. 스캔 가능한 요약 + 요인 패널 */
+.part--recap { padding-top: 0; }
+.recap { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); gap: var(--space-md); align-items: start; }
+.recap-summary { font-size: 0.93rem; line-height: 1.78; }
+.recap-summary p:last-child { margin-bottom: 0; }
+.recap-drivers {
+  padding: 13px 14px; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); background: var(--gradient-card);
+}
+.recap-drivers-title {
+  margin-bottom: 9px; font-family: var(--font-display);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-secondary);
+}
+.recap-list { list-style: none; display: flex; flex-direction: column; gap: 6px; padding: 0; }
+.recap-item {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 6px 9px; border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.55); border-left: 2px solid var(--accent-primary);
+}
+.recap-no { flex: 0 0 auto; font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--accent-light); }
+.recap-text { flex: 1; min-width: 0; font-size: 0.82rem; line-height: 1.58; color: var(--text-primary); }
+.recap-text strong { color: var(--accent-light); font-weight: 600; }
+
+/* PART 2 핵심 인물 — 밤사이 이벤트 산문 아래 카드 그리드 */
+.actors-wrap { margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px dashed var(--border-subtle); }
+.actors-title {
+  margin-bottom: 10px; font-family: var(--font-display);
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em;
+  text-transform: uppercase; color: var(--text-secondary);
+}
+.actors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+.actor-card {
+  padding: 13px 14px; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); background: var(--bg-input);
+  box-shadow: inset 3px 0 0 var(--accent-primary);
+}
+.actor-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 7px; }
+.actor-name { font-family: var(--font-display); font-weight: 700; font-size: 1rem; color: var(--text-heading); letter-spacing: -0.01em; }
+.actor-role { font-size: 0.71rem; color: var(--text-muted); }
+.actor-action { font-size: 0.84rem; line-height: 1.62; color: var(--text-primary); }
+.actor-impact { display: flex; align-items: baseline; gap: 7px; margin-top: 7px; }
+.actor-impact-label {
+  flex: 0 0 auto; padding: 1px 7px; border-radius: 4px;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+  background: rgba(99, 102, 241, 0.18); color: var(--accent-light);
+}
+.actor-impact-text { flex: 1; min-width: 0; font-size: 0.8rem; line-height: 1.58; color: var(--text-secondary); }
+.actor-assets { list-style: none; display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; padding: 0; }
+.actor-pill {
+  padding: 2px 8px; border-radius: 20px;
+  font-family: var(--font-mono); font-size: 0.67rem; font-weight: 600;
+  background: rgba(255, 255, 255, 0.07); color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+/* 시장 스냅샷 12심볼과 겹치는 티커는 강조한다 (링크는 만들지 않는다) */
+.actor-pill--market { background: rgba(99, 102, 241, 0.14); color: var(--accent-light); border-color: var(--border-medium); }
+
+/* PART 3 확률 바 (텍스트 폴백 렌더 전용) */
 .prob-bar-wrap {
   display: inline-block; vertical-align: middle; width: 80px; height: 6px;
   margin: 0 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden;
@@ -394,7 +452,7 @@ button { font: inherit; cursor: pointer; }
 .prob-pct.down { color: var(--red); }
 .prob-pct.neutral { color: var(--text-secondary); }
 
-/* PART 2 근거 행 */
+/* PART 3 근거 행 */
 .rationale-rows { list-style: none; display: flex; flex-direction: column; gap: 12px; }
 .rationale-row { padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-input); }
 .rationale-row.is-win { border-color: var(--border-accent); background: var(--gradient-card); }
@@ -411,7 +469,7 @@ button { font: inherit; cursor: pointer; }
 .rationale-pct { width: 42px; text-align: right; font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; }
 .rationale-text { margin-top: 7px; font-size: 0.84rem; color: var(--text-secondary); line-height: 1.65; }
 
-/* PART 3 리더 / 래거드 */
+/* PART 4 리더 / 래거드 */
 .lead-lag { display: grid; grid-template-columns: 3fr 2fr; gap: var(--space-md); }
 .lead-col { display: flex; flex-direction: column; gap: 8px; }
 .lead-title { font-size: 0.76rem; font-weight: 700; letter-spacing: 0.05em; }
@@ -425,7 +483,7 @@ button { font: inherit; cursor: pointer; }
 .lead-etf { font-family: var(--font-mono); font-size: 0.68rem; padding: 1px 6px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); }
 .lead-reason { margin-top: 5px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
 
-/* PART 4 리스크 */
+/* PART 5 리스크 */
 .risk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 .risk-card { padding: 12px 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-input); border-left-width: 3px; }
 .risk-card--high { border-left-color: var(--red); }
@@ -439,7 +497,7 @@ button { font: inherit; cursor: pointer; }
 .risk-title { font-weight: 700; font-size: 0.88rem; color: var(--text-heading); }
 .risk-detail { margin-top: 6px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.6; }
 
-/* PART 5 트레이드 */
+/* PART 6 트레이드 */
 .trade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(285px, 1fr)); gap: 12px; }
 .trade-card { padding: 14px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: var(--bg-input); }
 .trade-card--long { box-shadow: inset 3px 0 0 var(--green); }
@@ -456,7 +514,7 @@ button { font: inherit; cursor: pointer; }
 .trade-grid-kv dd.is-down { color: var(--red); }
 .trade-reason { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--border-subtle); font-size: 0.79rem; color: var(--text-secondary); line-height: 1.6; }
 
-/* PART 6 대시보드 */
+/* PART 7 대시보드 */
 .dash-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--border-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); overflow: hidden; }
 .dash-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 13px; background: var(--bg-secondary); }
 .dash-label { flex: 0 0 38%; font-size: 0.76rem; color: var(--text-muted); }
@@ -660,6 +718,7 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
 @media (max-width: 900px) {
   .hero-signals { grid-template-columns: 1fr; }
   .lead-lag { grid-template-columns: 1fr; }
+  .recap { grid-template-columns: 1fr; }
   .arc-link { grid-template-columns: 1fr; gap: 7px; }
   .arc-signals { justify-content: flex-start; }
 }
@@ -674,6 +733,7 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
   .card { padding: 10px 11px 8px; }
   .card-price { font-size: 1.05rem; }
   .briefing { padding: var(--space-md); }
+  .actors { grid-template-columns: 1fr; }
   .dash-list { grid-template-columns: 1fr; }
   .trade-grid-kv { grid-template-columns: repeat(2, 1fr); }
   .pager { grid-template-columns: 1fr; }
@@ -697,8 +757,10 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
   body::before { display: none; }
   .top-nav, .pwa-hint, .chart-modal, .toast-container, .lens, .pager, .skip-link, .card-hint { display: none !important; }
   .main { max-width: none; padding: 0; }
-  .briefing, .signal, .card, .econ-block, .score-card { background: #fff; border-color: #ccc; box-shadow: none; backdrop-filter: none; }
-  .hero-headline, .block-head h2, .prose, .card-price { color: #111; }
+  .briefing, .signal, .card, .econ-block, .score-card,
+  .recap-drivers, .recap-item, .actor-card { background: #fff; border-color: #ccc; box-shadow: none; backdrop-filter: none; }
+  .hero-headline, .block-head h2, .prose, .card-price,
+  .recap-text, .actor-name, .actor-action { color: #111; }
   .prose a { color: #111; text-decoration: underline; }
   .prose a::after { content: " (" attr(href) ")"; font-size: 0.75em; color: #555; }
 }
@@ -710,6 +772,8 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
      - Leftover Debug Code: 디버그 전용 규칙 없음. v1의 광고 슬롯·통계 리본 스타일은 전부 삭제
      - Improper Input for Security Decision: 인라인 style 속성으로 주입되는 값(폭·색상)은
        빌더가 숫자/hex 정규식으로 검증한 값만 사용한다
+     - Data Exposure: PART 1 리캡 · PART 2 인물 카드는 인라인 style을 전혀 쓰지 않는다.
+       LLM 문자열은 전부 텍스트 노드로만 들어가며 CSS는 클래스 셀렉터로만 스타일을 건다
    Not Applied:
      - [WARN] 웹폰트를 Google Fonts에서 로드한다. 완전한 오프라인/무추적을 원하면 폰트를 자체 호스팅할 것.
      - [WARN] 다크 테마 단일 지원. prefers-color-scheme: light 대응은 별도 팔레트가 필요하다.

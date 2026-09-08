@@ -1,0 +1,57 @@
+{#- archive.html — 월별로 묶은 전체 브리핑 목록. -#}
+{% extends "base.html" %}
+
+{% block page_title %}{{ L.archiveTitle }} · {{ site_name }}{% endblock %}
+{% block page_description %}{{ L.archiveTitle }} — {{ site_description }}{% endblock %}
+
+{% block main %}
+<header class="page-head">
+  <h1 class="page-title">{{ L.sectionArchive }}</h1>
+  <p class="page-sub">{{ L.archiveCount.format(n=total) }}</p>
+</header>
+
+{% if languages | length > 1 %}
+<div class="arc-filter" role="group" aria-label="{{ L.navLangLabel }}">
+  <button type="button" class="arc-filter-btn is-active" data-filter="all">{{ L.filterAll }}</button>
+  {% for code in languages %}
+  <button type="button" class="arc-filter-btn" data-filter="{{ code }}">{{ code | upper }}</button>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if months %}
+{% for month in months %}
+<section class="arc-month" aria-labelledby="m-{{ month.key }}">
+  <h2 class="arc-month-title" id="m-{{ month.key }}">{{ month.label }}</h2>
+  <ul class="arc-list">
+    {% for item in month.rows %}
+    <li class="arc-item" data-lang="{{ item.record.lang }}">
+      <a class="arc-link" href="{{ item.href }}">
+        <span class="arc-date">
+          <time datetime="{{ item.record.date }}">{{ item.date_text }}</time>
+          <span class="arc-lang">{{ item.record.lang | upper }}</span>
+        </span>
+        <span class="arc-headline">{{ item.record.headline }}</span>
+        <span class="arc-signals">
+          {% if item.direction %}
+          <span class="arc-dirbar" role="img"
+                aria-label="{{ L.dirUp }} {{ item.direction.up }}% / {{ L.dirFlat }} {{ item.direction.flat }}% / {{ L.dirDown }} {{ item.direction.down }}%">
+            {% for row in item.direction.rows %}
+            <i class="arc-dirbar-seg arc-dirbar-seg--{{ row.key }}" style="width:{{ row.pct }}%"></i>
+            {% endfor %}
+          </span>
+          <span class="arc-call arc-call--{{ item.direction.call }}">{{ item.direction.call_label }} {{ item.direction[item.direction.call] }}%</span>
+          {% endif %}
+          {% if item.fg is not none %}<span class="arc-fg" title="{{ L.fgTitle }}">F&amp;G {{ item.fg }}</span>{% endif %}
+          {% if item.spx_text %}<span class="arc-spx arc-spx--{{ item.spx_dir }}">S&amp;P {{ item.spx_text }}</span>{% endif %}
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endfor %}
+{% else %}
+<p class="empty-note">{{ L.archiveEmpty }}</p>
+{% endif %}
+{% endblock %}

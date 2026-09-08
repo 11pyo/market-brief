@@ -38,8 +38,13 @@ logger = logging.getLogger(__name__)
 _ALLOWED_CLI_NAMES = {"claude", "claude.exe", "claude.cmd", "claude.bat"}
 
 # [SECURE] 모델 인자 화이트리스트 - argv 주입 방지 (Category 1: Improper Input for Security Decision)
-_ALLOWED_MODEL_ALIASES = {"sonnet", "opus", "haiku", "fable"}
+# 운영 정책: Claude 호출의 최소 모델은 sonnet이다. haiku는 브리핑 품질(수치·실명 추출)이 떨어져
+# 별칭 목록에서 제외한다. 설정에 남아 있어도 아래 resolve_model이 sonnet으로 강등한다.
+_ALLOWED_MODEL_ALIASES = {"sonnet", "opus", "fable"}
 _MODEL_ID_PATTERN = re.compile(r"^claude-[a-z0-9][a-z0-9.\-]{0,63}$")
+# 전체 모델 ID(claude-haiku-4-5 등)로 우회해서 최소 모델 정책을 깨뜨리지 못하게 한다.
+_FORBIDDEN_MODEL_SUBSTRINGS = ("haiku",)
+MIN_MODEL_NOTE = "Claude 호출의 최소 모델은 sonnet입니다 (haiku 사용 금지)"
 
 # npm 전역 설치 시 셸 shim(claude.cmd) 대신 사용할 실제 바이너리 상대 경로.
 # shim 경유(cmd.exe)는 개행/따옴표 포함 인자를 재파싱하며 깨뜨리므로 실제 exe를 우선한다.
@@ -169,12 +174,25 @@ def reset_cache() -> None:
     _resolve_done = False
 
 
+def _is_allowed_model(candidate: str) -> bool:
+    """화이트리스트 별칭이거나 claude-<id> 형식이면서, 금지 모델이 아닐 것."""
+    if any(token in candidate for token in _FORBIDDEN_MODEL_SUBSTRINGS):
+        return False
+    return candidate in _ALLOWED_MODEL_ALIASES or bool(_MODEL_ID_PATTERN.match(candidate))
+
+
 def resolve_model(model: str | None = None) -> str:
-    """[SECURE] 모델 인자 화이트리스트 검증 - argv 주입 방지 (Category 1)."""
+    """[SECURE] 모델 인자 화이트리스트 검증 - argv 주입 방지 (Category 1).
+
+    허용되지 않은 값(오타·주입 시도·haiku 같은 금지 모델)은 'sonnet'으로 강등한다.
+    """
     candidate = (model or settings.claude_cli_model or "sonnet").strip().lower()
-    if candidate in _ALLOWED_MODEL_ALIASES or _MODEL_ID_PATTERN.match(candidate):
+    if _is_allowed_model(candidate):
         return candidate
-    logger.warning("[ClaudeCLI] 허용되지 않은 모델값(%r) - 'sonnet'으로 대체", candidate[:40])
+    logger.warning(
+        "[ClaudeCLI] 허용되지 않은 모델값(%r) - 'sonnet'으로 대체. %s",
+        candidate[:40], MIN_MODEL_NOTE,
+    )
     return "sonnet"
 
 
@@ -183,9 +201,12 @@ def _resolve_fallback_model(model: str | None) -> str:
     candidate = (model or "").strip().lower()
     if not candidate:
         return ""
-    if candidate in _ALLOWED_MODEL_ALIASES or _MODEL_ID_PATTERN.match(candidate):
+    if _is_allowed_model(candidate):
         return candidate
-    logger.warning("[ClaudeCLI] 허용되지 않은 폴백 모델값(%r) - 미사용", candidate[:40])
+    logger.warning(
+        "[ClaudeCLI] 허용되지 않은 폴백 모델값(%r) - 미사용. %s",
+        candidate[:40], MIN_MODEL_NOTE,
+    )
     return ""
 
 
@@ -356,7 +377,8 @@ def pick_main_model(model_usage: object) -> str:
     """실제 본문을 생성한 모델 ID 추출.
 
     CLI는 제목 생성 등 부수 작업에 별도 모델을 쓸 수 있어 modelUsage에 여러 키가 담긴다.
-    첫 키를 고르면 haiku 같은 보조 모델이 잡히므로 출력 토큰이 가장 많은 항목을 택한다.
+    첫 키를 고르면 CLI가 내부적으로 쓰는 소형 보조 모델이 잡히므로 출력 토큰이 가장 많은 항목을 택한다.
+    (보조 모델 선택은 CLI 내부 동작이라 이 프로젝트의 최소 모델 정책이 적용되지 않는다.)
     """
     if not isinstance(model_usage, dict) or not model_usage:
         return ""
@@ -625,8 +647,9 @@ async def probe() -> dict:
 
     try:
         cli = await _run_once(
+            # 최소 모델 정책(sonnet 이상)을 진단 호출에도 그대로 적용한다.
             PROBE_SYSTEM, PROBE_PROMPT,
-            model="haiku", timeout_sec=_PROBE_TIMEOUT_SEC,
+            model="sonnet", timeout_sec=_PROBE_TIMEOUT_SEC,
             json_schema=None, fallback_model="",
         )
         result["ok"] = True
@@ -656,7 +679,8 @@ async def probe() -> dict:
 # Security Checklist
 # Applied:
 #   - OS Command Injection: shell=False + argv 리스트 실행, 프롬프트는 stdin 전달, 실행 파일 basename 화이트리스트
-#   - Improper Input for Security Decision: 모델/폴백모델 인자를 화이트리스트+정규식으로 검증 후 argv 구성
+#   - Improper Input for Security Decision: 모델/폴백모델 인자를 화이트리스트+정규식으로 검증 후 argv 구성.
+#     금지 토큰(haiku)은 별칭이든 전체 모델 ID든 거부하고 sonnet으로 강등한다 (최소 모델 정책)
 #   - Path Traversal: CLI 경로 resolve(strict=True) + is_file() + 파일명 화이트리스트 검증
 #   - Race Condition (TOCTOU): tempfile.mkstemp(0600)로 예측 불가 임시파일 생성 후 fd로 직접 기록
 #   - Infinite Loop: 실행 타임아웃 상·하한 고정(30~1800s), 재시도 횟수 상한(최대 5회), 초과 시 프로세스 트리 kill.

@@ -6,9 +6,15 @@
 """
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 import pytest
 
-from mbrief import cli, paths, pipeline
+from mbrief import cli, paths, pipeline, store
+from mbrief.schemas import BriefingRecord
+
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 # ===== build 래퍼 =====
@@ -81,9 +87,91 @@ def test_parse_langs_whitelist(raw, expected):
     assert cli._parse_langs(raw) == expected
 
 
+# ===== show 명령 =====
+SECRET_NOTE = "SECRET-PORTFOLIO-ADVICE"
+
+
+@pytest.fixture
+def saved_record() -> BriefingRecord:
+    """포트폴리오 조언이 들어 있는 레코드를 tmp 저장소에 저장한다."""
+    raw = json.loads((FIXTURES / "briefing_sample.json").read_text(encoding="utf-8"))
+    record = BriefingRecord.model_validate(raw)
+    record.structured.portfolioNote = f"{SECRET_NOTE} — NVDA 비중을 줄일 것."
+    store.save_record(record)
+    return record
+
+
+def _show(capsys, *argv) -> tuple[int, str]:
+    args = cli.build_parser().parse_args(["show", *argv])
+    code = cli.cmd_show(args)
+    return code, capsys.readouterr().out
+
+
+def test_show_prints_public_markdown_without_portfolio(capsys, saved_record):
+    code, out = _show(capsys)
+    assert code == cli.EXIT_OK
+    assert saved_record.headline in out
+    assert "## PART 1 — 전날 시장 리캡" in out
+    assert "## PART 7 — 10초 마켓 대시보드" in out      # 대시보드는 잘리지 않는다
+    assert SECRET_NOTE not in out
+    assert "## PART 8" not in out
+
+
+def test_show_private_includes_the_portfolio_part(capsys, saved_record):
+    code, out = _show(capsys, "--private")
+    assert code == cli.EXIT_OK
+    assert SECRET_NOTE in out
+    assert "## PART 8 — 포트폴리오 맞춤 조언" in out
+
+
+def test_show_by_id(capsys, saved_record):
+    code, out = _show(capsys, "--id", saved_record.id)
+    assert code == cli.EXIT_OK
+    assert saved_record.id in out
+
+
+def test_show_rejects_malformed_id(capsys):
+    """[SECURE] 레코드 ID는 store.RECORD_ID_RE 화이트리스트로 검증한다 (Path Traversal 방지)."""
+    for bad in ("../../etc/passwd", "2026-09-07-ko-zzzzzz.json", "not-an-id"):
+        args = cli.build_parser().parse_args(["show", "--id", bad])
+        assert cli.cmd_show(args) == cli.EXIT_FAILED
+    assert "형식" in capsys.readouterr().err
+
+
+def test_show_reports_missing_record(capsys):
+    args = cli.build_parser().parse_args(["show"])
+    assert cli.cmd_show(args) == cli.EXIT_FAILED
+    assert "브리핑" in capsys.readouterr().err
+
+
+def test_show_falls_back_to_content_markdown(capsys, saved_record):
+    """구조화 출력이 없는 레코드는 contentMarkdown을 쓰고, 공개 출력에서는 비공개 파트를 잘라낸다."""
+    saved_record.structured = None
+    saved_record.contentMarkdown = (
+        "## PART 7 — 10초 마켓 대시보드\n- S&P 500\n\n"
+        f"## PART 8 — 포트폴리오 맞춤 조언\n{SECRET_NOTE}\n"
+    )
+    store.save_record(saved_record)
+
+    code, out = _show(capsys)
+    assert code == cli.EXIT_OK
+    assert "PART 7 — 10초 마켓 대시보드" in out
+    assert SECRET_NOTE not in out
+
+
+def test_show_parser_defaults(monkeypatch):
+    args = cli.build_parser().parse_args(["show"])
+    assert args.func is cli.cmd_show
+    assert args.private is False
+    assert args.id is None
+
+
 # --------------------------------------------------
 # Security Checklist
 # Applied:
+#   - Path Traversal: show --id 값이 store.RECORD_ID_RE 화이트리스트로 거부되는지 검증
+#   - Improper Authorization: show 기본 출력에 비공개 포트폴리오 조언이 없고,
+#     --private 를 명시할 때만 PART 8이 나오는지 검증 (구조화·텍스트 폴백 양쪽)
 #   - Improper Input for Security Decision: --lang 값이 2자 소문자 화이트리스트로 걸러지는지 검증
 #   - Missing Error Handling: 빌드 실패가 0이 아닌 종료 코드로 보고되는지 검증 (스케줄러가 실패 인지)
 #   - Error Message Information Exposure: 실패 시 콘솔에는 요약과 로그 위치만 출력되는지 검증

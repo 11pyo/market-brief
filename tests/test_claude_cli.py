@@ -36,7 +36,7 @@ def test_build_argv_core_flags():
 def test_build_argv_never_uses_bare():
     """--bare는 keychain을 건너뛰어 OAuth 구독 인증을 깨뜨린다. 절대 포함되면 안 된다."""
     argv = claude_cli.build_argv(CLI, "opus", PROMPT_FILE,
-                                 json_schema=STRUCTURED_JSON_SCHEMA, fallback_model="haiku")
+                                 json_schema=STRUCTURED_JSON_SCHEMA, fallback_model="opus")
     assert "--bare" not in argv
 
 
@@ -55,8 +55,8 @@ def test_build_argv_with_schema_serializes_json():
 
 
 def test_build_argv_with_fallback_model():
-    argv = claude_cli.build_argv(CLI, "sonnet", PROMPT_FILE, fallback_model="haiku")
-    assert argv[argv.index("--fallback-model") + 1] == "haiku"
+    argv = claude_cli.build_argv(CLI, "sonnet", PROMPT_FILE, fallback_model="opus")
+    assert argv[argv.index("--fallback-model") + 1] == "opus"
 
 
 # ===== 환경변수 스크럽 =====
@@ -343,7 +343,7 @@ def test_is_usage_error_detects_argument_faults():
 
 
 # ===== 모델 화이트리스트 =====
-@pytest.mark.parametrize("value", ["sonnet", "opus", "haiku", "fable", "claude-sonnet-4-5"])
+@pytest.mark.parametrize("value", ["sonnet", "opus", "fable", "claude-sonnet-4-5"])
 def test_resolve_model_allows_whitelisted(value):
     assert claude_cli.resolve_model(value) == value
 
@@ -359,10 +359,34 @@ def test_resolve_model_rejects_unlisted(value):
     assert claude_cli.resolve_model(value) == "sonnet"
 
 
+# ===== 최소 모델 정책: haiku 금지 =====
+@pytest.mark.parametrize("value", ["haiku", "HAIKU", " haiku ", "claude-haiku-4-5"])
+def test_resolve_model_downgrades_haiku_to_sonnet(value):
+    """소유자 정책: Claude 호출은 sonnet 이상만 쓴다. 별칭이든 전체 모델 ID든 강등한다."""
+    assert claude_cli.resolve_model(value) == "sonnet"
+
+
+def test_haiku_is_not_an_allowed_alias():
+    assert "haiku" not in claude_cli._ALLOWED_MODEL_ALIASES
+    assert {"sonnet", "opus"} <= claude_cli._ALLOWED_MODEL_ALIASES
+
+
+def test_resolve_model_warns_with_minimum_model_note(caplog):
+    with caplog.at_level("WARNING"):
+        claude_cli.resolve_model("haiku")
+    assert "sonnet" in caplog.text
+    assert claude_cli.MIN_MODEL_NOTE in caplog.text
+
+
 def test_resolve_fallback_model_rejects_unlisted():
     assert claude_cli._resolve_fallback_model("evil --flag") == ""
     assert claude_cli._resolve_fallback_model("") == ""
-    assert claude_cli._resolve_fallback_model("haiku") == "haiku"
+    assert claude_cli._resolve_fallback_model("opus") == "opus"
+
+
+@pytest.mark.parametrize("value", ["haiku", "claude-haiku-4-5"])
+def test_resolve_fallback_model_rejects_haiku(value):
+    assert claude_cli._resolve_fallback_model(value) == ""
 
 
 # ===== 경로 화이트리스트 =====

@@ -427,6 +427,7 @@
     var pattern = new RegExp(tokens.map(escapeRegExp).join('|'), 'i');
     var trades = [];
     var sectors = [];
+    var actors = [];
     var lensNodes = document.querySelectorAll('[data-lens]');
     for (var i = 0; i < lensNodes.length; i++) {
       var el = lensNodes[i];
@@ -434,6 +435,7 @@
       if (!pattern.test(hay)) continue;
       var name = (el.dataset.lens || '').trim();
       if (el.classList.contains('trade-card')) trades.push(name);
+      else if (el.classList.contains('actor-card')) actors.push(name);
       else sectors.push(name);
     }
 
@@ -459,6 +461,7 @@
     var lensRoot = document.getElementById('lens');
     appendGroup('trades', (lensRoot && lensRoot.dataset.lTrades) || 'Trade ideas', trades);
     appendGroup('sectors', (lensRoot && lensRoot.dataset.lSectors) || 'Sectors', sectors);
+    appendGroup('actors', (lensRoot && lensRoot.dataset.lActors) || 'Key actors', actors);
   }
 
   function applyLens(raw) {

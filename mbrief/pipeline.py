@@ -20,7 +20,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from mbrief import paths, scorecard, store
+from mbrief import marketclock, paths, scorecard, store
 from mbrief.config import settings
 from mbrief.llm import engine, prompts, translate
 from mbrief.schemas import BriefingRecord, MarketBundle, StructuredBriefing
@@ -137,6 +137,17 @@ async def refresh(*, offline: bool = False) -> MarketBundle:
 
 
 # ===== generate =====
+def _market_clock() -> marketclock.MarketClock:
+    """캐시된 S&P 500 차트로 현재 시장 상태를 판정한다.
+
+    5일 차트를 우선 쓴다 (연휴로 여러 날 쉬어도 직전 세션을 찾을 수 있다).
+    차트가 없으면 시각만으로 판정한 시계를 돌려준다.
+    """
+    charts = store.load_charts()
+    candles = charts.get("sp500_5d") or charts.get("sp500_1d") or []
+    return marketclock.build_clock(candles)
+
+
 def _market_text(bundle: MarketBundle) -> str:
     """캘린더(T1) + 시세 텍스트."""
     snapshot = {name: quote.model_dump() for name, quote in bundle.quotes.items()}
@@ -177,7 +188,7 @@ def _build_record(
 ) -> BriefingRecord:
     """레코드 조립. contentMarkdown 렌더는 **이 함수 한 곳에서만** 수행한다.
 
-    [SECURE] PART 7 공개 여부를 settings.publish_portfolio_note 한 군데에서만 판단해
+    [SECURE] PART 8 공개 여부를 settings.publish_portfolio_note 한 군데에서만 판단해
     렌더 경로 분기로 인한 비공개 데이터 노출을 막는다 (Category 2: Improper Authorization).
     """
     include_portfolio = settings.publish_portfolio_note
@@ -269,9 +280,14 @@ async def generate(
     # 3) 프롬프트 입력 구성
     step_started = time.time()
     market_text = _market_text(bundle)
+    clock = _market_clock()
+    clock_text = marketclock.format_for_llm(clock)
+    logger.info("[Pipeline] 시장 시계: %s | 마지막 세션 %s | 시세=%s",
+                clock.state, clock.last_session or "미상",
+                "장중 실시간" if clock.quotes_are_live else "직전 종가")
     portfolio_text = store.format_portfolio_for_llm(store.load_portfolio())
     if portfolio_text:
-        logger.info("[Pipeline] 포트폴리오 로드됨 - PART 7 생성 요청 (공개 여부: %s)",
+        logger.info("[Pipeline] 포트폴리오 로드됨 - PART 8 생성 요청 (공개 여부: %s)",
                     settings.publish_portfolio_note)
     logger.info("[Pipeline] 3/5 프롬프트 준비 %.1fs", time.time() - step_started)
 
@@ -286,6 +302,7 @@ async def generate(
     else:
         llm_result = await engine.generate_briefing(
             news_text, market_text, portfolio_text, primary, model=model,
+            clock_text=clock_text,
         )
         structured = llm_result.structured
         result_provider, result_model = llm_result.provider, llm_result.model
@@ -628,7 +645,7 @@ def run_daily(
 #   - Missing Error Handling: refresh/score/generate/build/publish/notify 단계별 예외를 개별 처리,
 #     build 이후 실패는 이미 저장된 레코드를 잃지 않는다
 #   - Improper Exception Handling: 빈 except 없음, 모든 실패 경로에서 로깅
-#   - Improper Authorization: PART 7 렌더 여부는 settings.publish_portfolio_note로만 결정 (기본 비공개)
+#   - Improper Authorization: PART 8 렌더 여부는 settings.publish_portfolio_note로만 결정 (기본 비공개)
 #   - Infinite Loop: lock 획득 재시도 2회 고정, 모든 반복이 유한 목록 기반
 # Not Applied:
 #   - [WARN] 광범위 except: 외부 모듈(사이트 빌더·배포·알림)의 예외 계층을 알 수 없어 Exception을 잡는다.

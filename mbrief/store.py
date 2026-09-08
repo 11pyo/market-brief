@@ -250,7 +250,10 @@ def load_scorecard() -> Scorecard | None:
 
 # ===== 포트폴리오 (비공개, 선택) =====
 def load_portfolio() -> Portfolio | None:
-    """data/portfolio.json. 없으면 None (PART 7을 생성하지 않는다)."""
+    """data/portfolio.json. 없으면 None (PART 8을 생성하지 않는다).
+
+    예시 템플릿: data/portfolio.example.json (복사해서 값을 채운다).
+    """
     data = _read_json(paths.PORTFOLIO_JSON)
     if data is None:
         return None

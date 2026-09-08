@@ -2,14 +2,16 @@
 
 회귀로 고정하는 것
   1. 산출물 구성 (index/archive/data/feed/.nojekyll/sw.js 플레이스홀더 치환)
-  2. 비공개 필드(PART 7)가 공개 산출물 어디에도 남지 않는다
+  2. 비공개 포트폴리오 파트(구계약 PART 7 / v2.1 PART 8)가 공개 산출물 어디에도 남지 않는다
   3. LLM 유래 문자열이 이스케이프되지 않은 마크업으로 새어나가지 않는다
   4. 루트 절대 경로(href="/", src="/")가 없다 — GitHub Pages 하위 경로 배포 전제
   5. data/index.json 이 SiteIndex 계약을 만족한다
+  6. v2.1 신규 필드(sessionRecap / keyActors)가 있으면 렌더되고, 없으면 빈 섹션 마크업을 남기지 않는다
 """
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -20,6 +22,7 @@ from mbrief.site import builder
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SECRET = "SECRET-PART7"
+SECRET8 = "SECRET-PART8"          # v2.1 계약: 포트폴리오 파트가 PART 8로 번호가 바뀌었다
 XSS = "<script>alert(1)</script>"
 
 
@@ -92,6 +95,53 @@ def hostile_record(sample_record: BriefingRecord) -> BriefingRecord:
         ),
         market=sample_record.market,
         topNews=sample_record.topNews[:3],
+    )
+
+
+@pytest.fixture
+def legacy_record(sample_record: BriefingRecord) -> BriefingRecord:
+    """v2.1 이전 레코드 — sessionRecap이 없고 keyActors가 비어 있다.
+
+    실제 data/briefings/ 의 기존 레코드가 전부 이 형태다. 새 섹션이 부재를 허용하지 못하면
+    과거 아카이브 페이지가 통째로 깨지므로 렌더 경로 전체를 이 픽스처로 태운다.
+    """
+    structured = sample_record.structured.model_copy(deep=True)
+    structured.sessionRecap = None
+    structured.keyActors = []
+    return BriefingRecord(
+        id="2026-09-03-ko-e5f6a7",
+        date="2026-09-03",
+        lang="ko",
+        generatedAt="2026-09-03T07:00:00+09:00",
+        provider="claude_cli",
+        model="claude-sonnet-5",
+        headline="구버전 레코드 — 리캡·인물 필드 없음",
+        structured=structured,
+        market=sample_record.market,
+        topNews=sample_record.topNews[:2],
+    )
+
+
+@pytest.fixture
+def part8_record(sample_record: BriefingRecord) -> BriefingRecord:
+    """v2.1 번호(PART 8)로 포트폴리오 파트를 쓴 텍스트 폴백 레코드."""
+    return BriefingRecord(
+        id="2026-09-02-ko-f6a7b8",
+        date="2026-09-02",
+        lang="ko",
+        generatedAt="2026-09-02T07:00:00+09:00",
+        provider="openai",
+        model="gpt-fallback",
+        headline="PART 8 표기 폴백 레코드",
+        structured=None,
+        contentMarkdown=(
+            "## PART 6 — 트레이드 아이디어\n"
+            "- XLU 롱 84.0~84.5\n\n"
+            "## PART 8 — 포트폴리오 맞춤 조언\n"
+            f"{SECRET8} 는 절대 공개하지 말 것.\n"
+        ),
+        market=sample_record.market,
+        topNews=sample_record.topNews[:2],
     )
 
 
@@ -358,17 +408,95 @@ def test_part7_variants_never_reach_any_output_file(
     "## 第7部 — ポートフォリオ",
     "**Portfolio Advice**",
     "포트폴리오 맞춤 조언",
+    # v2.1 재번호 — 포트폴리오가 PART 8이 됐다
+    "## PART 8 — 포트폴리오 맞춤 조언",
+    "**PART 8 — Portfolio Advice**",
+    "PART 8 — 포트폴리오",
+    "## パート8 — ポートフォリオ",
+    "### 파트 8",
+    "## 第8部 — ポートフォリオ",
 ])
-def test_strip_part7_markdown_handles_marker_variants(marker):
+def test_strip_portfolio_markdown_handles_marker_variants(marker):
     text = f"## PART 6 — 대시보드\n- 항목\n\n{marker}\n{SECRET}\n"
-    stripped = builder.strip_part7_markdown(text)
+    stripped = builder.strip_portfolio_markdown(text)
     assert SECRET not in stripped
     assert "PART 6" in stripped
+    # 하위 호환 별칭도 같은 결과를 낸다
+    assert builder.strip_part7_markdown(text) == stripped
 
 
-def test_strip_part7_markdown_keeps_text_without_marker():
+def test_strip_portfolio_markdown_keeps_text_without_marker():
     text = "## PART 1 — 어젯밤\n본문\n\n## PART 6 — 대시보드\n- 항목\n"
-    assert builder.strip_part7_markdown(text) == text
+    assert builder.strip_portfolio_markdown(text) == text
+
+
+def test_part8_portfolio_heading_never_reaches_any_output_file(
+    tmp_path, part8_record, sample_record, candles
+):
+    """`## PART 8 — 포트폴리오 맞춤 조언` 아래 본문이 out_dir 어디에도 남지 않는다."""
+    result = builder.build(
+        [sample_record, part8_record],
+        sample_record.market,
+        None,
+        {"sp500_1d": candles},
+        out_dir=tmp_path / "site",
+        settings=make_settings(),
+    )
+    hits = [
+        path.relative_to(result.out_dir).as_posix()
+        for path in result.out_dir.rglob("*")
+        if path.is_file() and SECRET8 in path.read_text(encoding="utf-8", errors="ignore")
+    ]
+    assert hits == [], f"PART 8 비공개 내용이 유출된 파일: {hits}"
+
+    payload = json.loads(
+        (result.out_dir / "data" / "briefings" / f"{part8_record.id}.json")
+        .read_text(encoding="utf-8")
+    )
+    assert "PART 8" not in payload["contentMarkdown"]
+    assert "PART 6" in payload["contentMarkdown"]      # 앞선 공개 파트는 남는다
+
+
+@pytest.mark.parametrize("heading", [
+    "## PART 7 — 10초 마켓 대시보드",
+    "## PART 7 — 10-Second Dashboard",
+    "## パート7 — ダッシュボード",
+    "## 第7部 — 十秒仪表盘",
+])
+def test_public_part7_dashboard_survives_portfolio_stripping(heading):
+    """v2.1에서 PART 7은 공개 파트(대시보드)다 — 번호만 보고 잘라내면 안 된다.
+
+    포트폴리오 번호가 구계약 7 → v2.1 8로 바뀌어 정규식이 7·8을 모두 잡는다.
+    대시보드 제목이 확인되는 줄은 예외로 두어 공개 본문이 사라지지 않게 한다.
+    """
+    text = f"## PART 6 — 트레이드\n- 항목\n\n{heading}\n- S&P 500: 7,718\n"
+    stripped = builder.strip_portfolio_markdown(text)
+    assert "PART 6" in stripped
+    assert "7,718" in stripped, "공개 대시보드 본문이 잘렸다"
+
+
+def test_builder_delegates_portfolio_stripping_to_prompts_module():
+    """제거 규칙의 단일 정의처가 mbrief.llm.prompts 인지 고정한다."""
+    from mbrief.llm import prompts
+
+    assert callable(getattr(prompts, "strip_portfolio_section", None))
+    text = f"## PART 6 — 트레이드\n- 항목\n\n## PART 8 — 포트폴리오\n{SECRET8}\n"
+    assert builder.strip_portfolio_markdown(text) == prompts.strip_portfolio_section(text)
+
+
+def test_local_fallback_matches_the_shared_helper(monkeypatch):
+    """prompts import가 실패해도(폴백 경로) 같은 결과를 내야 한다."""
+    from mbrief.llm import prompts
+
+    samples = [
+        f"## PART 6 — 트레이드\n- 항목\n\n## PART 8 — 포트폴리오\n{SECRET8}\n",
+        f"## PART 7 — 10초 마켓 대시보드\n- S&P 500: 7,718\n\n**파트 8**\n{SECRET8}\n",
+        f"본문\n\n## 第8部 — ポートフォリオ\n{SECRET8}\n",
+        "## PART 1 — 리캡\n본문만 있는 경우\n",
+    ]
+    expected = [prompts.strip_portfolio_section(t) for t in samples]
+    monkeypatch.setattr(builder, "_prompts", None)
+    assert [builder.strip_portfolio_markdown(t) for t in samples] == expected
 
 
 def test_portfolio_note_is_published_when_the_flag_is_on(tmp_path, hostile_record, candles):
@@ -488,13 +616,105 @@ def test_invalid_chart_keys_are_skipped(tmp_path, sample_record, candles):
 
 
 def test_structured_parts_are_rendered_as_components(built):
+    """v2.1 계약: 공개 파트는 PART 1~7, PART 8(포트폴리오)은 공개되지 않는다."""
     html = (built.out_dir / "index.html").read_text(encoding="utf-8")
     for marker in (
-        "PART 1", "PART 2", "PART 3", "PART 4", "PART 5", "PART 6",
-        "dirbar-seg", "fg-gauge", "trade-card", "risk-card", "dash-row",
+        "PART 1", "PART 2", "PART 3", "PART 4", "PART 5", "PART 6", "PART 7",
+        "recap-item", "actor-card", "dirbar-seg", "fg-gauge",
+        "trade-card", "risk-card", "dash-row",
     ):
         assert marker in html, f"컴포넌트 누락: {marker}"
-    assert "PART 7" not in html
+    assert "PART 8" not in html
+
+
+def test_part_headings_are_numbered_one_through_seven_in_order(built):
+    """파트 번호가 뒤섞이거나 건너뛰지 않는지 (라벨 재번호 회귀 방지)."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    titles = re.findall(r'<h3 class="part-title">(PART \d+)[^<]*</h3>', html)
+    assert titles == [f"PART {n}" for n in range(1, 8)], titles
+
+
+def test_session_recap_renders_summary_and_every_driver(built, sample_record):
+    """PART 1 리캡: 요약 마크다운 + drivers 전부가 번호 행으로 나온다."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    recap = sample_record.structured.sessionRecap
+    assert "part--recap" in html
+    assert "PART 1 · 전날 시장 리캡" in html
+    assert "시장을 움직인 요인" in html                      # L.recapDrivers
+    assert "사흘 만에 반락 마감했다" in html                  # summary 본문
+    assert "<strong>7,718.60(-0.41%)</strong>" in html      # summary 가 md 필터를 통과했다
+    for driver in recap.drivers:
+        assert driver in html, f"누락된 driver: {driver}"
+    assert html.count('class="recap-item"') == len(recap.drivers)
+
+
+def test_key_actor_cards_render_name_role_impact_and_ticker_pills(built):
+    """PART 2 인물 카드: 이름·직함·영향 라인 + 티커 pill."""
+    html = (built.out_dir / "index.html").read_text(encoding="utf-8")
+    assert "시장을 움직인 인물" in html                       # L.partActors
+    assert html.count('class="actor-card"') == 2
+    for text in ("제롬 파월", "미국 연준(Fed) 의장", "젠슨 황", "NVIDIA CEO"):
+        assert text in html, f"누락된 인물 정보: {text}"
+    assert '<span class="actor-impact-label">영향</span>' in html
+    for ticker in ("TLT", "QQQ", "^TNX", "NVDA", "SMH"):
+        assert f">{ticker}</li>" in html, f"누락된 티커 pill: {ticker}"
+    # 시장 스냅샷 12심볼과 같은 대상을 가리키는 티커만 강조된다
+    assert 'class="actor-pill actor-pill--market">QQQ</li>' in html
+    assert 'class="actor-pill actor-pill--market">^TNX</li>' in html
+    assert 'class="actor-pill">NVDA</li>' in html
+    assert 'class="actor-pill">TLT</li>' in html
+
+
+def test_key_actor_names_are_escaped_not_injected(tmp_path, sample_record, candles):
+    """인물 필드도 LLM 출력이다 — 마크업이 그대로 실행되면 안 된다."""
+    record = sample_record.model_copy(deep=True)
+    actor = record.structured.keyActors[0]
+    actor.name = XSS
+    actor.assets = ['"><img src=x>']
+    result = builder.build(
+        [record], record.market, None, {"sp500_1d": candles},
+        out_dir=tmp_path / "site", settings=make_settings(),
+    )
+    html = (result.out_dir / "index.html").read_text(encoding="utf-8")
+    assert "<script>alert" not in html
+    assert "<img src=x" not in html
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in html
+
+
+def test_record_without_recap_or_actors_leaves_no_empty_section_markup(
+    tmp_path, legacy_record, candles, scorecard
+):
+    """구버전 레코드(sessionRecap=None, keyActors=[])도 모든 페이지가 정상 생성된다."""
+    result = builder.build(
+        [legacy_record], legacy_record.market, scorecard, {"sp500_1d": candles},
+        out_dir=tmp_path / "site", settings=make_settings(),
+    )
+    assert result.pages == 3          # index + archive/index + 레코드 1건
+    for relative in (
+        "index.html",
+        "archive/index.html",
+        f"archive/{legacy_record.id}.html",
+        "data/index.json",
+        "data/latest.json",
+        "feed.xml",
+    ):
+        assert (result.out_dir / relative).exists(), f"누락된 산출물: {relative}"
+
+    for path, html in read_rendered_pages(result.out_dir).items():
+        for leftover in (
+            "part--recap", "recap-summary", "recap-drivers", "recap-list", "recap-item",
+            "actors-wrap", "actors-title", "actor-card", "actor-pill",
+            "시장을 움직인 요인", "PART 1 ·", "data-l-actors",
+        ):
+            assert leftover not in html, f"빈 섹션 잔재: {path.name} → {leftover}"
+        for attr in ('href="/', "href='/", 'src="/', "src='/"):
+            assert attr not in html, f"루트 절대 경로 발견: {path.name} ({attr})"
+
+    # 나머지 파트는 그대로 남는다
+    html = (result.out_dir / "index.html").read_text(encoding="utf-8")
+    for marker in ("PART 2", "PART 3", "PART 4", "PART 5", "PART 6", "PART 7"):
+        assert marker in html, f"컴포넌트 누락: {marker}"
+    assert "PART 8" not in html
 
 
 def test_fallback_record_gets_probability_bars(built):
@@ -852,8 +1072,11 @@ def test_schema_validators_strip_xml_illegal_control_chars():
 # --------------------------------------------------
 # Security Checklist
 # Applied:
-#   - Improper Authorization: PART 7 비공개 메모가 전체 산출물에서 검색되지 않음을 강제
+#   - Improper Authorization: 비공개 포트폴리오 메모가 전체 산출물에서 검색되지 않음을 강제.
+#     구계약 표기(PART 7)와 v2.1 표기(PART 8)를 모두 검증하고, 제거 규칙의 단일 정의처가
+#     mbrief.llm.prompts.strip_portfolio_section 임을 고정한다 (폴백 경로도 동일 결과인지 대조)
 #   - XSS: 모든 HTML/피드에서 미이스케이프 스크립트 부재 및 인라인 스크립트 화이트리스트 검증.
+#     v2.1 신규 필드(keyActors의 이름·티커)에 마크업을 넣어도 이스케이프되는지 별도 검증
 #     CSP 메타(script-src에 'unsafe-inline' 없음)와 인라인 이벤트 핸들러 부재를 함께 강제
 #   - Code Download Without Integrity Check: CDN 스크립트의 SRI(integrity/crossorigin/referrerpolicy)와
 #     외부 스크립트 호스트가 CSP 허용 목록에 한정되는지 검증

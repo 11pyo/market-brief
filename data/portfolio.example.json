@@ -1,0 +1,38 @@
+{
+  "_comment": "이 파일을 data/portfolio.json 으로 복사한 뒤 실제 값으로 바꿔 쓴다. portfolio.json 은 .gitignore 로 커밋에서 제외되며, 여기 담긴 내용은 로컬 claude -p 경로에만 전달된다(외부 API 폴백으로는 절대 전송되지 않는다). 공개 사이트 노출 여부는 PUBLISH_PORTFOLIO_NOTE 로 따로 결정한다.",
+  "allocations": [
+    {
+      "name": "주식",
+      "percentage": 45,
+      "details": "S&P 500 지수 ETF(SPY/IVV) 중심의 코어. 개별 종목은 편입하지 않는다."
+    },
+    {
+      "name": "테크",
+      "percentage": 25,
+      "details": "NVDA, MSFT, AAPL 및 반도체 ETF(SMH). AI 사이클에 집중된 위성 포지션."
+    },
+    {
+      "name": "암호화폐",
+      "percentage": 15,
+      "details": "BTC 70% / ETH 30%. 현물 보유, 레버리지 없음."
+    },
+    {
+      "name": "현금",
+      "percentage": 15,
+      "details": "MMF와 단기 국채(SGOV). 조정 시 분할 매수 재원."
+    }
+  ],
+  "investmentStyle": "Growth",
+  "riskTolerance": "Medium-High",
+  "totalAssets": "약 1.2억원",
+  "watchlist": [
+    "NVDA",
+    "AVGO",
+    "SMH",
+    "XLU",
+    "TLT",
+    "GLD",
+    "BTC-USD",
+    "USD/KRW"
+  ]
+}

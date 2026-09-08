@@ -253,6 +253,27 @@ def test_portfolio_invalid_json_returns_none():
     assert store.load_portfolio() is None
 
 
+def test_portfolio_example_file_is_a_valid_template():
+    """data/portfolio.example.json 을 그대로 복사하면 바로 동작해야 한다 (커밋되는 템플릿)."""
+    from mbrief.paths import ROOT
+
+    example = ROOT / "data" / "portfolio.example.json"
+    assert example.is_file(), "예시 포트폴리오 파일이 없다"
+
+    paths.PORTFOLIO_JSON.write_text(example.read_text(encoding="utf-8"), encoding="utf-8")
+    loaded = store.load_portfolio()
+    assert loaded is not None
+    names = {a.name for a in loaded.allocations}
+    assert {"주식", "테크", "암호화폐", "현금"} <= names
+    assert sum(a.percentage for a in loaded.allocations) == 100
+    assert loaded.investmentStyle and loaded.riskTolerance and loaded.totalAssets
+    assert loaded.watchlist
+
+    text = store.format_portfolio_for_llm(loaded)
+    assert "Asset Allocation:" in text
+    assert "Watchlist:" in text
+
+
 # ===== v1 마이그레이션 =====
 _V1_RECORD = {
     "id": "a1b2c3d4",

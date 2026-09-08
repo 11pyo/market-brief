@@ -158,7 +158,7 @@ def _commit_message(message: str | None) -> str:
     return f"publish: {today_str()} {headline}".strip()
 
 
-def publish_site(
+def publish_github(
     site_dir: Path | None = None,
     *,
     remote: str | None = None,
@@ -167,7 +167,7 @@ def publish_site(
     message: str | None = None,
     force: bool = False,
 ) -> bool:
-    """site/ 내용을 대상 브랜치로 커밋·푸시한다. 성공하면 True."""
+    """site/ 내용을 대상 브랜치로 커밋·푸시한다 (GitHub Pages). 성공하면 True."""
     source = Path(site_dir) if site_dir is not None else paths.SITE_DIR
     if not source.is_dir():
         logger.error("[Publish] 빌드 결과가 없습니다: %s (먼저 build 실행)", source)
@@ -241,6 +241,156 @@ def publish_site(
         except OSError as e:
             logger.error("[Publish] 파일 작업 실패: %s", e)
             return False
+
+
+# ===== Cloudflare Pages =====
+# 정적 디렉터리를 그대로 업로드한다 (Direct Upload). 저장소가 필요 없으므로
+# 소스를 비공개로 두면서 사이트만 공개할 수 있다.
+_WRANGLER_TIMEOUT = 600
+_WRANGLER_SPEC = "wrangler@4"
+# [SECURE] Pages 프로젝트명 화이트리스트 - argv 주입 방지 (Category 1)
+_CF_PROJECT_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,53}$")
+# 토큰이 stdout/stderr에 섞여 로그로 새지 않도록 마스킹한다
+_CF_TOKEN_RE = re.compile(r"\b[A-Za-z0-9_-]{30,}\b")
+
+
+def resolve_cf_project(project: str | None = None) -> str:
+    """Cloudflare Pages 프로젝트명 확인."""
+    name = (project or settings.cloudflare_project or "").strip().lower()
+    if not name:
+        raise PublishError("CLOUDFLARE_PROJECT가 비어 있습니다 (.env에 Pages 프로젝트명을 설정하세요).")
+    if not _CF_PROJECT_RE.match(name):
+        raise PublishError("CLOUDFLARE_PROJECT 형식이 올바르지 않습니다 (소문자·숫자·하이픈, 54자 이내).")
+    return name
+
+
+def _cf_env() -> dict[str, str]:
+    """wrangler 자식 프로세스 환경. 토큰은 설정에 있을 때만 주입한다."""
+    env = dict(os.environ)
+    if settings.cloudflare_api_token.strip():
+        env["CLOUDFLARE_API_TOKEN"] = settings.cloudflare_api_token.strip()
+    if settings.cloudflare_account_id.strip():
+        env["CLOUDFLARE_ACCOUNT_ID"] = settings.cloudflare_account_id.strip()
+    env["NO_COLOR"] = "1"
+    env["WRANGLER_SEND_METRICS"] = "false"
+    return env
+
+
+def _mask(text: str) -> str:
+    """[SECURE] 긴 토큰 형태 문자열을 마스킹 후 로깅 (Category 2/4)."""
+    return _CF_TOKEN_RE.sub("***", text or "")
+
+
+def _run_wrangler(args: list[str], timeout: int = _WRANGLER_TIMEOUT) -> subprocess.CompletedProcess:
+    """[SECURE] shell=False + argv 리스트로 wrangler 실행 - OS Command Injection 방지 (Category 1)."""
+    argv = ["npx", "--yes", _WRANGLER_SPEC, *args]
+    try:
+        return subprocess.run(
+            argv, cwd=str(paths.ROOT), env=_cf_env(), capture_output=True,
+            text=True, encoding="utf-8", errors="replace", timeout=timeout, shell=False,
+        )
+    except FileNotFoundError as e:
+        raise PublishError("npx를 찾을 수 없습니다. Node.js를 설치하세요.") from e
+    except subprocess.TimeoutExpired as e:
+        raise PublishError(f"wrangler {args[0] if args else ''} 타임아웃({timeout}s)") from e
+
+
+def cf_whoami() -> tuple[bool, str]:
+    """Cloudflare 인증 여부. (인증됨, 메시지)."""
+    proc = _run_wrangler(["whoami"], timeout=120)
+    out = _mask(f"{proc.stdout}\n{proc.stderr}").strip()
+    if proc.returncode == 0 and "not authenticated" not in out.lower():
+        return True, out[-400:]
+    return False, out[-400:]
+
+
+def publish_cloudflare(
+    site_dir: Path | None = None,
+    *,
+    project: str | None = None,
+    dry_run: bool = False,
+) -> bool:
+    """site/를 Cloudflare Pages에 Direct Upload로 배포한다. 성공하면 True."""
+    source = Path(site_dir) if site_dir is not None else paths.SITE_DIR
+    if not source.is_dir():
+        logger.error("[Publish] 빌드 결과가 없습니다: %s (먼저 build 실행)", source)
+        return False
+
+    try:
+        name = resolve_cf_project(project)
+    except PublishError as e:
+        logger.error("[Publish] %s", e)
+        return False
+
+    authed, detail = cf_whoami()
+    if not authed:
+        logger.error(
+            "[Publish] Cloudflare 인증이 없습니다. `npx wrangler login`을 1회 실행하거나 "
+            ".env에 CLOUDFLARE_API_TOKEN/CLOUDFLARE_ACCOUNT_ID를 설정하세요. 상세: %s", detail,
+        )
+        return False
+
+    logger.info("[Publish] 대상 Cloudflare Pages 프로젝트: %s", name)
+    if dry_run:
+        logger.info("[Publish] dry-run - 업로드하지 않음 (인증 확인까지 완료)")
+        return True
+
+    deploy_args = [
+        "pages", "deploy", str(source),
+        "--project-name", name,
+        "--branch", "main",          # 프로덕션 브랜치로 업로드
+        "--commit-dirty=true",       # 소스 트리 상태와 무관하게 진행
+    ]
+    proc = _run_wrangler(deploy_args)
+    combined = _mask(f"{proc.stdout}\n{proc.stderr}")
+
+    # 프로젝트가 아직 없으면 1회 생성 후 재시도한다 (최초 배포 경로).
+    if proc.returncode != 0 and "not found" in combined.lower():
+        logger.info("[Publish] 프로젝트가 없어 새로 생성합니다: %s", name)
+        created = _run_wrangler(
+            ["pages", "project", "create", name, "--production-branch", "main"], timeout=180,
+        )
+        if created.returncode != 0:
+            logger.error("[Publish] 프로젝트 생성 실패: %s", _mask(created.stderr)[-400:])
+            return False
+        proc = _run_wrangler(deploy_args)
+        combined = _mask(f"{proc.stdout}\n{proc.stderr}")
+
+    if proc.returncode != 0:
+        logger.error("[Publish] Cloudflare 배포 실패: %s", combined[-600:])
+        return False
+
+    for line in combined.splitlines():
+        if "https://" in line:
+            logger.info("[Publish] %s", line.strip())
+    logger.info("[Publish] Cloudflare Pages 배포 완료: %s", name)
+    return True
+
+
+def publish_site(
+    site_dir: Path | None = None,
+    *,
+    remote: str | None = None,
+    branch: str | None = None,
+    dry_run: bool = False,
+    message: str | None = None,
+    force: bool = False,
+    target: str | None = None,
+) -> bool:
+    """설정된 배포 대상으로 site/를 게시한다.
+
+    PUBLISH_TARGET=github    → gh-pages 브랜치 푸시 (기본)
+    PUBLISH_TARGET=cloudflare → Cloudflare Pages Direct Upload
+    """
+    chosen = (target or settings.publish_target or "github").strip().lower()
+    if chosen == "cloudflare":
+        return publish_cloudflare(site_dir, dry_run=dry_run)
+    if chosen != "github":
+        logger.error("[Publish] 알 수 없는 PUBLISH_TARGET: %r (github 또는 cloudflare)", chosen[:20])
+        return False
+    return publish_github(
+        site_dir, remote=remote, branch=branch, dry_run=dry_run, message=message, force=force,
+    )
 
 
 # --------------------------------------------------

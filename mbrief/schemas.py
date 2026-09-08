@@ -124,17 +124,38 @@ class DashboardItem(BaseModel):
     comment: str = ""
 
 
+class SessionRecap(BaseModel):
+    """전날(직전 정규장) 세션 리캡 — 무엇이 얼마나 움직였고, 무엇이 그것을 몰았는가."""
+    summary: str = ""                               # 2~4문장. 지수 마감 + 주도 흐름 (마크다운)
+    drivers: list[str] = Field(default_factory=list)  # 전날 움직임을 만든 요인 3~5개 (한 줄씩, 수치 포함)
+
+
+class KeyActor(BaseModel):
+    """시장을 움직인 인물의 행보 — 정책결정자·정치 지도자·거물 경영자."""
+    name: str                                       # 실명 (예: "제롬 파월", "젠슨 황")
+    role: str = ""                                  # 직함/소속 (예: "Fed 의장", "NVIDIA CEO")
+    action: str = ""                                # 무엇을 했는가 (발언·결정·발표), 수치·시점 포함
+    impact: str = ""                                # 시장에 미친 영향
+    assets: list[str] = Field(default_factory=list)  # 영향받은 자산·티커 (예: ["NVDA", "SMH"])
+
+
 class StructuredBriefing(BaseModel):
-    """`claude -p --json-schema`로 받는 본문. 각 문자열 필드는 마크다운 허용(굵게·목록 정도)."""
+    """LLM 구조화 출력 본문 (claude -p --json-schema, OpenAI/Gemini JSON 스키마 공통).
+
+    각 문자열 필드는 마크다운 허용(굵게·목록 정도). sessionRecap/keyActors는 v2.1에서 추가된
+    필드라 이전 레코드에는 없다 — 렌더 측은 항상 부재를 허용해야 한다.
+    """
     headline: str                                   # 한 줄 헤드라인 (구체적 사건·수치, <= 90자)
-    overnight: str                                  # PART 1: 어젯밤 핵심 이벤트 & 시장 충격 분석 (마크다운)
-    direction: Direction                            # PART 2: 방향성 확률 + 근거
-    sectorLeaders: list[SectorCall] = Field(default_factory=list)   # PART 3: 주도 섹터 (3)
-    sectorLaggards: list[SectorCall] = Field(default_factory=list)  # PART 3: 약세 섹터 (2)
-    risks: list[Risk] = Field(default_factory=list)                 # PART 4: 핵심 리스크 (3~5)
-    trades: list[TradeIdea] = Field(default_factory=list)           # PART 5: 트레이드 아이디어 (2~4)
-    dashboard: list[DashboardItem] = Field(default_factory=list)    # PART 6: 10초 마켓 대시보드 (6~10)
-    portfolioNote: Optional[str] = None             # PART 7: 소유자 포트폴리오 맞춤 조언 (선택, 기본 비공개)
+    sessionRecap: Optional[SessionRecap] = None     # PART 1: 전날 세션 리캡 (구버전 레코드 호환을 위해 선택)
+    overnight: str                                  # PART 2: 밤사이 이벤트 (지정학·정책·실적) 마크다운
+    keyActors: list[KeyActor] = Field(default_factory=list)         # PART 2: 시장을 움직인 인물 (0~5)
+    direction: Direction                            # PART 3: 방향성 확률 + 근거
+    sectorLeaders: list[SectorCall] = Field(default_factory=list)   # PART 4: 주도 섹터 (3)
+    sectorLaggards: list[SectorCall] = Field(default_factory=list)  # PART 4: 약세 섹터 (2)
+    risks: list[Risk] = Field(default_factory=list)                 # PART 5: 핵심 리스크 (3~5)
+    trades: list[TradeIdea] = Field(default_factory=list)           # PART 6: 트레이드 아이디어 (2~4)
+    dashboard: list[DashboardItem] = Field(default_factory=list)    # PART 7: 10초 마켓 대시보드 (6~10)
+    portfolioNote: Optional[str] = None             # PART 8: 소유자 포트폴리오 맞춤 조언 (선택, 기본 비공개)
 
     @field_validator("headline")
     @classmethod

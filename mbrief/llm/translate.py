@@ -1,7 +1,8 @@
 """추가 언어 번역 패스.
 
 원문(기본 언어) StructuredBriefing을 그대로 유지한 채 문자열 필드만 번역한다.
-분석을 다시 하지 않으므로 저렴한 모델(settings.claude_cli_translate_model, 기본 haiku)을 쓴다.
+분석을 다시 하지 않으므로 생성보다 가벼운 모델을 쓰되, 최소 모델 정책에 따라 sonnet 이상만 쓴다
+(settings.claude_cli_translate_model, 기본 sonnet).
 실패하면 None을 반환하고 상위(pipeline)가 해당 언어를 건너뛴다.
 """
 from __future__ import annotations

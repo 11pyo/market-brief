@@ -359,8 +359,9 @@ def format_for_llm(news_items: list[dict]) -> str:
         text += "⚡ BREAKING: HIGH-IMPACT OVERNIGHT DEVELOPMENTS (last 12h)\n"
         text += (
             "*** CRITICAL INSTRUCTION TO LLM ***\n"
-            "These are the most important recent events. PART 1 MUST open by naming the specific person/company "
-            "and their exact action. Do NOT write vague summaries. Prioritize ANY presidential announcement, "
+            "These are the most important recent events. PART 2 (overnight) MUST open by naming the specific "
+            "person/company and their exact action, and the same people belong in keyActors. "
+            "Do NOT write vague summaries. Prioritize ANY presidential announcement, "
             "major company earnings/product launch, or Fed statement listed here.\n"
             "Each line is tagged with its source tier — T1=official primary source, T2=verified newswire, "
             "T3=realtime wire (fast but unconfirmed).\n\n"

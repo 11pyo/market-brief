@@ -1,0 +1,23 @@
+{#- empty.html — 아직 브리핑 레코드가 하나도 없을 때의 index.html. -#}
+{% extends "base.html" %}
+
+{% block page_title %}{{ site_title or site_name }}{% endblock %}
+
+{% block main %}
+<div class="empty-hero">
+  <div class="empty-mark" aria-hidden="true">
+    <svg width="64" height="64" viewBox="0 0 28 28" fill="none">
+      <rect x="2" y="18" width="4" height="8" rx="1" fill="#4f46e5" opacity="0.5"/>
+      <rect x="8" y="12" width="4" height="14" rx="1" fill="#6366f1" opacity="0.6"/>
+      <rect x="14" y="6" width="4" height="20" rx="1" fill="#818cf8" opacity="0.75"/>
+      <rect x="20" y="2" width="4" height="24" rx="1" fill="#a5b4fc"/>
+    </svg>
+  </div>
+  <h1 class="empty-title">{{ L.emptyTitle }}</h1>
+  <p class="empty-desc">{{ L.emptyDesc }}</p>
+  <p class="empty-links">
+    <a class="btn btn--primary" href="{{ base }}archive/index.html">{{ L.navArchive }}</a>
+    <a class="btn" href="{{ base }}feed.xml">{{ L.navRss }}</a>
+  </p>
+</div>
+{% endblock %}

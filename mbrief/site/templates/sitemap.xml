@@ -1,0 +1,13 @@
+{#- sitemap.xml — site_url이 설정된 경우에만 생성된다 (절대 URL이 필수이므로). -#}
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{% for u in urls %}
+  <url>
+    <loc>{{ u.loc }}</loc>
+{% if u.lastmod %}
+    <lastmod>{{ u.lastmod }}</lastmod>
+{% endif %}
+    <priority>{{ u.priority }}</priority>
+  </url>
+{% endfor %}
+</urlset>

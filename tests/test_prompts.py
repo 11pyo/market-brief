@@ -9,8 +9,10 @@ from mbrief.llm import prompts
 from mbrief.schemas import (
     DashboardItem,
     Direction,
+    KeyActor,
     Risk,
     SectorCall,
+    SessionRecap,
     StructuredBriefing,
     TradeIdea,
 )
@@ -76,6 +78,37 @@ def test_schema_enums_and_counts():
     assert props["portfolioNote"]["type"] == ["string", "null"]
 
 
+def test_schema_has_session_recap_and_key_actors():
+    """v2.1 계약: PART 1(전날 리캡)과 PART 2(핵심 인물)가 구조화 스키마에 있어야 한다."""
+    props = prompts.STRUCTURED_JSON_SCHEMA["properties"]
+
+    recap = props["sessionRecap"]
+    assert recap["type"] == "object"
+    assert set(recap["properties"]) == set(SessionRecap.model_fields)
+    assert recap["properties"]["summary"]["type"] == "string"
+    drivers = recap["properties"]["drivers"]
+    assert (drivers["minItems"], drivers["maxItems"]) == (3, 5)
+    assert drivers["items"]["type"] == "string"
+
+    actors = props["keyActors"]
+    assert actors["type"] == "array"
+    assert (actors["minItems"], actors["maxItems"]) == (0, 5)
+    assert set(actors["items"]["properties"]) == set(KeyActor.model_fields)
+    assert actors["items"]["properties"]["assets"]["items"]["type"] == "string"
+
+
+def test_schema_required_lists_every_field():
+    schema = prompts.STRUCTURED_JSON_SCHEMA
+    assert set(schema["required"]) == set(schema["properties"])
+
+
+def test_schema_field_order_matches_the_model():
+    """스키마 프로퍼티 순서를 pydantic 모델 순서와 맞춰 둔다 (모델이 파트 순서를 정의한다)."""
+    assert list(prompts.STRUCTURED_JSON_SCHEMA["properties"]) == list(
+        StructuredBriefing.model_fields
+    )
+
+
 def test_schema_prices_are_strings():
     trade_props = prompts.STRUCTURED_JSON_SCHEMA["properties"]["trades"]["items"]["properties"]
     for key in ("entry", "target", "stop", "rr"):
@@ -105,7 +138,7 @@ def test_schema_validates_the_real_fixture(fixture_json):
 def test_lang_names_and_part_titles_cover_same_languages():
     assert set(prompts.LANG_NAMES) == set(prompts.PART_TITLES) == set(prompts.LABELS)
     for lang, titles in prompts.PART_TITLES.items():
-        assert len(titles) == 7, lang
+        assert len(titles) == prompts.PART_COUNT, lang
 
 
 def test_build_user_prompt_mentions_language_and_json():
@@ -126,29 +159,29 @@ def test_build_user_prompt_with_portfolio():
 def test_build_text_prompt_has_framework():
     prompt = prompts.build_text_prompt("NEWS", "MARKET", "", "ko")
     assert "PART 1 —" in prompt
-    assert "PART 6 —" in prompt
+    assert "PART 7 —" in prompt
     assert "DO NOT generate an Expert Panel" in prompt
 
 
-def test_build_text_prompt_omits_part7_by_default():
-    """[SECURE] 포트폴리오가 있어도 include_portfolio=False면 PART 7을 요청하지 않는다."""
+def test_build_text_prompt_omits_part8_by_default():
+    """[SECURE] 포트폴리오가 있어도 include_portfolio=False면 PART 8을 요청하지 않는다."""
     prompt = prompts.build_text_prompt("NEWS", "MARKET", "60% equities", "ko")
     assert "60% equities" not in prompt
     assert "USER PORTFOLIO" not in prompt
-    assert 'Include this as "PART 7' not in prompt
+    assert 'Include this as "PART 8' not in prompt
 
 
-def test_build_text_prompt_includes_part7_when_allowed():
+def test_build_text_prompt_includes_part8_when_allowed():
     prompt = prompts.build_text_prompt("NEWS", "MARKET", "60% equities", "ko", True)
     assert "60% equities" in prompt
     assert "USER PORTFOLIO" in prompt
-    assert 'Include this as "PART 7' in prompt
+    assert 'Include this as "PART 8' in prompt
 
 
-def test_build_text_prompt_without_portfolio_never_asks_for_part7():
+def test_build_text_prompt_without_portfolio_never_asks_for_part8():
     prompt = prompts.build_text_prompt("NEWS", "MARKET", "", "ko", True)
     assert "USER PORTFOLIO" not in prompt
-    assert 'Include this as "PART 7' not in prompt
+    assert 'Include this as "PART 8' not in prompt
 
 
 def test_unknown_lang_falls_back_to_default():
@@ -195,7 +228,7 @@ def _sample(fixture_json) -> StructuredBriefing:
 
 def test_render_markdown_contains_all_part_headers(fixture_json):
     md = prompts.render_markdown(_sample(fixture_json), "ko", include_portfolio=False)
-    for index in range(1, 7):
+    for index in range(1, prompts.PART_COUNT):
         assert f"## PART {index} — {prompts.PART_TITLES['ko'][index - 1]}" in md
 
 
@@ -232,7 +265,7 @@ def test_render_markdown_hides_portfolio_by_default():
     assert "비공개 조언" not in prompts.render_markdown(structured, "ko", include_portfolio=False)
     shown = prompts.render_markdown(structured, "ko", include_portfolio=True)
     assert "비공개 조언" in shown
-    assert "## PART 7 —" in shown
+    assert "## PART 8 —" in shown
 
 
 @pytest.mark.parametrize("lang", ["ko", "en", "zh", "ja"])
@@ -240,6 +273,103 @@ def test_render_markdown_all_languages(fixture_json, lang):
     md = prompts.render_markdown(_sample(fixture_json), lang)
     assert f"## PART 1 — {prompts.PART_TITLES[lang][0]}" in md
     assert md.endswith("\n")
+
+
+# ===== 새 파트: 전날 리캡 · 핵심 인물 =====
+def test_render_markdown_session_recap(fixture_json):
+    structured = _sample(fixture_json)
+    md = prompts.render_markdown(structured, "ko")
+    recap = structured.sessionRecap
+    assert recap is not None
+    assert recap.summary in md
+    for driver in recap.drivers:
+        assert f"- {driver}" in md
+    # PART 1은 PART 2보다 먼저 나온다
+    assert md.index("## PART 1 —") < md.index("## PART 2 —")
+
+
+def test_render_markdown_key_actors(fixture_json):
+    structured = _sample(fixture_json)
+    md = prompts.render_markdown(structured, "ko")
+    actor = structured.keyActors[0]
+    assert f"**{actor.name}** ({actor.role}) — {actor.action}" in md
+    assert f"영향: {actor.impact}" in md
+    assert "`NVDA`" in md
+    # 인물 블록은 PART 2 안에 있다 (PART 3 앞)
+    assert md.index(actor.name) < md.index("## PART 3 —")
+
+
+def test_render_markdown_tolerates_legacy_records_without_new_fields():
+    """구버전 레코드(sessionRecap/keyActors 없음)도 렌더할 수 있어야 한다."""
+    structured = StructuredBriefing(
+        headline="h", overnight="간밤 본문",
+        direction=Direction(up=40, flat=30, down=30),
+    )
+    md = prompts.render_markdown(structured, "ko")
+    assert "## PART 1 —" not in md        # 데이터가 없으면 빈 파트를 만들지 않는다
+    assert "## PART 2 — 밤사이 이벤트 & 핵심 인물" in md
+    assert "## PART 7 — 10초 마켓 대시보드" in md
+
+
+def test_part_titles_are_eight_parts_in_contract_order():
+    assert prompts.PART_TITLES["ko"][0] == "전날 시장 리캡"
+    assert prompts.PART_TITLES["ko"][6] == "10초 마켓 대시보드"
+    assert prompts.PART_TITLES["ko"][prompts.PORTFOLIO_PART - 1] == "포트폴리오 맞춤 조언"
+    for lang in ("ko", "en", "zh", "ja"):
+        assert len(prompts.PART_TITLES[lang]) == prompts.PART_COUNT == 8
+        assert len(set(prompts.PART_TITLES[lang])) == 8   # 번역 누락으로 중복되지 않는다
+
+
+# ===== 비공개 파트 제거 (사이트 빌더와 공유하는 단일 규칙) =====
+@pytest.mark.parametrize("marker", [
+    "## PART 8 — 포트폴리오 맞춤 조언",
+    "**PART 7 — portfolio**",
+    "## パート8",
+    "### 파트 8",
+    "## 第8部 — ポートフォリオ",
+    "**Portfolio Advice**",
+    "포트폴리오 맞춤 조언",
+])
+def test_strip_portfolio_section_cuts_from_the_marker(marker):
+    secret = "SECRET-HOLDINGS"
+    text = f"## PART 7 — 10초 마켓 대시보드\n- S&P 500: 7,718\n\n{marker}\n{secret}\n"
+    stripped = prompts.strip_portfolio_section(text)
+    assert secret not in stripped
+    assert "PART 7 — 10초 마켓 대시보드" in stripped   # 대시보드는 살아남는다
+
+
+def test_strip_portfolio_section_keeps_text_without_a_portfolio_part():
+    text = (
+        "## PART 1 — 전날 시장 리캡\n본문\n\n"
+        "## PART 6 — 트레이드 아이디어\n- 항목\n"
+    )
+    assert prompts.strip_portfolio_section(text) == text
+
+
+def test_strip_portfolio_section_keeps_the_dashboard_part():
+    """회귀: PART 7은 이제 대시보드다. 정규식이 7을 포함해도 잘리면 안 된다."""
+    for title in ("10초 마켓 대시보드", "10-Second Market Dashboard",
+                  "10秒市场仪表盘", "10秒マーケットダッシュボード"):
+        text = f"## PART 7 — {title}\n- S&P 500: 7,718\n"
+        assert prompts.strip_portfolio_section(text) == text
+
+
+def test_strip_portfolio_section_handles_empty_input():
+    assert prompts.strip_portfolio_section("") == ""
+    assert prompts.strip_portfolio_section("## PART 8 — 포트폴리오 맞춤 조언\n비공개\n") == ""
+
+
+def test_render_markdown_public_output_survives_the_stripper(fixture_json):
+    """공개 렌더(PART 1~7)는 strip_portfolio_section을 통과해도 그대로 남는다."""
+    structured = _sample(fixture_json)
+    structured.portfolioNote = "비공개 조언 SECRET"
+    public = prompts.render_markdown(structured, "ko", include_portfolio=False)
+    assert prompts.strip_portfolio_section(public) == public
+    assert "SECRET" not in public
+
+    private = prompts.render_markdown(structured, "ko", include_portfolio=True)
+    assert "SECRET" in private
+    assert "SECRET" not in prompts.strip_portfolio_section(private)
 
 
 # --------------------------------------------------

@@ -25,11 +25,13 @@ class Settings(BaseSettings):
     # ===== LLM: Claude Code CLI (1순위) =====
     claude_cli_enabled: bool = True
     claude_cli_path: str = ""                 # 비우면 PATH에서 claude 자동 탐색
-    claude_cli_model: str = "sonnet"          # sonnet | opus | haiku | claude-... 전체 모델 ID
-    claude_cli_fallback_model: str = "haiku"  # 과부하 시 CLI 자체 폴백(--fallback-model). 비우면 미사용
+    # 정책: Claude 호출은 sonnet 이상만 쓴다. haiku는 허용 목록에서 제외되어 sonnet으로 강등된다
+    # (mbrief/llm/claude_cli.py의 _ALLOWED_MODEL_ALIASES).
+    claude_cli_model: str = "sonnet"          # sonnet | opus | fable | claude-... 전체 모델 ID
+    claude_cli_fallback_model: str = "opus"   # 과부하 시 CLI 자체 폴백(--fallback-model). 비우면 미사용
     claude_cli_timeout_sec: int = 720         # 1회 호출 상한 (구조화 출력 한국어 브리핑 실측 4~7분)
     claude_cli_retries: int = 1               # 실패 시 재시도 횟수 (인증 실패는 재시도하지 않음)
-    claude_cli_translate_model: str = "haiku" # 추가 언어 번역 패스용 모델
+    claude_cli_translate_model: str = "sonnet"  # 추가 언어 번역 패스용 모델 (최소 sonnet)
 
     # ===== LLM: API 폴백 (선택) =====
     # 로컬 CLI 실패 시 시도 순서. 키가 없는 프로바이더는 자동 제외, 빈 문자열이면 폴백 없음.
@@ -46,7 +48,7 @@ class Settings(BaseSettings):
     briefing_langs: str = "ko"                # 쉼표 구분. 첫 언어로 분석 생성, 나머지는 번역 패스 (예: "ko,en")
     briefing_days: str = "mon,tue,wed,thu,fri,sat"  # daily 명령이 실행되는 요일 (일요일 기본 제외)
     max_briefings_on_site: int = 60           # 정적 사이트에 포함할 최근 브리핑 수 (data/briefings/는 전부 보관)
-    publish_portfolio_note: bool = False      # PART 7(소유자 포트폴리오 조언)을 공개 사이트에 포함할지
+    publish_portfolio_note: bool = False      # PART 8(소유자 포트폴리오 조언)을 공개 사이트에 포함할지
     tz: str = "Asia/Seoul"
 
     # ===== 정적 사이트 =====
@@ -57,6 +59,12 @@ class Settings(BaseSettings):
     github_repo_url: str = "https://github.com/11pyo/market-brief-ai"
 
     # ===== 배포 (gh-pages) =====
+    # github     = gh-pages 브랜치로 푸시 (무료 플랜은 공개 저장소 필요)
+    # cloudflare = Cloudflare Pages Direct Upload (저장소 불필요, 소스 비공개 유지 가능)
+    publish_target: str = "github"
+    cloudflare_project: str = ""      # Pages 프로젝트명 (소문자·숫자·하이픈)
+    cloudflare_api_token: str = ""    # 무인 실행용. 비우면 `wrangler login` 세션을 사용한다
+    cloudflare_account_id: str = ""
     publish_enabled: bool = True
     publish_remote: str = "origin"            # 리모트 이름 또는 저장소 URL. 비공개 저장소는 GitHub Pages 불가 → 공개 저장소 URL 지정
     publish_branch: str = "gh-pages"

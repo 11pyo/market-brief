@@ -1,0 +1,181 @@
+{#-
+  base.html — 모든 페이지의 골격.
+
+  경로 규칙: 링크·자산은 반드시 `{{ base }}` 접두사를 쓴다 ("./" 또는 "../").
+  GitHub 프로젝트 페이지는 `/<repo>/` 하위에 서빙되므로 "/css/..." 같은 루트 절대 경로는 깨진다.
+
+  블록: page_title / meta_extra / main / scripts
+-#}
+<!doctype html>
+<html lang="{{ html_lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+{#-
+  [SECURE] Content Security Policy - XSS·서드파티 코드 주입 차단 (Category 1: XSS)
+  정적 호스팅(GitHub Pages)이라 응답 헤더를 넣을 수 없으므로 meta로 선언한다.
+  - script-src에 'unsafe-inline'이 없다: 인라인 실행 스크립트가 하나도 없어야 동작한다.
+    (JSON-LD의 type="application/ld+json"은 실행 스크립트가 아니라 데이터 블록이라 영향 없음)
+    서비스워커 등록·테마 처리 등 모든 실행 코드는 web/js/app.js 한 곳에 있다.
+  - script-src의 cdn.jsdelivr.net은 차트 라이브러리용이며 해당 태그는 SRI로 고정돼 있다.
+  - style-src의 'unsafe-inline'은 빌더가 생성하는 인라인 style(확률 바 너비 등) 때문에 필요하다.
+    삽입값은 builder에서 정규식 검증(_safe_color / 정수 %)을 거친다.
+  - frame-ancestors는 meta CSP에서 무시된다(헤더 전용). 헤더를 넣을 수 있는 호스팅으로 옮길 때를
+    대비해 선언만 유지한다 — 현재는 클릭재킹 방어로 신뢰하면 안 된다.
+-#}
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'">
+<title>{% block page_title %}{{ site_title or site_name }}{% endblock %}</title>
+<meta name="description" content="{% block page_description %}{{ site_description }}{% endblock %}">
+<meta name="author" content="{{ site_name }}">
+<meta name="robots" content="index, follow">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#6366f1">
+{% if site_url %}
+<link rel="canonical" href="{{ site_url }}/{{ canonical_path }}">
+{% endif %}
+
+{# ===== Open Graph / Twitter ===== #}
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:site_name" content="{{ site_name }}">
+<meta property="og:title" content="{{ self.page_title() }}">
+<meta property="og:description" content="{{ self.page_description() }}">
+<meta property="og:locale" content="{{ og_locale }}">
+{% if site_url %}
+<meta property="og:url" content="{{ site_url }}/{{ canonical_path }}">
+<meta property="og:image" content="{{ site_url }}/icons/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+{% endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ self.page_title() }}">
+<meta name="twitter:description" content="{{ self.page_description() }}">
+{% if site_url %}
+<meta name="twitter:image" content="{{ site_url }}/icons/og-image.png">
+{% endif %}
+<meta name="msvalidate.01" content="BF2602034EBCA1A253B7019A8222C6FF">
+
+{# ===== hreflang: 같은 날짜의 다른 언어 레코드 (절대 URL이 필요하므로 site_url이 있을 때만) ===== #}
+{% if site_url and lang_links %}
+{% for link in lang_links %}
+<link rel="alternate" hreflang="{{ link.lang }}" href="{{ site_url }}/{{ link.canonical_path }}">
+{% endfor %}
+<link rel="alternate" hreflang="x-default" href="{{ site_url }}/">
+{% endif %}
+{% if site_url %}
+<link rel="alternate" type="application/rss+xml" title="{{ site_name }} RSS" href="{{ site_url }}/feed.xml">
+{% else %}
+<link rel="alternate" type="application/rss+xml" title="{{ site_name }} RSS" href="{{ base }}feed.xml">
+{% endif %}
+
+{# ===== JSON-LD (Jinja |tojson 은 <, >, & 를 유니코드 이스케이프하므로 script 컨텍스트에서 안전) ===== #}
+{% block jsonld %}
+<script type="application/ld+json">{{ {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": site_name,
+  "alternateName": "Market Brief AI",
+  "description": site_description,
+  "inLanguage": ["ko", "en", "zh", "ja"],
+  "url": (site_url ~ "/") if site_url else "",
+  "isAccessibleForFree": true
+} | tojson }}</script>
+{% endblock %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="{{ base }}css/style.css?v={{ build_id }}">
+<link rel="manifest" href="{{ base }}manifest.json">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ base }}icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ base }}icons/favicon-16.png">
+<link rel="apple-touch-icon" href="{{ base }}icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="{{ site_name }}">
+{% block meta_extra %}{% endblock %}
+</head>
+
+<body data-base="{{ base }}" data-lang="{{ lang }}"
+      data-l-share-copied="{{ L.shareCopied }}" data-l-chart-loading="{{ L.chartLoading }}"
+      data-l-chart-empty="{{ L.chartNoData }}" data-l-chart-error="{{ L.chartError }}"
+      data-l-sw-updated="{{ L.swUpdated }}" data-l-watch-none="{{ L.watchNone }}"
+      data-l-watch-count="{{ L.watchCount }}">
+
+<a class="skip-link" href="#main">{{ L.skipToContent }}</a>
+
+<nav class="top-nav" aria-label="{{ site_name }}">
+  <a class="nav-brand" href="{{ base }}index.html">
+    <span class="brand-icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+        <rect x="2" y="18" width="4" height="8" rx="1" fill="#4f46e5"/>
+        <rect x="8" y="12" width="4" height="14" rx="1" fill="#6366f1"/>
+        <rect x="14" y="6" width="4" height="20" rx="1" fill="#818cf8"/>
+        <rect x="20" y="2" width="4" height="24" rx="1" fill="#a5b4fc"/>
+      </svg>
+    </span>
+    <span class="brand-text">
+      <span class="brand-title">{{ L.brandTitle }}</span>
+      <span class="brand-subtitle">{{ L.brandSubtitle }}</span>
+    </span>
+  </a>
+
+  <div class="nav-links">
+    <a href="{{ base }}index.html" {% if page == 'index' %}aria-current="page"{% endif %}>{{ L.navHome }}</a>
+    <a href="{{ base }}archive/index.html" {% if page == 'archive' %}aria-current="page"{% endif %}>{{ L.navArchive }}</a>
+    <a href="{{ base }}feed.xml">{{ L.navRss }}</a>
+    {% if github_repo_url %}
+    <a href="{{ github_repo_url }}" target="_blank" rel="noopener noreferrer">{{ L.navGithub }}</a>
+    {% endif %}
+  </div>
+
+  <div class="nav-actions">
+    {% if lang_links | length > 1 %}
+    <div class="lang-switcher" role="group" aria-label="{{ L.navLangLabel }}">
+      {% for link in lang_links %}
+      <a class="lang-btn{{ ' is-active' if link.active }}" href="{{ link.href }}" hreflang="{{ link.lang }}"
+         {% if link.active %}aria-current="true"{% endif %}>{{ link.label }}</a>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="cur-switch" role="group" aria-label="{{ L.navCurrencyLabel }}">
+      <button type="button" class="cur-btn is-active" data-currency="USD" aria-pressed="true">USD</button>
+      <button type="button" class="cur-btn" data-currency="KRW" aria-pressed="false">KRW</button>
+    </div>
+  </div>
+</nav>
+
+<div class="pwa-hint" id="pwa-hint" hidden>
+  <span class="pwa-hint-icon" aria-hidden="true">📱</span>
+  <span class="pwa-hint-text">{{ L.pwaHint }}</span>
+  <button type="button" class="pwa-hint-close" id="pwa-hint-close" aria-label="{{ L.pwaDismiss }}">✕</button>
+</div>
+
+<main class="main" id="main">
+{% block main %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+  <p class="footer-disclaimer"><strong>{{ L.disclaimerTitle }}</strong> — {{ L.disclaimerShort }}</p>
+  <p class="footer-long">{{ L.disclaimerBody }}</p>
+  <p class="footer-meta">
+    <span>{{ L.footerSources }}</span>
+    <span class="footer-dot" aria-hidden="true">·</span>
+    <span>{{ L.footerGenerated }}</span>
+    <span class="footer-dot" aria-hidden="true">·</span>
+    <span>{{ L.footerBuild }}: <time datetime="{{ build_time_iso }}">{{ build_time_text }}</time></span>
+  </p>
+  <p class="footer-links">
+    <a href="{{ base }}index.html">{{ L.navHome }}</a>
+    <a href="{{ base }}archive/index.html">{{ L.navArchive }}</a>
+    <a href="{{ base }}feed.xml">{{ L.navRss }}</a>
+    {% if github_repo_url %}<a href="{{ github_repo_url }}" target="_blank" rel="noopener noreferrer">{{ L.navGithub }}</a>{% endif %}
+  </p>
+</footer>
+
+<div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
+
+{% block scripts %}{% endblock %}
+<script src="{{ base }}js/app.js?v={{ build_id }}" defer></script>
+</body>
+</html>

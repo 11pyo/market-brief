@@ -10,7 +10,9 @@ server.log
 logs/
 
 # 빌드 결과 (gh-pages 브랜치로 배포되므로 master에는 두지 않는다)
-site/
+# 반드시 선행 슬래시를 붙인다: `site/` 는 하위 경로의 같은 이름 디렉터리(mbrief/site/ = 사이트 빌더
+# 패키지)까지 제외해 버려, 새로 clone 하면 build 명령이 ImportError 로 죽는다.
+/site/
 
 # 런타임 데이터
 # 시세·차트 스냅샷 (재생성 가능)
@@ -19,6 +21,8 @@ data/cache/
 data/briefings/
 # 소유자 포트폴리오 (비공개)
 data/portfolio.json
+# 예시 파일은 실제 보유 내역이 아니므로 커밋한다 (복사해서 쓰는 템플릿)
+!data/portfolio.example.json
 data/scorecard.json
 data/.daily.lock
 data/stats.json

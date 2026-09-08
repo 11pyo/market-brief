@@ -5,11 +5,12 @@
      씌우면 CLI 자체 타임아웃(claude_cli_timeout_sec)보다 먼저 취소되어 재시도가 실행되지 않고
      불필요하게 API 폴백(Gemini 등)으로 떨어진다.
   2. API 폴백 구간에는 여전히 바깥 타임아웃이 적용된다.
-  3. 엔진은 마크다운을 렌더하지 않는다 (PART 7 공개 판단을 pipeline 한 곳으로 모으기 위함).
+  3. 엔진은 마크다운을 렌더하지 않는다 (PART 8 공개 판단을 pipeline 한 곳으로 모으기 위함).
 """
 from __future__ import annotations
 
 import asyncio
+import json
 
 import pytest
 
@@ -86,9 +87,9 @@ def test_api_fallback_is_still_bounded_by_provider_timeout(monkeypatch):
     monkeypatch.setattr(engine, "_provider_timeout", lambda: 0)
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["gemini"])
 
-    async def slow_call(system_prompt, user_prompt):
+    async def slow_call(system_prompt, user_prompt, json_schema=None):
         await asyncio.sleep(5)
-        return "본문", "gemini-2.5-flash"
+        return api_providers.ProviderResult("본문", None, "gemini-2.5-flash")
 
     monkeypatch.setitem(api_providers.PROVIDERS, "gemini", slow_call)
 
@@ -101,8 +102,8 @@ def test_api_fallback_succeeds_within_timeout(monkeypatch):
     monkeypatch.setattr(engine, "_provider_timeout", lambda: 30)
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["gemini"])
 
-    async def fast_call(system_prompt, user_prompt):
-        return "## PART 1 — 폴백 본문", "gemini-2.5-flash"
+    async def fast_call(system_prompt, user_prompt, json_schema=None):
+        return api_providers.ProviderResult("## PART 1 — 폴백 본문", None, "gemini-2.5-flash")
 
     monkeypatch.setitem(api_providers.PROVIDERS, "gemini", fast_call)
 
@@ -126,10 +127,10 @@ def test_engine_returns_structured_without_rendering_markdown(monkeypatch, cli_a
     assert "PART 1" not in result.text
 
 
-# ===== 4. 텍스트 폴백 프롬프트의 PART 7 게이팅 =====
-@pytest.mark.parametrize("publish_note,expects_part7", [(False, False), (True, True)])
-def test_text_prompt_part7_follows_publish_setting(
-    monkeypatch, cli_available, publish_note, expects_part7
+# ===== 4. 텍스트 폴백 프롬프트의 PART 8 게이팅 =====
+@pytest.mark.parametrize("publish_note,expects_part8", [(False, False), (True, True)])
+def test_text_prompt_part8_follows_publish_setting(
+    monkeypatch, cli_available, publish_note, expects_part8
 ):
     monkeypatch.setattr(engine.settings, "publish_portfolio_note", publish_note, raising=False)
     seen: dict[str, str] = {}
@@ -143,8 +144,8 @@ def test_text_prompt_part7_follows_publish_setting(
     monkeypatch.setattr(claude_cli, "generate", generate)
 
     _run(portfolio_text="60% equities")
-    assert ('Include this as "PART 7' in seen["text_prompt"]) is expects_part7
-    assert ("60% equities" in seen["text_prompt"]) is expects_part7
+    assert ('Include this as "PART 8' in seen["text_prompt"]) is expects_part8
+    assert ("60% equities" in seen["text_prompt"]) is expects_part8
 
 
 # ===== 4-b. 비공개 포트폴리오는 외부 API 폴백으로 나가지 않는다 =====
@@ -160,10 +161,11 @@ def test_api_fallback_prompt_never_contains_portfolio(monkeypatch, publish_note)
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["gemini"])
     seen: dict[str, str] = {}
 
-    async def capture(system_prompt, user_prompt):
+    async def capture(system_prompt, user_prompt, json_schema=None):
         seen["system"] = system_prompt
         seen["user"] = user_prompt
-        return "## PART 1 — 폴백 본문", "gemini-2.5-flash"
+        seen["schema"] = json_schema
+        return api_providers.ProviderResult("## PART 1 — 폴백 본문", None, "gemini-2.5-flash")
 
     monkeypatch.setitem(api_providers.PROVIDERS, "gemini", capture)
 
@@ -172,7 +174,7 @@ def test_api_fallback_prompt_never_contains_portfolio(monkeypatch, publish_note)
     assert "NVDA 40%" not in seen["user"]
     assert "1234" not in seen["user"]
     assert "USER PORTFOLIO" not in seen["user"]
-    assert 'Include this as "PART 7' not in seen["user"]
+    assert 'Include this as "PART 8' not in seen["user"]
     assert "NVDA 40%" not in seen["system"]
     # 뉴스·시세 데이터는 정상적으로 전달된다
     assert "NEWS" in seen["user"] and "MARKET" in seen["user"]
@@ -256,7 +258,7 @@ def test_structured_schema_matches_model_fields():
 # Applied:
 #   - Unencrypted Sensitive Data(제3자 전송 금지): 외부 API 폴백 프롬프트에 비공개 포트폴리오가
 #     설정과 무관하게 포함되지 않는지, 반대로 로컬 CLI 경로에는 전달되는지 검증
-#   - Improper Authorization: 텍스트 폴백 프롬프트가 publish_portfolio_note에 따라서만 PART 7을 요청하는지 검증
+#   - Improper Authorization: 텍스트 폴백 프롬프트가 publish_portfolio_note에 따라서만 PART 8을 요청하는지 검증
 #   - Infinite Loop: API 폴백 타임아웃 상·하한이 적용되고 초과 시 다음 경로로 넘어가는지 검증
 #   - Unsafe Deserialization: 스키마에 맞지 않는 LLM 출력이 거부되는지 검증
 #   - Error Message Information Exposure: 전체 실패 시 조치 안내 메시지만 노출되는지 검증
@@ -272,8 +274,8 @@ def test_notice_when_cli_not_installed(monkeypatch):
     monkeypatch.setattr(claude_cli, "resolve_cli", lambda: None)
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["openai"])
 
-    async def fake_openai(system_prompt, user_prompt):
-        return "# 폴백 본문", "gpt-4o"
+    async def fake_openai(system_prompt, user_prompt, json_schema=None):
+        return api_providers.ProviderResult("# 폴백 본문", None, "gpt-4o")
 
     monkeypatch.setitem(api_providers.PROVIDERS, "openai", fake_openai)
 
@@ -289,8 +291,8 @@ def test_notice_when_cli_not_logged_in(monkeypatch):
     monkeypatch.setattr(claude_cli, "resolve_cli", lambda: r"C:\fake\claude.exe")
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["openai"])
 
-    async def fake_openai(system_prompt, user_prompt):
-        return "# 폴백 본문", "gpt-4o"
+    async def fake_openai(system_prompt, user_prompt, json_schema=None):
+        return api_providers.ProviderResult("# 폴백 본문", None, "gpt-4o")
 
     monkeypatch.setitem(api_providers.PROVIDERS, "openai", fake_openai)
 
@@ -311,13 +313,13 @@ def test_auth_error_sets_login_notice_and_falls_back(monkeypatch):
 
     used: list[str] = []
 
-    async def fake_openai(system_prompt, user_prompt):
+    async def fake_openai(system_prompt, user_prompt, json_schema=None):
         used.append("openai")
-        return "# 폴백 본문", "gpt-4o"
+        return api_providers.ProviderResult("# 폴백 본문", None, "gpt-4o")
 
-    async def fake_gemini(system_prompt, user_prompt):
+    async def fake_gemini(system_prompt, user_prompt, json_schema=None):
         used.append("gemini")
-        return "# 제미나이", "gemini-2.5-flash"
+        return api_providers.ProviderResult("# 제미나이", None, "gemini-2.5-flash")
 
     monkeypatch.setitem(api_providers.PROVIDERS, "openai", fake_openai)
     monkeypatch.setitem(api_providers.PROVIDERS, "gemini", fake_gemini)
@@ -338,6 +340,113 @@ def test_successful_cli_run_has_no_notice(monkeypatch, cli_available):
     result = _run()
     assert result.notice == ""
     assert result.login_required is False
+
+
+# ===== 7. API 폴백도 구조화 출력을 쓴다 =====
+def _api_only(monkeypatch, provider: str = "openai"):
+    """claude_cli를 막고 지정한 API 프로바이더 하나만 남긴다."""
+    monkeypatch.setattr(claude_cli, "available", lambda: False)
+    monkeypatch.setattr(claude_cli, "resolve_cli", lambda: None)
+    monkeypatch.setattr(engine, "_provider_timeout", lambda: 30)
+    monkeypatch.setattr(api_providers, "available_providers", lambda: [provider])
+
+
+def test_api_provider_receives_the_structured_schema(monkeypatch):
+    """openai/gemini에는 claude_cli와 같은 JSON 스키마가 전달된다."""
+    _api_only(monkeypatch, "openai")
+    seen: dict = {}
+
+    async def fake(system_prompt, user_prompt, json_schema=None):
+        seen["schema"] = json_schema
+        seen["user"] = user_prompt
+        return api_providers.ProviderResult(
+            json.dumps(_structured_payload(), ensure_ascii=False),
+            _structured_payload(),
+            "gpt-4o",
+        )
+
+    monkeypatch.setitem(api_providers.PROVIDERS, "openai", fake)
+
+    result = _run()
+    assert seen["schema"] is prompts.STRUCTURED_JSON_SCHEMA
+    assert "JSON schema" in seen["user"]          # 구조화 프롬프트를 썼다
+    assert result.provider == "openai"
+    assert isinstance(result.structured, StructuredBriefing)
+    assert result.structured.headline == "테스트 헤드라인"
+    assert result.text == ""                      # 원문 JSON은 레코드로 새지 않는다
+
+
+def test_api_structured_output_is_validated_before_use(monkeypatch):
+    """스키마에 맞지 않는 구조화 출력은 버리고, 같은 응답의 텍스트를 마크다운으로 쓴다."""
+    _api_only(monkeypatch, "openai")
+
+    async def fake(system_prompt, user_prompt, json_schema=None):
+        return api_providers.ProviderResult(
+            "## PART 1 — 전날 시장 리캡\n본문",
+            {"headline": "필드가 모자란 응답"},     # direction/overnight 없음 → 검증 실패
+            "gpt-4o",
+        )
+
+    monkeypatch.setitem(api_providers.PROVIDERS, "openai", fake)
+
+    result = _run()
+    assert result.provider == "openai"
+    assert result.structured is None
+    assert result.text == "## PART 1 — 전날 시장 리캡\n본문"   # 프로바이더 결과를 통째로 버리지 않는다
+
+
+def test_api_text_only_json_body_is_recovered_as_structured(monkeypatch):
+    """스키마가 거부돼 텍스트로 돌아와도 본문이 JSON이면 구조화로 살려 쓴다."""
+    _api_only(monkeypatch, "gemini")
+
+    async def fake(system_prompt, user_prompt, json_schema=None):
+        return api_providers.ProviderResult(
+            json.dumps(_structured_payload(), ensure_ascii=False), None, "gemini-2.5-flash",
+        )
+
+    monkeypatch.setitem(api_providers.PROVIDERS, "gemini", fake)
+
+    result = _run()
+    assert isinstance(result.structured, StructuredBriefing)
+    assert result.provider == "gemini"
+
+
+def test_anthropic_fallback_stays_text_only(monkeypatch):
+    """anthropic은 구조화 미지원 → 스키마를 넘기지 않고 텍스트 프롬프트를 쓴다."""
+    _api_only(monkeypatch, "anthropic")
+    seen: dict = {}
+
+    async def fake(system_prompt, user_prompt, json_schema=None):
+        seen["schema"] = json_schema
+        seen["user"] = user_prompt
+        return api_providers.ProviderResult("## PART 1 — 본문", None, "claude-sonnet-5")
+
+    monkeypatch.setitem(api_providers.PROVIDERS, "anthropic", fake)
+
+    result = _run()
+    assert seen["schema"] is None
+    assert "JSON schema" not in seen["user"]
+    assert result.structured is None
+    assert result.text == "## PART 1 — 본문"
+
+
+def test_api_structured_prompt_never_contains_portfolio(monkeypatch):
+    """회귀: 구조화 API 경로에도 비공개 포트폴리오는 실리지 않는다."""
+    monkeypatch.setattr(engine.settings, "publish_portfolio_note", True, raising=False)
+    _api_only(monkeypatch, "openai")
+    seen: dict = {}
+
+    async def fake(system_prompt, user_prompt, json_schema=None):
+        seen["user"] = user_prompt
+        return api_providers.ProviderResult("본문", None, "gpt-4o")
+
+    monkeypatch.setitem(api_providers.PROVIDERS, "openai", fake)
+
+    _run(portfolio_text="NVDA 40%, 현금 10%, 계좌번호 1234")
+    assert "NVDA 40%" not in seen["user"]
+    assert "1234" not in seen["user"]
+    assert "USER PORTFOLIO" not in seen["user"]
+    assert "portfolioNote to null" in seen["user"]
 
 
 def test_fallback_order_follows_settings(monkeypatch):

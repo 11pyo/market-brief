@@ -1,6 +1,6 @@
 """방향성 적중 스코어카드.
 
-어제(또는 최근) 브리핑의 PART 2 방향성 확률을, 그 다음 세션의 S&P 500 등락으로 채점한다.
+어제(또는 최근) 브리핑의 방향성 확률(PART 3, structured.direction)을 그 다음 세션의 S&P 500 등락으로 채점한다.
   - 실제 방향 : changePercent >= +0.3% → up, <= -0.3% → down, 그 사이는 flat
   - 적중      : 최대 확률 시나리오 == 실제 방향
   - Brier     : sum over (up, flat, down) of (p/100 - y)^2  — 0이 완벽, 2가 최악

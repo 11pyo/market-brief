@@ -1,6 +1,6 @@
 """명령행 인터페이스 — `python -m mbrief <command>`.
 
-명령: refresh | score | generate | build | publish | notify | daily | preview | doctor
+명령: refresh | score | generate | build | publish | notify | daily | show | preview | doctor
       install-task | migrate
 
 실패 시 0이 아닌 종료 코드를 반환한다 (Windows 작업 스케줄러가 실패를 인지할 수 있도록).
@@ -195,6 +195,50 @@ def cmd_daily(args: argparse.Namespace) -> int:
     return code
 
 
+def cmd_show(args: argparse.Namespace) -> int:
+    """저장된 브리핑 마크다운을 터미널에 출력한다.
+
+    기본은 공개본(포트폴리오 파트 제외)이고, --private를 주면 PART 8까지 렌더한다.
+    """
+    from mbrief.llm import prompts
+
+    record_id = (getattr(args, "id", None) or "").strip()
+    if record_id:
+        # [SECURE] 레코드 ID를 store의 화이트리스트 정규식으로 검증 - Path Traversal 방지 (Category 1)
+        if not store.RECORD_ID_RE.match(record_id):
+            print("브리핑 ID 형식이 올바르지 않습니다 (예: 2026-09-07-ko-a1b2c3).", file=sys.stderr)
+            return EXIT_FAILED
+        record = store.load_record(record_id)
+        missing = f"브리핑을 찾을 수 없습니다: {record_id}"
+    else:
+        record = store.latest_record(settings.primary_lang)
+        missing = f"저장된 브리핑이 없습니다 ({settings.primary_lang}). 먼저 generate를 실행하세요."
+
+    # [SECURE] Optional 반환값을 사용 전 None 검사 - Null Pointer Dereference 방지 (Category 5)
+    if record is None:
+        print(missing, file=sys.stderr)
+        return EXIT_FAILED
+
+    private = bool(getattr(args, "private", False))
+    if record.structured is not None:
+        markdown = prompts.render_markdown(record.structured, record.lang, include_portfolio=private)
+    else:
+        markdown = record.contentMarkdown
+    if not private:
+        # [SECURE] 공개 출력 경로는 사이트 빌더와 같은 규칙으로 비공개 파트를 잘라낸다
+        #          - Improper Authorization 방지 (Category 2)
+        markdown = prompts.strip_portfolio_section(markdown)
+
+    print(f"# {record.headline}")
+    print(f"_{record.id} · {record.date} · {record.lang} · {record.provider}/{record.model}_")
+    print("")
+    print(markdown.rstrip())
+    if private and record.structured is not None and not (record.structured.portfolioNote or "").strip():
+        print("")
+        print("(포트폴리오 조언 없음 - data/portfolio.json이 있어야 생성됩니다)", file=sys.stderr)
+    return EXIT_OK
+
+
 def cmd_preview(args: argparse.Namespace) -> int:
     from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
@@ -366,6 +410,7 @@ def build_parser() -> argparse.ArgumentParser:
             "예시:\n"
             "  python -m mbrief daily              전체 파이프라인 (작업 스케줄러가 호출)\n"
             "  python -m mbrief generate --mock --offline   네트워크·LLM 없이 샘플 레코드 생성\n"
+            "  python -m mbrief show --private              최신 브리핑을 포트폴리오 조언까지 출력\n"
             "  python -m mbrief preview --port 3000         site/ 로컬 미리보기\n"
             "  python -m mbrief doctor             환경 진단 (로그인 상태 포함)\n"
         ),
@@ -384,7 +429,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_generate.add_argument("--lang", help="쉼표 구분 언어 (예: ko,en). 기본값은 BRIEFING_LANGS")
     p_generate.add_argument("--mock", action="store_true", help="LLM 호출 없이 픽스처 본문 사용")
     p_generate.add_argument("--offline", action="store_true", help="네트워크 없이 픽스처 사용")
-    p_generate.add_argument("--model", help="claude CLI 모델 (sonnet|opus|haiku|claude-...)")
+    p_generate.add_argument("--model", help="claude CLI 모델 (sonnet|opus|fable|claude-...). 최소 sonnet")
     p_generate.add_argument("--force", action="store_true",
                             help="오늘 브리핑이 이미 있어도 다시 생성")
     p_generate.set_defaults(func=cmd_generate)
@@ -406,6 +451,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_daily.add_argument("--force", action="store_true",
                          help="오늘 브리핑이 이미 있어도 다시 생성 (기본은 build/publish만 재실행)")
     p_daily.set_defaults(func=cmd_daily)
+
+    p_show = sub.add_parser("show", help="저장된 브리핑 마크다운을 터미널에 출력")
+    p_show.add_argument("--private", action="store_true",
+                        help="PART 8(포트폴리오 맞춤 조언)까지 포함해 출력 (기본은 제외)")
+    p_show.add_argument("--id", help="브리핑 ID (예: 2026-09-07-ko-a1b2c3). 생략하면 최신")
+    p_show.set_defaults(func=cmd_show)
 
     p_preview = sub.add_parser("preview", help="site/ 를 127.0.0.1에서 서빙")
     p_preview.add_argument("--port", type=int, default=8000, help="포트 (기본 8000)")
@@ -460,5 +511,7 @@ def main(argv: list[str] | None = None) -> int:
 # Not Applied:
 #   - [WARN] preview는 인증 없는 개발용 정적 서버다. 루프백 바인딩에만 의존하므로
 #     같은 PC의 다른 사용자에게는 노출된다. 공개 배포 용도로 쓰지 말 것.
-#   - [WARN] doctor의 호출 테스트는 실제 claude 호출 1회를 소모한다 (haiku, 매우 소량).
+#   - [WARN] doctor의 호출 테스트는 실제 claude 호출 1회를 소모한다 (sonnet, 매우 소량).
+#   - [WARN] show --private 는 비공개 포트폴리오 조언을 터미널에 그대로 출력한다.
+#     화면 공유·로그 캡처 중에는 사용하지 말 것 (출력 내용은 파일로 저장되지 않는다).
 # --------------------------------------------------

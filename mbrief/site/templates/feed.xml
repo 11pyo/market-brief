@@ -1,0 +1,22 @@
+{#- feed.xml — RSS 2.0 (최근 20건). autoescape(xml)가 모든 값을 이스케이프한다. -#}
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>{{ site_title or site_name }}</title>
+    <link>{{ home_link }}</link>
+    <description>{{ site_description }}</description>
+    <language>{{ lang }}</language>
+    <lastBuildDate>{{ build_rfc822 }}</lastBuildDate>
+    <generator>mbrief static site builder ({{ build_id }})</generator>
+    <atom:link href="{{ self_link }}" rel="self" type="application/rss+xml"/>
+{% for item in items %}
+    <item>
+      <title>{{ item.title }}</title>
+      <link>{{ item.link }}</link>
+      <guid isPermaLink="false">{{ item.guid }}</guid>
+      <pubDate>{{ item.pub_date }}</pubDate>
+      <description>{{ item.title }} — {{ item.description }}</description>
+    </item>
+{% endfor %}
+  </channel>
+</rss>

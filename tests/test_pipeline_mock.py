@@ -90,7 +90,7 @@ def test_generate_record_carries_market_from_fixtures(fixture_json):
 def test_generate_content_markdown_is_rendered():
     record = _generate()[0]
     assert record.contentMarkdown
-    for index in range(1, 7):
+    for index in range(1, 8):
         assert f"## PART {index} — " in record.contentMarkdown
     assert "📈 상승:" in record.contentMarkdown
     assert "🎯 " in record.contentMarkdown
@@ -132,7 +132,7 @@ def test_generate_multi_lang_copies_in_mock_mode():
     # mock 모드에서는 번역하지 않고 본문을 복제한다
     assert translated.structured.headline == primary.structured.headline
     # 마크다운 헤더는 대상 언어로 렌더된다
-    assert "## PART 1 — Overnight Events & Market Impact" in translated.contentMarkdown
+    assert "## PART 1 — Previous Session Recap" in translated.contentMarkdown
     assert store.load_record(translated.id) is not None
 
 

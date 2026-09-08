@@ -81,6 +81,7 @@ claude auth login                         # 1회. Claude Code CLI 구독 로그�
 | `python -m mbrief build` | `data/` + `web/` → `site/` (index.html, archive/*.html, data/*.json, feed.xml, sitemap.xml) |
 | `python -m mbrief publish [--dry-run]` | `site/` 를 `gh-pages` 브랜치로 커밋·푸시 |
 | `python -m mbrief daily [--no-publish] [--force]` | refresh → score → generate → build → publish → notify (작업 스케줄러가 호출). 재실행해도 같은 날 브리핑을 중복 생성하지 않는다 |
+| `python -m mbrief show [--private] [--id <레코드ID>]` | 저장된 브리핑 마크다운을 터미널에 출력. `--private` 는 PART 8(포트폴리오 조언)까지 포함 |
 | `python -m mbrief preview [--port 8000]` | 로컬 미리보기 서버 (127.0.0.1) |
 | `python -m mbrief doctor` | Python/의존성/.env/Claude CLI 로그인/git 원격/작업 등록 점검 |
 | `python -m mbrief migrate` | v1 브리핑 JSON을 v2 형식으로 변환 |
@@ -126,14 +127,15 @@ un_daily.cmd` 는 `.venv\Scripts\python.exe` 가 있으면 그것을 절대경�
 | 변수 | 기본값 | 설명 |
 |---|---|---|
 | `FINNHUB_API_KEY` | (필수) | [finnhub.io](https://finnhub.io/) 무료 키. 헤더(`X-Finnhub-Token`)로만 전송 |
-| `CLAUDE_CLI_MODEL` | `sonnet` | `sonnet` / `opus` / `haiku` / 전체 모델 ID |
-| `CLAUDE_CLI_FALLBACK_MODEL` | `haiku` | 과부하 시 CLI 자체 폴백 (`--fallback-model`) |
+| `CLAUDE_CLI_MODEL` | `sonnet` | `sonnet` / `opus` / `fable` / 전체 모델 ID. **최소 sonnet** (haiku 는 거부되고 sonnet 으로 강등) |
+| `CLAUDE_CLI_FALLBACK_MODEL` | `opus` | 과부하 시 CLI 자체 폴백 (`--fallback-model`) |
+| `CLAUDE_CLI_TRANSLATE_MODEL` | `sonnet` | 추가 언어 번역 패스용 모델 (최소 sonnet) |
 | `CLAUDE_CLI_TIMEOUT_SEC` | `720` | 1회 호출 상한 |
-| `LLM_FALLBACK_PROVIDERS` | `openai,gemini` | CLI 실패·미로그인 시 폴백 순서. 키 없는 항목은 자동 제외. 비우면 폴백 없음 |
+| `LLM_FALLBACK_PROVIDERS` | `openai,gemini` | CLI 실패·미로그인 시 폴백 순서. openai/gemini 는 같은 JSON 스키마로 **구조화 출력**을 요청한다. 키 없는 항목은 자동 제외, 비우면 폴백 없음 |
 | `GEMINI_API_KEY` 등 | | 폴백용 (선택) |
-| `BRIEFING_LANGS` | `ko` | 첫 언어로 분석, 나머지는 haiku 번역 패스 (예: `ko,en`) |
+| `BRIEFING_LANGS` | `ko` | 첫 언어로 분석, 나머지는 번역 패스 (예: `ko,en`) |
 | `BRIEFING_DAYS` | `mon,...,sat` | `daily` 실행 요일 |
-| `PUBLISH_PORTFOLIO_NOTE` | `false` | PART 7을 공개 사이트에 포함할지 |
+| `PUBLISH_PORTFOLIO_NOTE` | `false` | PART 8(포트폴리오 조언)을 공개 사이트에 포함할지. 꺼도 `mbrief show --private` 로 본인은 확인 가능 |
 | `SITE_URL` | | 공개 URL |
 | `PUBLISH_REMOTE` / `PUBLISH_BRANCH` | `origin` / `gh-pages` | 배포 대상 |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | | 생성 완료 알림 (선택) |
