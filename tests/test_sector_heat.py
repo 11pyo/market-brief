@@ -186,8 +186,10 @@ def test_get_sector_history_fetches_every_sector_plus_the_benchmark(monkeypatch)
     monkeypatch.setattr(market_data, "_fetch_history_sync", fetch)
     history = asyncio.run(market_data.get_sector_history())
 
-    assert set(history) == set(market_data.SECTOR_SYMBOLS.values()) | {BENCH}
-    assert len(seen) == 12                       # 11 섹터 + ^GSPC, 중복 호출 없음
+    # 대분류 11 + 테마 13 + 기준지수. 목록이 늘어도 테스트가 따라오도록 상수에서 유도한다.
+    expected = set(market_data.SECTOR_SYMBOLS.values()) | set(market_data.THEME_SYMBOLS.values()) | {BENCH}
+    assert set(history) == expected
+    assert len(seen) == len(expected)            # 중복 호출 없음
     assert {period for _, period in seen} == {market_data.HISTORY_PERIOD}
 
 
@@ -201,8 +203,9 @@ def test_get_sector_history_isolates_individual_failures(monkeypatch):
     history = asyncio.run(market_data.get_sector_history())
 
     assert "XLK" not in history                  # 실패한 심볼만 빠진다
-    assert BENCH in history and "XLE" in history
-    assert len(history) == 11
+    assert BENCH in history and "XLE" in history and "SMH" in history
+    expected = set(market_data.SECTOR_SYMBOLS.values()) | set(market_data.THEME_SYMBOLS.values()) | {BENCH}
+    assert len(history) == len(expected) - 1     # XLK 하나만 빠진다
 
 
 def test_get_sector_history_drops_empty_series(monkeypatch):

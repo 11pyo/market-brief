@@ -1367,3 +1367,32 @@ def test_chart_timezone_label_is_passed_to_the_page(tmp_path, sample_record):
     html = (out / "index.html").read_text(encoding="utf-8")
     assert 'data-l-chart-tz="' in html
     assert 'id="chart-tz"' in html
+
+
+# ===== 홈은 최신 시장, 아카이브는 그 시점 =====
+def test_index_uses_live_market_while_archive_keeps_its_snapshot(tmp_path, sample_record):
+    """회귀: 장중 tick이 차트만 갱신하고 카드·과열도는 아침에 멈춰 있던 문제.
+
+    홈(index)은 '지금의 시장'이라 최신 번들을 쓰고, 아카이브는 그 브리핑이 근거로 삼은
+    스냅샷을 그대로 보존해야 한다 (과거 문서를 사후 수정하지 않는다).
+    """
+    from mbrief.schemas import MarketBundle, Quote
+
+    live = MarketBundle(
+        updatedAt="2026-09-08T14:37:00+09:00",
+        quotes={"S&P 500": Quote(price=9999.0, change=1.0, changePercent=0.1)},
+    )
+    older = sample_record.model_copy(deep=True)
+    older.id = "2026-09-07-ko-aaaaaa"
+    older.date = "2026-09-07"
+    older.generatedAt = "2026-09-07T07:00:00+09:00"
+
+    out = tmp_path / "site"
+    builder.build([sample_record, older], live, None, {}, out_dir=out)
+
+    index_html = (out / "index.html").read_text(encoding="utf-8")
+    archive_html = (out / "archive" / f"{older.id}.html").read_text(encoding="utf-8")
+
+    assert "9,999.00" in index_html            # 홈은 최신 시세
+    assert "9,999.00" not in archive_html      # 아카이브는 자기 스냅샷 유지
+    assert sample_record.market is not None

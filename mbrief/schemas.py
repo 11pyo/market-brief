@@ -56,6 +56,9 @@ class Candle(BaseModel):
 
 
 HeatLabel = Literal["hot", "warm", "neutral", "cool", "cold"]
+# sector = GICS 대분류 11개(XLK 등). theme = 그 안을 쪼갠 산업·테마(SMH 반도체 등).
+# 테마는 대분류의 부분집합이라 서로 겹친다. 화면·프롬프트 모두 이 사실을 함께 밝힌다.
+HeatGroup = Literal["sector", "theme"]
 
 
 class SectorHeat(BaseModel):
@@ -67,6 +70,7 @@ class SectorHeat(BaseModel):
     """
     symbol: str                                     # 예: "XLK"
     name: str = ""                                  # 예: "Technology"
+    group: HeatGroup = "sector"                     # 대분류 / 테마 구분
     gapPct: Optional[float] = None                  # 200일 이동평균 대비 이격도 (%)
     gapPercentile: Optional[float] = None           # 최근 2년 이격도 분포에서의 백분위 (0~100)
     rsi14: Optional[float] = None                   # 일봉 RSI(14)
@@ -84,6 +88,7 @@ class SectorValuation(BaseModel):
     """
     symbol: str
     name: str = ""
+    group: HeatGroup = "sector"                     # 대분류 / 테마 구분
     trailingPE: Optional[float] = None
     priceToBook: Optional[float] = None
     dividendYield: Optional[float] = None           # 0.0043 = 0.43%

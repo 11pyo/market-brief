@@ -222,6 +222,35 @@ SECTOR_SYMBOLS: dict[str, str] = {
     "Utilities":           "XLU",
 }
 
+# 대분류 안을 쪼갠 산업·테마 ETF.
+# GICS 11개 대분류는 "Technology" 하나에 반도체·소프트웨어·클라우드가 뒤섞여 있어
+# 무엇이 달아올랐는지 구분되지 않는다. 아래는 그 안을 갈라 보기 위한 목록이다.
+#
+# 선정 기준: 2년치 일봉 확보(백분위 계산에 필요) + 테마 중복 최소화.
+# 주의: 테마는 대분류의 '부분집합'이라 서로 겹친다 (SMH 는 XLK 안에 있다). 순위를 나란히
+#       놓고 합산하거나 비중으로 읽으면 안 되며, 화면·프롬프트에 이 사실을 함께 표기한다.
+THEME_SYMBOLS: dict[str, str] = {
+    "반도체":            "SMH",
+    "소프트웨어":         "IGV",
+    "클라우드":           "SKYY",
+    "데이터센터 인프라":    "DTCR",
+    "사이버보안":         "CIBR",
+    "인터넷 플랫폼":       "FDN",
+    "AI":               "AIQ",
+    "바이오텍":           "XBI",
+    "방산·항공우주":       "ITA",
+    "지역은행":           "KRE",
+    "주택건설":           "ITB",
+    "금광":              "GDX",
+    "우라늄·원자력":       "URA",
+}
+
+# 과열도·밸류에이션 계산 대상 전체 (대분류 + 테마). 값은 (심볼, group).
+ALL_HEAT_SYMBOLS: dict[str, tuple[str, str]] = {
+    **{name: (sym, "sector") for name, sym in SECTOR_SYMBOLS.items()},
+    **{name: (sym, "theme") for name, sym in THEME_SYMBOLS.items()},
+}
+
 _sector_cache: tuple[float, dict] | None = None
 SECTOR_CACHE_TTL = 60  # 1분
 
@@ -321,7 +350,9 @@ async def get_sector_history(period: str = HISTORY_PERIOD) -> dict[str, list[flo
         period = HISTORY_PERIOD
 
     # dict.fromkeys로 순서를 유지하며 중복 제거 (섹터에 ^GSPC가 들어와도 두 번 받지 않는다)
-    symbols = list(dict.fromkeys([*SECTOR_SYMBOLS.values(), SECTOR_BENCHMARK]))
+    symbols = list(dict.fromkeys(
+        [*SECTOR_SYMBOLS.values(), *THEME_SYMBOLS.values(), SECTOR_BENCHMARK]
+    ))
     loop = asyncio.get_running_loop()
 
     results: dict[str, list[float]] = {}
@@ -372,7 +403,7 @@ def build_sector_heat(history: dict[str, list[float]] | None) -> dict[str, Secto
         logger.warning("[MarketData] 기준 지수(%s) 3개월 수익률 계산 불가 - rel3m 생략", SECTOR_BENCHMARK)
 
     heat: dict[str, SectorHeat] = {}
-    for name, symbol in SECTOR_SYMBOLS.items():
+    for name, (symbol, group) in ALL_HEAT_SYMBOLS.items():
         closes = history.get(symbol) or []
         if not closes:
             logger.warning("[MarketData] 과열도 건너뜀 %s (%s): 종가 없음", name, symbol)
@@ -399,6 +430,7 @@ def build_sector_heat(history: dict[str, list[float]] | None) -> dict[str, Secto
             heat[name] = SectorHeat(
                 symbol=symbol,
                 name=name,
+                group=group,
                 gapPct=None if gap_pct is None else round(gap_pct, 2),
                 gapPercentile=None if gap_percentile is None else round(gap_percentile, 1),
                 rsi14=_round_or_none(indicators.rsi(closes, indicators.RSI_PERIOD), 1),
@@ -442,7 +474,7 @@ async def get_sector_fundamentals() -> dict[str, dict]:
     Returns: {"XLK": {"trailingPE": 33.15, "priceToBook": 1.25, "dividendYield": 0.0043}, ...}
     개별 심볼 실패는 격리하고, 결측 필드 수를 집계해 한 줄로 로깅한다. 절대 전체를 실패시키지 않는다.
     """
-    symbols = list(SECTOR_SYMBOLS.values())
+    symbols = list(dict.fromkeys([*SECTOR_SYMBOLS.values(), *THEME_SYMBOLS.values()]))
     loop = asyncio.get_running_loop()
 
     results: dict[str, dict] = {}
@@ -516,7 +548,7 @@ def build_sector_valuation(
             pe_history.setdefault(symbol, []).append(value)
 
     valuation: dict[str, SectorValuation] = {}
-    for name, symbol in SECTOR_SYMBOLS.items():
+    for name, (symbol, group) in ALL_HEAT_SYMBOLS.items():
         data = fundamentals.get(symbol)
         recorded_days = len(recorded_dates.get(symbol, ()))
         if data is None and recorded_days == 0:
@@ -533,6 +565,7 @@ def build_sector_valuation(
             valuation[name] = SectorValuation(
                 symbol=symbol,
                 name=name,
+                group=group,
                 trailingPE=_round_or_none(trailing_pe, 2),
                 priceToBook=_round_or_none(_finite_float(data.get("priceToBook")), 2),
                 dividendYield=_round_or_none(_finite_float(data.get("dividendYield")), 6),

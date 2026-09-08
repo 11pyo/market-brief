@@ -82,6 +82,12 @@ LABELS: dict[str, dict[str, str]] = {
         # 과열도는 가격만으로 계산하는 '스트레치' 지표다. 가치 판정 어휘(싸다/비싸다)는 쓰지 않는다.
         "sectorHeatTitle": "🌡️ 섹터 과열도",
         "sectorValuationTitle": "🧾 섹터 밸류에이션",
+        "themeHeatTitle": "🧩 테마·산업 과열도",
+        "themeValuationTitle": "🧩 테마·산업 밸류에이션",
+        "themeNote": (
+            "대분류를 더 잘게 쪼갠 산업·테마입니다. 테마는 대분류의 부분집합이라 서로 겹칩니다 "
+            "(반도체는 Technology 안에 있습니다). 합산하거나 비중으로 읽지 마세요."
+        ),
         "heatHot": "과열",
         "heatWarm": "다소 과열",
         "heatNeutral": "중립",
@@ -258,6 +264,12 @@ LABELS: dict[str, dict[str, str]] = {
         "laggardsTitle": "Laggards",
         "sectorHeatTitle": "🌡️ Sector Heat",
         "sectorValuationTitle": "🧾 Sector Valuation",
+        "themeHeatTitle": "🧩 Theme & Industry Heat",
+        "themeValuationTitle": "🧩 Theme & Industry Valuation",
+        "themeNote": (
+            "Finer industry and theme slices. Themes are subsets of the broad sectors and overlap "
+            "each other (semiconductors sit inside Technology). Do not sum them or read them as weights."
+        ),
         "heatHot": "Hot",
         "heatWarm": "Warm",
         "heatNeutral": "Neutral",
@@ -422,6 +434,12 @@ LABELS: dict[str, dict[str, str]] = {
         "laggardsTitle": "落后板块",
         "sectorHeatTitle": "🌡️ 板块过热度",
         "sectorValuationTitle": "🧾 板块估值",
+        "themeHeatTitle": "🧩 主题·行业过热度",
+        "themeValuationTitle": "🧩 主题·行业估值",
+        "themeNote": (
+            "更细分的行业与主题。主题是大类板块的子集且相互重叠（半导体属于科技板块）。"
+            "请勿相加或当作权重解读。"
+        ),
         "heatHot": "过热",
         "heatWarm": "偏热",
         "heatNeutral": "中性",
@@ -582,6 +600,12 @@ LABELS: dict[str, dict[str, str]] = {
         "laggardsTitle": "劣後セクター",
         "sectorHeatTitle": "🌡️ セクター過熱度",
         "sectorValuationTitle": "🧾 セクターバリュエーション",
+        "themeHeatTitle": "🧩 テーマ・業種の過熱度",
+        "themeValuationTitle": "🧩 テーマ・業種のバリュエーション",
+        "themeNote": (
+            "大分類をさらに細分した業種・テーマです。テーマは大分類の部分集合で互いに重複します"
+            "（半導体はTechnologyの中にあります）。合算したり比率として読まないでください。"
+        ),
         "heatHot": "過熱",
         "heatWarm": "やや過熱",
         "heatNeutral": "中立",

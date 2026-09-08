@@ -287,8 +287,8 @@ def test_get_sector_fundamentals_covers_every_sector(monkeypatch):
         lambda symbol: {"trailingPE": 20.0, "priceToBook": 2.0, "dividendYield": 0.01},
     )
     found = asyncio.run(market_data.get_sector_fundamentals())
-    assert set(found) == set(market_data.SECTOR_SYMBOLS.values())
-    assert len(found) == 11
+    expected = set(market_data.SECTOR_SYMBOLS.values()) | set(market_data.THEME_SYMBOLS.values())
+    assert set(found) == expected               # 대분류 + 테마 전부 수집한다
 
 
 def test_get_sector_fundamentals_isolates_failures(monkeypatch):
@@ -300,7 +300,8 @@ def test_get_sector_fundamentals_isolates_failures(monkeypatch):
     monkeypatch.setattr(market_data, "_fetch_fundamentals_sync", fetch)
     found = asyncio.run(market_data.get_sector_fundamentals())
     assert XLK not in found
-    assert len(found) == 10                       # 나머지는 살아남는다
+    expected = set(market_data.SECTOR_SYMBOLS.values()) | set(market_data.THEME_SYMBOLS.values())
+    assert len(found) == len(expected) - 1        # 실패한 하나만 빠지고 나머지는 살아남는다
 
 
 # ===== pipeline 배선 =====
@@ -311,16 +312,20 @@ def test_record_sector_valuation_appends_and_fills_the_bundle(monkeypatch):
     )
     bundle = market_data.to_bundle({}, {}, None, {})
 
+    total = len(market_data.ALL_HEAT_SYMBOLS)          # 대분류 + 테마
     written = asyncio.run(pipeline.record_sector_valuation(bundle))
-    assert written == 11
-    assert set(bundle.sectorValuation) == set(market_data.SECTOR_SYMBOLS)
+    assert written == total
+    assert set(bundle.sectorValuation) == set(market_data.ALL_HEAT_SYMBOLS)
     assert bundle.sectorValuation["Technology"].trailingPE == 20.0
     assert bundle.sectorValuation["Technology"].recordedDays == 1
     assert bundle.sectorValuation["Technology"].pePercentile is None   # 아직 하루치뿐
+    # group 태깅: 대분류와 테마가 구분돼 들어간다
+    assert bundle.sectorValuation["Technology"].group == "sector"
+    assert bundle.sectorValuation["반도체"].group == "theme"
 
     # 같은 날 두 번째 실행은 한 줄도 추가하지 않는다.
     assert asyncio.run(pipeline.record_sector_valuation(bundle)) == 0
-    assert len(store.load_valuation()) == 11
+    assert len(store.load_valuation()) == total
 
 
 def test_record_sector_valuation_survives_a_collection_failure(monkeypatch):

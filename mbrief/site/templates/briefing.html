@@ -180,12 +180,18 @@
   등급 클래스는 화이트리스트(builder.HEAT_LABEL_KEYS)를 통과한 다섯 값으로 한정된다.
   나머지 문자열은 전부 Jinja autoescape 를 거치는 텍스트 노드다 - CSS/속성 인젝션 방지 (Category 1)
 -#}
-{% if sector_heat %}
-<section class="block block--tight" aria-labelledby="h-heat">
-  <div class="block-head"><h2 id="h-heat">{{ L.sectorHeatTitle }}</h2></div>
-  <p class="heat-note">{{ L.heatNote }}</p>
+{#-
+  대분류(GICS 11개)와 테마(반도체·소프트웨어 등)를 같은 마크업으로 두 번 그린다.
+  테마는 대분류의 부분집합이라 한 목록에 섞으면 순위가 오독된다 (SMH 는 XLK 안에 있다).
+-#}
+{% for hg in [(sector_heat, L.sectorHeatTitle, L.heatNote, 'h-heat'),
+              (theme_heat, L.themeHeatTitle, L.themeNote, 'h-theme-heat')] %}
+{% if hg[0] %}
+<section class="block block--tight" aria-labelledby="{{ hg[3] }}">
+  <div class="block-head"><h2 id="{{ hg[3] }}">{{ hg[1] }}</h2></div>
+  <p class="heat-note">{{ hg[2] }}</p>
   <ul class="heat-list">
-    {% for h in sector_heat %}
+    {% for h in hg[0] %}
     <li class="heat-row heat-row--{{ h.label }}">
       <div class="heat-id">
         <span class="heat-name">{{ h.name }}</span>
@@ -213,18 +219,21 @@
   </ul>
 </section>
 {% endif %}
+{% endfor %}
 
 {#-
   ============ 3-c. 섹터 밸류에이션 (v2.2) ============
   현재 PER/PBR 수치만 보여준다. pePercentile 이 없으면 '기록 중 (N일)' 진행 상태만 노출하고
   어떤 평가 결론도 만들지 않는다 (근거가 될 과거 분포가 아직 없기 때문).
 -#}
-{% if sector_valuation %}
-<section class="block block--tight" aria-labelledby="h-val">
-  <div class="block-head"><h2 id="h-val">{{ L.sectorValuationTitle }}</h2></div>
-  <p class="val-note">{{ L.valuationNote }}</p>
+{% for vg in [(sector_valuation, L.sectorValuationTitle, L.valuationNote, 'h-val'),
+              (theme_valuation, L.themeValuationTitle, L.themeNote, 'h-theme-val')] %}
+{% if vg[0] %}
+<section class="block block--tight" aria-labelledby="{{ vg[3] }}">
+  <div class="block-head"><h2 id="{{ vg[3] }}">{{ vg[1] }}</h2></div>
+  <p class="val-note">{{ vg[2] }}</p>
   <ul class="val-list">
-    {% for v in sector_valuation %}
+    {% for v in vg[0] %}
     <li class="val-row{{ ' val-row--accruing' if v.accruing }}">
       <div class="val-id">
         <span class="val-name">{{ v.name }}</span>
@@ -252,6 +261,7 @@
   </ul>
 </section>
 {% endif %}
+{% endfor %}
 
 {# ============ 4. 브리핑 본문 ============ #}
 <article class="block briefing" id="briefing-body" aria-labelledby="h-briefing">

@@ -549,6 +549,7 @@ def _sector_heat_view(market: MarketBundle | None, labels: dict[str, str]) -> li
             {
                 "name": display,
                 "symbol": _clean_inline(getattr(item, "symbol", ""), 12),
+                "group": getattr(item, "group", "sector"),
                 "label": label,
                 "label_text": labels[HEAT_LABEL_KEYS[label]],
                 "percentile": pctile,
@@ -567,6 +568,19 @@ def _sector_heat_view(market: MarketBundle | None, labels: dict[str, str]) -> li
         )
     rows.sort(key=lambda r: (r["percentile"] is None, -(r["percentile"] or 0.0), r["name"]))
     return rows
+
+
+def _heat_group(market: MarketBundle | None, labels: dict[str, str], group: str) -> list[dict]:
+    """과열도 뷰모델을 group(sector/theme)으로 걸러 낸다.
+
+    group 필드가 없던 시기의 레코드는 전부 'sector'로 취급한다 (기본값과 동일).
+    """
+    return [row for row in _sector_heat_view(market, labels) if row.get("group", "sector") == group]
+
+
+def _valuation_group(market: MarketBundle | None, labels: dict[str, str], group: str) -> list[dict]:
+    """밸류에이션 뷰모델을 group(sector/theme)으로 걸러 낸다."""
+    return [row for row in _sector_valuation_view(market, labels) if row.get("group", "sector") == group]
 
 
 def _sector_valuation_view(market: MarketBundle | None, labels: dict[str, str]) -> list[dict]:
@@ -593,6 +607,7 @@ def _sector_valuation_view(market: MarketBundle | None, labels: dict[str, str]) 
             {
                 "name": display,
                 "symbol": _clean_inline(getattr(item, "symbol", ""), 12),
+                "group": getattr(item, "group", "sector"),
                 "per_text": _fmt_plain(getattr(item, "trailingPE", None)) or "—",
                 "pbr_text": _fmt_plain(getattr(item, "priceToBook", None)) or "—",
                 "yield_text": "—" if dividend is None else f"{float(dividend) * 100:.2f}%",
@@ -1244,7 +1259,14 @@ def build(
 
     def render_briefing(record: BriefingRecord, *, base: str, is_index: bool) -> str:
         labels = i18n.get_labels(record.lang)
-        record_market = record.market or market
+        # 홈(index)은 '지금의 시장', 아카이브는 '그 브리핑이 근거로 삼은 시점'을 보여준다.
+        #
+        # 장중 tick은 30분마다 시세·차트만 새로 받는다. 그런데 카드·과열도를 레코드 스냅샷에서
+        # 읽으면 tick이 차트 파일만 갱신하고 화면 숫자는 아침에 멈춰 있게 된다(실측으로 확인).
+        # 그래서 홈에서는 최신 번들을 쓴다. 브리핑 본문은 생성 시점 그대로이므로, 카드에 붙는
+        # '기준 시각'이 본문과 다를 수 있다 — 각 라벨이 자기 데이터의 시각을 정확히 표기한다.
+        # 아카이브는 과거 문서라 반드시 레코드 스냅샷을 유지한다(사후 수정 금지).
+        record_market = (market or record.market) if is_index else (record.market or market)
         ordered = [r for r in safe_records if r.lang == record.lang]
         pos = next((i for i, r in enumerate(ordered) if r.id == record.id), None)
         newer = ordered[pos - 1] if pos is not None and pos > 0 else None
@@ -1277,8 +1299,12 @@ def build(
             "sectors": _sector_chips(record_market),
             # v2.2 신규 필드. 기능 도입 이전 레코드에는 없으므로 빈 리스트가 정상값이며
             # 템플릿은 두 경우 모두 섹션 마크업 자체를 만들지 않는다.
-            "sector_heat": _sector_heat_view(record_market, labels),
-            "sector_valuation": _sector_valuation_view(record_market, labels),
+            # 대분류(GICS 11개)와 테마(반도체·소프트웨어 등)를 분리해 넘긴다.
+            # 테마는 대분류의 부분집합이라 한 목록에 섞어 순위를 매기면 오독을 부른다.
+            "sector_heat": _heat_group(record_market, labels, "sector"),
+            "theme_heat": _heat_group(record_market, labels, "theme"),
+            "sector_valuation": _valuation_group(record_market, labels, "sector"),
+            "theme_valuation": _valuation_group(record_market, labels, "theme"),
             "fg": _fear_greed_view(record_market, labels, record.lang),
             "calendar": _calendar_view(record_market, labels, record.lang, record.date),
             "market_updated": (
