@@ -5,7 +5,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Claude Code CLI](https://img.shields.io/badge/LLM-Claude%20Code%20CLI%20(claude%20--p)-6366f1?style=flat-square)](https://docs.anthropic.com/claude-code)
-[![Live](https://img.shields.io/badge/Live-11pyo.github.io%2Fmarket--brief-10b981?style=flat-square&logo=github)](https://11pyo.github.io/market-brief/)
+[![Live](https://img.shields.io/badge/Live-market--brief--4ns.pages.dev-f38020?style=flat-square&logo=cloudflare&logoColor=white)](https://market-brief-4ns.pages.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 ---
@@ -110,17 +110,31 @@ un_daily.cmd` 는 `.venv\Scripts\python.exe` 가 있으면 그것을 절대경�
 
 ## 배포
 
-빌드 결과 `site/` 는 순수 정적 파일입니다. 현재 구성은 **소스 저장소(비공개) 와 사이트 저장소(공개)를 분리**한 형태입니다.
+빌드 결과 `site/` 는 순수 정적 파일입니다. `PUBLISH_TARGET` 한 줄로 대상을 바꿉니다.
 
-| | 저장소 | 역할 |
+| 대상 | 설정 | 특징 |
 |---|---|---|
-| 소스 | `11pyo/market-brief-ai` (비공개) | 코드·설정. `master` |
-| 사이트 | `11pyo/market-brief` (공개) | `gh-pages` 브랜치 = `site/` 내용. GitHub Pages → **https://11pyo.github.io/market-brief/** |
+| **Cloudflare Pages** (현재) | `PUBLISH_TARGET=cloudflare` | 저장소 불필요, 대역폭 무제한, 소스 비공개 유지 가능 |
+| GitHub Pages | `PUBLISH_TARGET=github` | 무료 플랜은 공개 저장소 필요, 월 100GB 대역폭 |
 
-`python -m mbrief publish` 가 `site/` 를 `PUBLISH_REMOTE`/`PUBLISH_BRANCH`(기본 `origin`/`gh-pages`)로 커밋·푸시합니다.
-`.env` 의 `SITE_URL` 은 canonical·sitemap·RSS 링크에 쓰입니다. Cloudflare Pages / Netlify 에 `site/` 폴더를 올려도 동일하게 동작합니다 (상대 경로만 사용).
+현재 운영 주소는 **https://market-brief-4ns.pages.dev/** 입니다.
 
-무료 플랜은 비공개 저장소에서 Pages 를 제공하지 않으므로, 소스 저장소를 공개하지 않는 한 별도 공개 저장소가 필요합니다.
+### Cloudflare 사전 준비 (1회)
+
+```bash
+npm install --save-dev wrangler@4    # 이미 package.json에 포함
+npx wrangler login                   # 브라우저에서 승인
+```
+
+`.env` 에 `CLOUDFLARE_PROJECT` 를 지정하면 최초 배포 시 프로젝트가 자동 생성됩니다.
+작업 스케줄러로 무인 실행할 때 OAuth 세션이 만료되면 `CLOUDFLARE_API_TOKEN` 과
+`CLOUDFLARE_ACCOUNT_ID` 를 `.env` 에 넣어 토큰 방식으로 전환하세요.
+
+주의: Cloudflare는 **계정 이메일 인증을 마쳐야** Pages·Workers 배포를 허용합니다.
+미인증 상태에서는 업로드까지 진행된 뒤 `code: 8000077` 로 거부됩니다.
+
+Windows에서 `npx` 는 배치 파일이라 `shell=False` 로 실행되지 않습니다. 이 프로젝트는
+셸을 켜는 대신 `node_modules/wrangler` 의 JS 엔트리를 `node` 로 직접 실행합니다.
 
 ## 환경 변수 (`.env`)
 

@@ -78,7 +78,7 @@ def test_redact_hides_credentials():
 
 # ===== 실제 배포 =====
 def test_publish_creates_branch_with_index_html(bare_remote, site_dir):
-    ok = publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages")
+    ok = publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages")
     assert ok is True
 
     files = _branch_files(bare_remote, "gh-pages")
@@ -89,12 +89,12 @@ def test_publish_creates_branch_with_index_html(bare_remote, site_dir):
 
 
 def test_publish_updates_existing_branch(bare_remote, site_dir):
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages")
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages")
 
     # 두 번째 배포: 파일 하나를 제거하고 하나를 추가
     (site_dir / "archive" / "2026-09-07-ko-a1b2c3.html").unlink()
     (site_dir / "feed.xml").write_text("<rss/>", encoding="utf-8")
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages")
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages")
 
     files = _branch_files(bare_remote, "gh-pages")
     assert "feed.xml" in files
@@ -102,31 +102,31 @@ def test_publish_updates_existing_branch(bare_remote, site_dir):
 
 
 def test_publish_no_change_is_success(bare_remote, site_dir):
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages")
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages")
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages")
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages")
     proc = _git(["--git-dir", str(bare_remote), "rev-list", "--count", "gh-pages"])
     assert proc.stdout.strip() == "1"  # 변경이 없으면 새 커밋을 만들지 않는다
 
 
 def test_publish_dry_run_does_not_push(bare_remote, site_dir):
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages", dry_run=True)
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages", dry_run=True)
     proc = _git(["--git-dir", str(bare_remote), "rev-parse", "--verify", "gh-pages"])
     assert proc.returncode != 0  # 브랜치가 생성되지 않았어야 한다
 
 
 def test_publish_custom_commit_message(bare_remote, site_dir):
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages",
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages",
                                 message="publish: 2026-09-07 테스트 헤드라인")
     proc = _git(["--git-dir", str(bare_remote), "log", "-1", "--pretty=%s", "gh-pages"])
     assert proc.stdout.strip() == "publish: 2026-09-07 테스트 헤드라인"
 
 
 def test_publish_missing_site_dir_returns_false(bare_remote, tmp_path):
-    assert publish.publish_site(tmp_path / "nope", remote=str(bare_remote), branch="gh-pages") is False
+    assert publish.publish_github(tmp_path / "nope", remote=str(bare_remote), branch="gh-pages") is False
 
 
 def test_publish_bad_branch_returns_false(bare_remote, site_dir):
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="bad branch") is False
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="bad branch") is False
 
 
 # ===== 오류 진단 =====
@@ -177,7 +177,7 @@ def test_publish_retries_push_once_before_failing(bare_remote, site_dir, monkeyp
     monkeypatch.setattr(publish, "_run_git", flaky)
     monkeypatch.setattr(publish, "_PUSH_RETRY_PAUSE_SEC", 0.0)
 
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages") is True
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages") is True
     assert len(attempts) == 2  # 1회 실패 후 정확히 1회만 재시도
     assert "index.html" in _branch_files(bare_remote, "gh-pages")
 
@@ -195,7 +195,7 @@ def test_publish_gives_up_after_one_retry(bare_remote, site_dir, monkeypatch):
     monkeypatch.setattr(publish, "_run_git", always_failing)
     monkeypatch.setattr(publish, "_PUSH_RETRY_PAUSE_SEC", 0.0)
 
-    assert publish.publish_site(site_dir, remote=str(bare_remote), branch="gh-pages") is False
+    assert publish.publish_github(site_dir, remote=str(bare_remote), branch="gh-pages") is False
     assert len(attempts) == 2  # 무한 재시도하지 않는다
 
 
@@ -212,3 +212,67 @@ def test_publish_gives_up_after_one_retry(bare_remote, site_dir, monkeypatch):
 #   - [WARN] 실제 원격(GitHub) 푸시는 테스트하지 않는다. 인증·네트워크가 필요하므로
 #     로컬 bare 저장소로 대체 검증한다.
 # --------------------------------------------------
+
+
+# ===== 배포 대상 분기 =====
+# 회귀 배경: publish_site를 설정 기반 디스패처로 바꾼 뒤, .env의 PUBLISH_TARGET이
+# cloudflare로 바뀌자 git 경로를 검증하던 테스트들이 조용히 다른 함수로 들어갔다.
+# 분기 자체를 고정해 둔다.
+def _spy(calls, name, result=True):
+    def fn(*args, **kwargs):
+        calls.append(name)
+        return result
+    return fn
+
+
+def test_publish_site_routes_to_github(monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(publish, "publish_github", _spy(calls, "github"))
+    monkeypatch.setattr(publish, "publish_cloudflare", _spy(calls, "cloudflare"))
+    assert publish.publish_site(target="github") is True
+    assert calls == ["github"]
+
+
+def test_publish_site_routes_to_cloudflare(monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(publish, "publish_github", _spy(calls, "github"))
+    monkeypatch.setattr(publish, "publish_cloudflare", _spy(calls, "cloudflare"))
+    assert publish.publish_site(target="cloudflare") is True
+    assert calls == ["cloudflare"]
+
+
+def test_publish_site_follows_settings_when_target_omitted(monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(publish, "publish_github", _spy(calls, "github"))
+    monkeypatch.setattr(publish, "publish_cloudflare", _spy(calls, "cloudflare"))
+    monkeypatch.setattr(publish.settings, "publish_target", "cloudflare")
+    assert publish.publish_site() is True
+    assert calls == ["cloudflare"]
+
+
+def test_publish_site_rejects_unknown_target(monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(publish, "publish_github", _spy(calls, "github"))
+    monkeypatch.setattr(publish, "publish_cloudflare", _spy(calls, "cloudflare"))
+    # [SECURE] 알 수 없는 대상은 조용히 기본값으로 떨어지지 않고 실패한다 - 의도치 않은 공개 방지
+    assert publish.publish_site(target="ftp") is False
+    assert calls == []
+
+
+def test_cf_project_name_whitelist():
+    for bad in ("BAD NAME", "../x", "-flag", "a" * 60, "proj;rm -rf /"):
+        with pytest.raises(publish.PublishError):
+            publish.resolve_cf_project(bad)
+    assert publish.resolve_cf_project("market-brief") == "market-brief"
+
+
+def test_cf_project_falls_back_to_settings(monkeypatch):
+    monkeypatch.setattr(publish.settings, "cloudflare_project", "from-settings")
+    assert publish.resolve_cf_project() == "from-settings"
+    assert publish.resolve_cf_project("") == "from-settings"   # 빈 인자는 설정값으로 대체
+
+
+def test_cf_project_requires_a_value(monkeypatch):
+    monkeypatch.setattr(publish.settings, "cloudflare_project", "")
+    with pytest.raises(publish.PublishError):
+        publish.resolve_cf_project("")

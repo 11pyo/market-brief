@@ -102,3 +102,6 @@ claude -p --model <sonnet|opus|fable> --output-format json --json-schema <Struct
 Claude 호출은 **최소 sonnet**이다. `haiku` 는 별칭이든 전체 모델 ID(`claude-haiku-*`)든
 `claude_cli.resolve_model()` 이 거부하고 경고와 함께 `sonnet` 으로 강등한다.
 `--fallback-model` 기본값은 `opus`(구독 쿼터 유지), 번역 패스도 `sonnet` 이다.
+- 배포 대상은 `PUBLISH_TARGET` 으로 고른다. 기본 운영은 Cloudflare Pages Direct Upload(`market-brief` 프로젝트, https://market-brief-4ns.pages.dev)이며, GitHub Pages(`gh-pages` 브랜치)는 대체 경로로 남겨 둔다. 두 경로 모두 `site/` 를 그대로 올린다.
+- Cloudflare 배포는 `node node_modules/wrangler/bin/wrangler.js pages deploy` 로 실행한다. Windows에서 `npx`/`wrangler` 는 배치 파일이라 `shell=False` 로 실행되지 않으므로, 셸을 켜는 대신 JS 엔트리를 node로 직접 호출해 셸 인용 규칙을 우회한다.
+- Cloudflare Pages는 `/foo.html` 을 `/foo` 로 308 리다이렉트한다. 상대 경로 깊이는 그대로라 자산 해석에는 영향이 없다.
