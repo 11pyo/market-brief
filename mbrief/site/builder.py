@@ -651,14 +651,24 @@ def _fear_greed_view(market: MarketBundle | None, labels: dict[str, str], lang: 
     def delta(ref: float | None) -> dict:
         val = None if ref is None else round(float(ref), 1)
         if val is None:
-            return {"value": None, "arrow": "—", "color": "#94a3b8", "width": 0}
+            return {"value": None, "arrow": "—", "diff": None, "color": "#94a3b8", "width": 0}
+        diff = round(score - val, 1)
         if score > val:
             arrow, col = "▲", "#22c55e"
+            diff_str = f"+{diff:.1f}"
         elif score < val:
             arrow, col = "▼", "#ef4444"
+            diff_str = f"-{abs(diff):.1f}"
         else:
             arrow, col = "—", "#94a3b8"
-        return {"value": val, "arrow": arrow, "color": col, "width": max(0, min(100, int(val)))}
+            diff_str = "0.0"
+        return {
+            "value": val,
+            "diff": diff_str,
+            "arrow": arrow,
+            "color": col,
+            "width": max(0, min(100, int(val))),
+        }
 
     return {
         "score": round(score),

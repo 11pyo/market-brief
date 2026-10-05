@@ -176,10 +176,15 @@
           <p class="fg-score" style="color:{{ fg.color }}">{{ fg.score }}</p>
           <ul class="fg-rows">
             {% for row in fg.rows %}
-            <li class="fg-row">
+            <li class="fg-row"{% if row.value is not none and row.diff is not none %} title="{{ row.label }}: 당시 지수 {{ row.value }}점 (오늘 대비 {{ row.arrow }} {{ row.diff }})"{% endif %}>
               <span class="fg-row-label">{{ row.label }}</span>
               <span class="fg-row-bar"><i style="width:{{ row.width }}%;background:{{ row.color }}"></i></span>
-              <span class="fg-row-val" style="color:{{ row.color }}">{{ row.arrow }} {{ row.value if row.value is not none else '—' }}</span>
+              <span class="fg-row-val">
+                <span class="fg-val-score">{{ row.value if row.value is not none else '—' }}</span>
+                {% if row.diff is not none %}
+                <span class="fg-val-diff" style="color:{{ row.color }}">({{ row.arrow }} {{ row.diff }})</span>
+                {% endif %}
+              </span>
             </li>
             {% endfor %}
           </ul>

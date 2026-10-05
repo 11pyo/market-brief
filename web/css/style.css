@@ -295,12 +295,14 @@ button { font: inherit; cursor: pointer; }
 .fg-gauge { flex: 0 0 auto; width: 148px; height: 98px; }
 .fg-side { flex: 1; min-width: 0; }
 .fg-score { font-family: var(--font-display); font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 8px; }
-.fg-rows { list-style: none; display: flex; flex-direction: column; gap: 5px; }
-.fg-row { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; }
-.fg-row-label { width: 64px; flex-shrink: 0; color: var(--text-muted); }
-.fg-row-bar { flex: 1; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
-.fg-row-bar i { display: block; height: 100%; border-radius: 3px; opacity: 0.75; }
-.fg-row-val { width: 46px; text-align: right; font-family: var(--font-mono); font-size: 0.68rem; }
+.fg-rows { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.fg-row { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; }
+.fg-row-label { width: 62px; flex-shrink: 0; color: var(--text-muted); font-size: 0.7rem; }
+.fg-row-bar { flex: 1; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); overflow: hidden; min-width: 36px; }
+.fg-row-bar i { display: block; height: 100%; border-radius: 3px; opacity: 0.8; }
+.fg-row-val { display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 4px; font-family: var(--font-mono); font-size: 0.72rem; white-space: nowrap; flex-shrink: 0; }
+.fg-val-score { font-weight: 700; color: var(--text-primary); }
+.fg-val-diff { font-weight: 600; font-size: 0.68rem; }
 .fg-note { margin-top: 8px; font-size: 0.65rem; color: var(--text-muted); }
 
 /* ===== 7. MARKET CARDS ===== */
