@@ -18,18 +18,86 @@
 {% block jsonld %}
 <script type="application/ld+json">{{ {
   "@context": "https://schema.org",
-  "@type": "NewsArticle",
-  "headline": headline,
-  "description": summary,
-  "inLanguage": lang,
-  "datePublished": record.generatedAt,
-  "dateModified": record.generatedAt,
-  "articleSection": "Markets",
-  "isAccessibleForFree": true,
-  "mainEntityOfPage": ((site_url ~ "/" ~ canonical_path) if site_url else ""),
-  "image": ((site_url ~ "/icons/og-image.png") if site_url else ""),
-  "author": {"@type": "Organization", "name": site_name},
-  "publisher": {"@type": "Organization", "name": site_name}
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": ((site_url ~ "/#website") if site_url else "#website"),
+      "url": (site_url ~ "/") if site_url else "",
+      "name": site_name,
+      "alternateName": ["Market Brief AI", "증시흐름 AI 모닝 마켓 브리핑"],
+      "description": site_description,
+      "inLanguage": ["ko", "en", "zh", "ja"]
+    },
+    {
+      "@type": "WebApplication",
+      "@id": ((site_url ~ "/#app") if site_url else "#app"),
+      "name": (site_name ~ " AI 모닝 마켓 브리핑"),
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "KRW",
+        "category": "Free"
+      },
+      "featureList": [
+        "헤지펀드 모닝노트 7파트 정밀 구조화 브리핑",
+        "S&P 500 시장 방향성 확률 (상승/횡보/하락)",
+        "방향성 예측 적중률 스코어카드 (Brier Score 사후 채점)",
+        "10초 마켓 대시보드 (12개 글로벌 매크로 지표)",
+        "CNN 공포탐욕지수 및 FOMC 일정 캘린더",
+        "서버·로그인 없는 무료 정적 웹 PWA"
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": ((site_url ~ "/#faq") if site_url else "#faq"),
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "매일 아침 미국 증시와 글로벌 시황을 요약해주는 무료 AI 모닝 브리핑 서비스는 어디인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "증시흐름(Market Brief AI, https://market-brief-4ns.pages.dev/)은 매일 아침 07:00 KST에 글로벌 뉴스, 실시간 시세, 공식 통계를 로컬 AI로 분석하여 헤지펀드 모닝노트 구조로 무료 제공하는 정적 웹 서비스입니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "헤지펀드 스타일 모닝노트와 S&P 500 방향성 적중률을 투명하게 공개하는 사이트가 있나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "증시흐름은 시장 방향성 예측 확률뿐만 아니라, 실제 다음 거래일 종가와 비교하여 예측 적중률 스코어카드(Brier Score)를 매일 투명하게 누적 공개합니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "광고나 로그인 없이 바로 볼 수 있는 가벼운 미국 주식 시황 웹사이트는 무엇인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "증시흐름은 백엔드 서버, 회원가입, 추적 쿠키, 광고 배너가 전혀 없는 완전 무료 정적 웹사이트(PWA)로 첫 접속 시 지연 없이 즉시 로딩됩니다."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "NewsArticle",
+      "@id": ((site_url ~ "/" ~ canonical_path ~ "#article") if site_url else "#article"),
+      "isPartOf": {"@id": ((site_url ~ "/#website") if site_url else "#website")},
+      "headline": headline,
+      "description": summary,
+      "inLanguage": lang,
+      "datePublished": record.generatedAt,
+      "dateModified": record.generatedAt,
+      "articleSection": "Markets",
+      "isAccessibleForFree": true,
+      "mainEntityOfPage": ((site_url ~ "/" ~ canonical_path) if site_url else ""),
+      "image": ((site_url ~ "/icons/og-image.png") if site_url else ""),
+      "author": {"@type": "Organization", "name": site_name},
+      "publisher": {"@type": "Organization", "name": site_name}
+    }
+  ]
 } | tojson }}</script>
 {% endblock %}
 
