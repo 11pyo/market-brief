@@ -59,6 +59,7 @@ class Settings(BaseSettings):
     site_title: str = "AI 모닝 마켓 브리핑 | 증시흐름"
     site_description: str = "매일 아침 07시, 로컬 Claude가 글로벌 뉴스와 시세를 분석해 만드는 헤지펀드 모닝노트 스타일 브리핑."
     github_repo_url: str = "https://github.com/11pyo/market-brief-ai"
+    ga_measurement_id: str = "G-074Z6B4Q07"   # Google Analytics 4 (GA4) 측정 ID
 
     # ===== 배포 (gh-pages) =====
     # github     = gh-pages 브랜치로 푸시 (무료 플랜은 공개 저장소 필요)

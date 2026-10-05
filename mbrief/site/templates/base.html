@@ -23,7 +23,7 @@
   - frame-ancestors는 meta CSP에서 무시된다(헤더 전용). 헤더를 넣을 수 있는 호스팅으로 옮길 때를
     대비해 선언만 유지한다 — 현재는 클릭재킹 방어로 신뢰하면 안 된다.
 -#}
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-ancestors 'none'; base-uri 'none'; object-src 'none'; form-action 'self'">
 <title>{% block page_title %}{{ site_title or site_name }}{% endblock %}</title>
 <meta name="description" content="{% block page_description %}{{ site_description }}{% endblock %}">
 <meta name="author" content="{{ site_name }}">
@@ -93,10 +93,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="{{ site_name }}">
+{% if ga_measurement_id %}
+{# ===== Google Analytics 4 (GA4) ===== #}
+<script async src="https://www.googletagmanager.com/gtag/js?id={{ ga_measurement_id }}"></script>
+{% endif %}
 {% block meta_extra %}{% endblock %}
 </head>
 
 <body data-base="{{ base }}" data-lang="{{ lang }}"
+      data-ga-measurement-id="{{ ga_measurement_id|default('', true) }}"
       data-l-share-copied="{{ L.shareCopied }}" data-l-chart-loading="{{ L.chartLoading }}"
       data-l-chart-empty="{{ L.chartNoData }}" data-l-chart-error="{{ L.chartError }}"
       data-l-sw-updated="{{ L.swUpdated }}" data-l-watch-none="{{ L.watchNone }}"

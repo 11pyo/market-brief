@@ -610,8 +610,19 @@
     });
   }
 
+  // ===== Google Analytics 4 (GA4) =====
+  function initGoogleAnalytics() {
+    var gaId = body && body.dataset.gaMeasurementId;
+    if (!gaId || !/^G-[A-Z0-9]+$/i.test(gaId)) return;
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', gaId);
+  }
+
   // ===== 부트스트랩 =====
   function boot() {
+    initGoogleAnalytics();
     initCurrency();
     initChart();
     initShare();

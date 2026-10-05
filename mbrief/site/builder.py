@@ -1251,6 +1251,7 @@ def build(
         "site_description": getattr(settings, "site_description", ""),
         "site_url": site_url,
         "github_repo_url": _safe_url(getattr(settings, "github_repo_url", "")),
+        "ga_measurement_id": getattr(settings, "ga_measurement_id", "") or "",
         "build_id": build_id,
         "build_time_iso": build_time_iso,
     }
