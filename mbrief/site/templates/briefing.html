@@ -65,6 +65,22 @@
         },
         {
           "@type": "Question",
+          "name": "오늘 미국 증시 시황과 S&P 500 시장 방향성 확률(상승/횡보/하락)은 어떻게 되나요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "증시흐름은 오늘 장 S&P 500의 상승·횡보·하락 확률을 100% 합산으로 산출하고 명확한 팩트 근거와 사후 Brier Score 적중률을 투명하게 공개합니다."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "현재 CNN 공포·탐욕 지수 점수와 과거 대비 변동 추이를 볼 수 있는 곳은 어디인가요?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "증시흐름 메인 대시보드에서 CNN Fear & Greed Index의 현재 점수(0~100)와 전일 종가, 1주 전, 1개월 전 대비 증감폭을 실시간 게이지와 함께 즉시 확인할 수 있습니다."
+          }
+        },
+        {
+          "@type": "Question",
           "name": "헤지펀드 스타일 모닝노트와 S&P 500 방향성 적중률을 투명하게 공개하는 사이트가 있나요?",
           "acceptedAnswer": {
             "@type": "Answer",
@@ -82,7 +98,7 @@
       ]
     },
     {
-      "@type": "NewsArticle",
+      "@type": ["NewsArticle", "AnalysisNewsArticle", "Report"],
       "@id": ((site_url ~ "/" ~ canonical_path ~ "#article") if site_url else "#article"),
       "isPartOf": {"@id": ((site_url ~ "/#website") if site_url else "#website")},
       "headline": headline,
@@ -90,12 +106,76 @@
       "inLanguage": lang,
       "datePublished": record.generatedAt,
       "dateModified": record.generatedAt,
-      "articleSection": "Markets",
+      "articleSection": "Financial Markets",
       "isAccessibleForFree": true,
       "mainEntityOfPage": ((site_url ~ "/" ~ canonical_path) if site_url else ""),
       "image": ((site_url ~ "/icons/og-image.png") if site_url else ""),
-      "author": {"@type": "Organization", "name": site_name},
-      "publisher": {"@type": "Organization", "name": site_name}
+      "author": {
+        "@type": "Organization",
+        "name": site_name,
+        "alternateName": "Market Brief AI Engine",
+        "url": ((site_url ~ "/") if site_url else "")
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": site_name,
+        "logo": {
+          "@type": "ImageObject",
+          "url": ((site_url ~ "/icons/icon-192.png") if site_url else "")
+        }
+      },
+      "about": [
+        {
+          "@type": "FinancialIndex",
+          "name": "S&P 500",
+          "tickerSymbol": "^GSPC",
+          "sameAs": "https://www.wikidata.org/wiki/Q242345"
+        },
+        {
+          "@type": "FinancialIndex",
+          "name": "Nasdaq Composite",
+          "tickerSymbol": "^IXIC",
+          "sameAs": "https://www.wikidata.org/wiki/Q114883"
+        },
+        {
+          "@type": "Thing",
+          "name": "CNN Fear & Greed Index"
+        },
+        {
+          "@type": "GovernmentOrganization",
+          "name": "Federal Open Market Committee (FOMC)",
+          "sameAs": "https://www.wikidata.org/wiki/Q1345942"
+        }
+      ],
+      "mentions": [
+        {"@type": "Thing", "name": "Macroeconomics"},
+        {"@type": "Thing", "name": "Federal Reserve Monetary Policy"},
+        {"@type": "FinancialProduct", "name": "US 10-Year Treasury Yield"}
+      ]
+    },
+    {
+      "@type": "Dataset",
+      "@id": ((site_url ~ "/#dataset-latest") if site_url else "#dataset-latest"),
+      "name": (site_name ~ " Daily Market Briefing Data (" ~ record.date ~ ")"),
+      "description": "Structured JSON dataset containing macro direction probabilities, key market drivers, sentiment scores, and risks.",
+      "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "distribution": [
+        {
+          "@type": "DataDownload",
+          "encodingFormat": "application/json",
+          "contentUrl": ((site_url ~ "/data/latest.json") if site_url else "data/latest.json")
+        },
+        {
+          "@type": "DataDownload",
+          "encodingFormat": "application/json",
+          "contentUrl": ((site_url ~ "/data/market.json") if site_url else "data/market.json")
+        },
+        {
+          "@type": "DataDownload",
+          "encodingFormat": "text/plain",
+          "contentUrl": ((site_url ~ "/llms-full.txt") if site_url else "llms-full.txt")
+        }
+      ]
     }
   ]
 } | tojson }}</script>

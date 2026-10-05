@@ -286,6 +286,7 @@ def test_build_result_counts(built, tmp_path):
         "manifest.json",
         "robots.txt",
         "llms.txt",
+        "llms-full.txt",
         "css/style.css",
         "js/app.js",
         "icons/icon-192.png",

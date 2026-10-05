@@ -3,5 +3,44 @@
 User-agent: *
 Allow: /
 
-# 빌더가 site_url이 설정된 경우에만 아래 줄을 남긴다 (없으면 줄 자체를 제거).
+# Generative Engine Optimization (GEO): AI Search Engines & Autonomous Agents
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Cohere-ai
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# 빌더가 site_url이 설정된 경우에만 아래 줄들을 남긴다 (없으면 줄 자체를 제거).
 Sitemap: __SITE_URL__/sitemap.xml
+LLMs-Txt: __SITE_URL__/llms.txt
+LLMs-Full-Txt: __SITE_URL__/llms-full.txt

@@ -917,6 +917,129 @@ def _plain_summary(record: BriefingRecord, limit: int = 280) -> str:
     return text[:limit] + ("…" if len(text) > limit else "")
 
 
+def _build_llms_full(
+    record: BriefingRecord | None,
+    market: MarketBundle | None,
+    site_url: str = "",
+) -> str:
+    """llmstxt.org 표준 규격: AI 에이전트가 단일 호출로 최신 시장 브리핑 전문을 파싱할 수 있는 마크다운 텍스트."""
+    if record is None:
+        return "# 증시흐름 (Market Brief AI)\n\n현재 게시된 브리핑 데이터가 없습니다.\n"
+
+    base_url = site_url.rstrip("/") or "https://market-brief-4ns.pages.dev"
+    lines: list[str] = [
+        f"# 증시흐름 AI 모닝 마켓 브리핑 ({record.date})",
+        "",
+        f"> **헤드라인**: {record.headline}",
+        f"> **발행 시각**: {record.generatedAt} | **분석 모델**: {record.model or record.provider}",
+        "> **원천 출처**: Yahoo Finance, Finnhub, CNN Fear & Greed, Federal Reserve, U.S. BLS",
+        "",
+    ]
+
+    s = record.structured
+    if s and s.direction:
+        d = s.direction
+        call_val = getattr(d, "call", "")
+        call_str = call_val.upper() if isinstance(call_val, str) else ""
+        lines.extend([
+            "## 1. 시장 방향성 확률 (S&P 500 Direction Call)",
+            f"- **오늘의 콜**: {call_str} (상승 {d.up}% / 횡보 {d.flat}% / 하락 {d.down}%)",
+        ])
+        if getattr(d, "rationaleUp", None):
+            lines.append(f"  - 상승 근거: {d.rationaleUp}")
+        if getattr(d, "rationaleFlat", None):
+            lines.append(f"  - 횡보 근거: {d.rationaleFlat}")
+        if getattr(d, "rationaleDown", None):
+            lines.append(f"  - 하락 근거: {d.rationaleDown}")
+        lines.append("")
+
+    if market and market.fearGreed:
+        fg = market.fearGreed
+        lines.extend([
+            "## 2. CNN 공포·탐욕 지수 (Fear & Greed Index)",
+            f"- **현재 점수**: {fg.score} ({fg.rating})",
+            f"- 과거 비교: 전일 종가 {fg.previous_close} | 1주 전 {fg.previous_1week} | 1개월 전 {fg.previous_1month}",
+            "",
+        ])
+
+    if s and s.sessionRecap:
+        lines.extend([
+            "## 3. 전날 시장 리캡 (Market Recap)",
+            s.sessionRecap.summary or "",
+            "",
+        ])
+        if s.sessionRecap.drivers:
+            lines.append("### 핵심 시장 요인")
+            for dr in s.sessionRecap.drivers:
+                lines.append(f"- {dr}")
+            lines.append("")
+
+    if s and s.overnight:
+        lines.extend([
+            "## 4. 밤사이 핵심 이벤트 (Overnight Events)",
+            s.overnight,
+            "",
+        ])
+
+    if s and s.keyActors:
+        lines.append("## 5. 시장을 움직인 주요 인물 (Key Actors)")
+        for act in s.keyActors:
+            assets_str = f" (관련 자산: {', '.join(act.assets)})" if act.assets else ""
+            lines.append(f"- **{act.name}** ({act.role}): {act.action} -> [영향] {act.impact}{assets_str}")
+        lines.append("")
+
+    if s and (s.sectorLeaders or s.sectorLaggards):
+        lines.append("## 6. 섹터 리더십 (Sector Leadership)")
+        if s.sectorLeaders:
+            lines.append("- **주도 섹터**:")
+            for item in s.sectorLeaders:
+                lines.append(f"  - {item.name} ({item.etf}): {item.reason}")
+        if s.sectorLaggards:
+            lines.append("- **약세 섹터**:")
+            for item in s.sectorLaggards:
+                lines.append(f"  - {item.name} ({item.etf}): {item.reason}")
+        lines.append("")
+
+    if s and s.risks:
+        lines.append("## 7. 핵심 리스크 (Key Risks)")
+        for rk in s.risks:
+            lines.append(f"- [{rk.severity.upper()}] **{rk.title}**: {rk.detail}")
+        lines.append("")
+
+    if s and s.trades:
+        lines.append("## 8. 트레이드 아이디어 (Trade Ideas)")
+        for tr in s.trades:
+            lines.append(f"- **{tr.side.upper()} {tr.asset}**: 진입 {tr.entry} | 목표 {tr.target} | 손절 {tr.stop} (R:R {tr.rr}) — {tr.rationale}")
+        lines.append("")
+
+    if s and s.dashboard:
+        lines.append("## 9. 10초 마켓 대시보드 (10-Second Dashboard)")
+        for db in s.dashboard:
+            lines.append(f"- **{db.label}**: {db.value} ({db.comment})")
+        lines.append("")
+
+    if not s and record.contentMarkdown:
+        cleaned_md = strip_portfolio_markdown(record.contentMarkdown)
+        lines.extend([
+            "## 브리핑 본문 (Markdown Content)",
+            cleaned_md,
+            "",
+        ])
+
+    lines.extend([
+        "---",
+        "## Machine-Readable API & Links for AI Agents",
+        f"- Official Web: {base_url}/",
+        f"- Latest Briefing JSON: {base_url}/data/latest.json",
+        f"- Market Snapshot JSON: {base_url}/data/market.json",
+        f"- LLMs Manifest: {base_url}/llms.txt",
+        "",
+        "Disclaimer: AI-generated financial research. Not investment advice.",
+    ])
+
+    return "\n".join(lines) + "\n"
+
+
 # ===== 개인정보 · 비공개 필드 제거 =====
 
 
@@ -1493,6 +1616,9 @@ def build(
 
     # GitHub Pages가 Jekyll 처리를 건너뛰게 한다 (밑줄로 시작하는 자산 보호)
     _write_text(out_dir / ".nojekyll", "")
+
+    # --- llms-full.txt (Answer.AI / llmstxt.org 표준 GEO 산출물) ---
+    _write_text(out_dir / "llms-full.txt", _build_llms_full(latest, market, site_url))
 
     return BuildResult(out_dir=out_dir, pages=pages, records=len(safe_records), build_id=build_id)
 

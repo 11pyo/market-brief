@@ -27,7 +27,8 @@
 <title>{% block page_title %}{{ site_title or site_name }}{% endblock %}</title>
 <meta name="description" content="{% block page_description %}{{ site_description }}{% endblock %}">
 <meta name="author" content="{{ site_name }}">
-<meta name="robots" content="index, follow">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+<meta name="ai-content-declaration" content="ai-generated, data-verified">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#6366f1">
 {% if site_url %}
@@ -61,10 +62,20 @@
 {% endfor %}
 <link rel="alternate" hreflang="x-default" href="{{ site_url }}/">
 {% endif %}
+
+{# ===== GEO & Feeds: AI 에이전트 및 RSS 검색 디스커버리 ===== #}
 {% if site_url %}
 <link rel="alternate" type="application/rss+xml" title="{{ site_name }} RSS" href="{{ site_url }}/feed.xml">
+<link rel="alternate" type="text/plain" title="LLM Agent Manifest (llms.txt)" href="{{ site_url }}/llms.txt">
+<link rel="alternate" type="text/plain" title="Full Plaintext Market Briefing" href="{{ site_url }}/llms-full.txt">
+<link rel="alternate" type="application/json" title="Latest Briefing JSON API" href="{{ site_url }}/data/latest.json">
+<link rel="alternate" type="application/json" title="Latest Market Snapshot JSON" href="{{ site_url }}/data/market.json">
 {% else %}
 <link rel="alternate" type="application/rss+xml" title="{{ site_name }} RSS" href="{{ base }}feed.xml">
+<link rel="alternate" type="text/plain" title="LLM Agent Manifest (llms.txt)" href="{{ base }}llms.txt">
+<link rel="alternate" type="text/plain" title="Full Plaintext Market Briefing" href="{{ base }}llms-full.txt">
+<link rel="alternate" type="application/json" title="Latest Briefing JSON API" href="{{ base }}data/latest.json">
+<link rel="alternate" type="application/json" title="Latest Market Snapshot JSON" href="{{ base }}data/market.json">
 {% endif %}
 
 {# ===== JSON-LD (Jinja |tojson 은 <, >, & 를 유니코드 이스케이프하므로 script 컨텍스트에서 안전) ===== #}
