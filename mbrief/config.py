@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     # ===== 데이터 소스 =====
     finnhub_api_key: str = ""                 # 뉴스·어닝 캘린더 (https://finnhub.io 무료 키)
 
-    # ===== LLM: Claude Code CLI (1순위) =====
-    claude_cli_enabled: bool = True
+    # ===== LLM: Claude Code CLI =====
+    claude_cli_enabled: bool = False
     claude_cli_path: str = ""                 # 비우면 PATH에서 claude 자동 탐색
     # 정책: Claude 호출은 sonnet 이상만 쓴다. haiku는 허용 목록에서 제외되어 sonnet으로 강등된다
     # (mbrief/llm/claude_cli.py의 _ALLOWED_MODEL_ALIASES).
@@ -33,12 +33,12 @@ class Settings(BaseSettings):
     claude_cli_retries: int = 1               # 실패 시 재시도 횟수 (인증 실패는 재시도하지 않음)
     claude_cli_translate_model: str = "sonnet"  # 추가 언어 번역 패스용 모델 (최소 sonnet)
 
-    # ===== LLM: API 폴백 (선택) =====
-    # 로컬 CLI 실패 시 시도 순서. 키가 없는 프로바이더는 자동 제외, 빈 문자열이면 폴백 없음.
-    llm_fallback_providers: str = "openai,gemini"
+    # ===== LLM: API 프로바이더 =====
+    # Google AI Studio Gemini 최우선 실행
+    llm_fallback_providers: str = "gemini,openai"
     llm_timeout_sec: int = 300
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    gemini_model: str = "gemini-3.7-flash"
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
     anthropic_api_key: str = ""

@@ -225,7 +225,7 @@ async def generate_briefing(
             except (claude_cli.ClaudeCliError, asyncio.TimeoutError, OSError) as e:
                 errors.append(f"claude_cli 텍스트 실패: {e}")
                 logger.warning("[LLM] claude_cli 텍스트 실패: %s", e)
-    else:
+    elif settings.claude_cli_enabled:
         # 미설치와 미로그인(인증 백오프)은 사용자가 취해야 할 조치가 다르므로 구분해 안내한다.
         if claude_cli.resolve_cli() is None:
             notice = CLI_MISSING_NOTICE

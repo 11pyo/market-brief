@@ -21,6 +21,10 @@
 (function () {
   'use strict';
 
+  window.addEventListener('error', function (e) {
+    window.__lastError = (e && e.message) + ' @ ' + (e && e.lineno);
+  });
+
   // ===== 공통 유틸 =====
   // [SECURE] 정규식 메타문자 이스케이프 - 사용자 입력이 패턴으로 해석되는 것을 방지 (Category 1)
   function escapeRegExp(value) {
@@ -621,67 +625,132 @@
   }
 
   // =======================================================================
-  // 8. 스마트 네비게이터 허브 & 접이식 블록 & 뷰 모드 스위처
+  // 8. 스마트 네비게이터 허브 & 팝업 모달 & 뷰 모드 스위처 (스크롤 압박 0)
   // =======================================================================
   var VIEW_MODE_KEY = 'mbrief_view_mode';
 
-  function expandSection(sectionEl) {
-    if (!sectionEl) return;
-    sectionEl.classList.remove('is-collapsed');
-    var btn = sectionEl.querySelector('.collapse-toggle-btn');
-    if (btn) {
-      btn.setAttribute('aria-expanded', 'true');
-      var icon = btn.querySelector('.collapse-icon');
-      var text = btn.querySelector('.collapse-text');
-      if (icon) icon.textContent = '▾';
-      if (text) text.textContent = label('lCollapseFold', '접기');
+  var SECTION_TITLES = {
+    'briefing-body': { icon: '🧭', title: '오늘의 핵심 브리핑 (7개 파트)' },
+    'sec-market': { icon: '📊', title: '10초 시장 스냅샷 (12대 지표)' },
+    'sec-sectors': { icon: '🔥', title: '섹터 과열도 & PER 밸류에이션' },
+    'sec-calendar': { icon: '🏛️', title: '경제 캘린더 & FOMC 일정' },
+    'sec-news': { icon: '📰', title: '검증된 근거 뉴스 50선' },
+    'sec-scorecard': { icon: '🎯', title: 'AI 예측 적중률 성적표' }
+  };
+
+  var currentActiveSection = null;
+  var currentPlaceholder = null;
+
+  function openSectionModal(targetId) {
+    var modalEl = document.getElementById('section-modal');
+    var modalBodyHost = document.getElementById('modal-body-host');
+    var modalTitleEl = document.getElementById('modal-section-title');
+    var modalBadgeIcon = document.getElementById('modal-badge-icon');
+    var modalTabs = document.querySelectorAll('.modal-tab-btn');
+    if (!modalEl || !modalBodyHost) return;
+
+    var targetEl = document.getElementById(targetId);
+    if (!targetEl) return;
+
+    // 기존에 모달에 올라가 있던 섹션을 원래 자리로 복원
+    if (currentActiveSection && currentPlaceholder && currentPlaceholder.parentNode) {
+      currentPlaceholder.parentNode.insertBefore(currentActiveSection, currentPlaceholder);
+      currentPlaceholder.remove();
+      currentPlaceholder = null;
+    }
+
+    // 새로운 플레이스홀더를 남겨두고 섹션 DOM을 모달 내부로 이동 (이벤트·차트 보존)
+    var placeholder = document.createElement('div');
+    placeholder.className = 'section-placeholder';
+    placeholder.style.display = 'none';
+    targetEl.parentNode.insertBefore(placeholder, targetEl);
+    modalBodyHost.textContent = '';
+    modalBodyHost.appendChild(targetEl);
+
+    currentActiveSection = targetEl;
+    currentPlaceholder = placeholder;
+
+    // 접힌 섹션 내용 자동 펼침
+    targetEl.classList.remove('is-collapsed');
+    var collapseBody = targetEl.querySelector('.collapsible-body');
+    if (collapseBody) collapseBody.style.display = 'block';
+
+    // 타이틀 및 아이콘 갱신
+    var meta = SECTION_TITLES[targetId] || { icon: '📋', title: targetEl.dataset.sectionName || '상세 보기' };
+    if (modalBadgeIcon) modalBadgeIcon.textContent = meta.icon;
+    if (modalTitleEl) modalTitleEl.textContent = meta.title;
+
+    // 상단 탭 활성화 상태
+    for (var i = 0; i < modalTabs.length; i++) {
+      modalTabs[i].classList.toggle('is-active', modalTabs[i].dataset.target === targetId);
+    }
+
+    modalEl.removeAttribute('hidden');
+    body.style.overflow = 'hidden';
+    modalBodyHost.scrollTop = 0;
+
+    // URL 해시 기록 (뒤로가기 지원)
+    if (window.location.hash !== '#' + targetId) {
+      try { window.history.pushState(null, '', '#' + targetId); } catch (e) {}
     }
   }
 
-  function collapseSection(sectionEl) {
-    if (!sectionEl) return;
-    sectionEl.classList.add('is-collapsed');
-    var btn = sectionEl.querySelector('.collapse-toggle-btn');
-    if (btn) {
-      btn.setAttribute('aria-expanded', 'false');
-      var icon = btn.querySelector('.collapse-icon');
-      var text = btn.querySelector('.collapse-text');
-      if (icon) icon.textContent = '▸';
-      if (text) text.textContent = label('lCollapseUnfold', '펼치기');
+  function closeSectionModal() {
+    var modalEl = document.getElementById('section-modal');
+    if (!modalEl) return;
+
+    if (currentActiveSection && currentPlaceholder && currentPlaceholder.parentNode) {
+      currentPlaceholder.parentNode.insertBefore(currentActiveSection, currentPlaceholder);
+      currentPlaceholder.remove();
+      currentPlaceholder = null;
+      currentActiveSection = null;
+    }
+
+    modalEl.setAttribute('hidden', '');
+    body.style.overflow = '';
+
+    if (window.location.hash) {
+      try { window.history.pushState(null, '', window.location.pathname + window.location.search); } catch (e) {}
     }
   }
 
-  function toggleSection(sectionEl) {
-    if (!sectionEl) return;
-    if (sectionEl.classList.contains('is-collapsed')) {
-      expandSection(sectionEl);
-    } else {
-      collapseSection(sectionEl);
-    }
-  }
+  function initSectionModal() {
+    var modalEl = document.getElementById('section-modal');
+    var modalBackdrop = document.getElementById('modal-backdrop');
+    var modalCloseBtn = document.getElementById('modal-close-btn');
+    var modalTabs = document.querySelectorAll('.modal-tab-btn');
+    if (!modalEl) return;
 
-  function initCollapsible() {
-    var blocks = document.querySelectorAll('.collapsible-block');
-    if (!blocks.length) return;
-
-    for (var i = 0; i < blocks.length; i++) {
-      (function (block) {
-        var head = block.querySelector('.block-head--collapsible');
-        var btn = block.querySelector('.collapse-toggle-btn');
-        if (btn) {
-          btn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            toggleSection(block);
-          });
-        }
-        if (head) {
-          head.addEventListener('click', function (e) {
-            if (e.target.closest('a') || e.target.closest('button')) return;
-            toggleSection(block);
-          });
-        }
-      })(blocks[i]);
+    if (modalCloseBtn) {
+      modalCloseBtn.addEventListener('click', closeSectionModal);
     }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', closeSectionModal);
+    }
+
+    for (var i = 0; i < modalTabs.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var targetId = btn.dataset.target;
+          if (targetId) openSectionModal(targetId);
+        });
+      })(modalTabs[i]);
+    }
+
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modalEl && !modalEl.hasAttribute('hidden')) {
+        closeSectionModal();
+      }
+    });
+
+    window.addEventListener('popstate', function () {
+      var hash = (window.location.hash || '').replace('#', '');
+      if (hash && SECTION_TITLES[hash]) {
+        openSectionModal(hash);
+      } else if (modalEl && !modalEl.hasAttribute('hidden')) {
+        closeSectionModal();
+      }
+    });
   }
 
   function initHubNavigator() {
@@ -689,32 +758,42 @@
     if (!cards.length) return;
 
     for (var i = 0; i < cards.length; i++) {
-      cards[i].addEventListener('click', function (e) {
-        var targetId = e.currentTarget.dataset.target;
-        if (!targetId) return;
-        var targetEl = document.getElementById(targetId);
-        if (!targetEl) return;
+      (function (card) {
+        function activate() {
+          var targetId = card.dataset.target;
+          if (!targetId) return;
 
-        // 카드 집중 모드일 때 다른 섹션은 접어두어 스크롤 압박 최소화
-        if (body.classList.contains('mode-card')) {
-          var allBlocks = document.querySelectorAll('.collapsible-block');
-          for (var j = 0; j < allBlocks.length; j++) {
-            if (allBlocks[j] !== targetEl) {
-              collapseSection(allBlocks[j]);
+          // 팝업 모드(기본)일 때는 팝업 모달로 시원하게 열기!
+          if (body.classList.contains('mode-card') || !body.classList.contains('mode-all')) {
+            openSectionModal(targetId);
+          } else {
+            // 전체 펼쳐보기 모드일 때는 해당 섹션으로 부드러운 스크롤 이동
+            var targetEl = document.getElementById(targetId);
+            if (targetEl) {
+              targetEl.classList.remove('is-collapsed');
+              targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              targetEl.classList.remove('is-focused');
+              void targetEl.offsetWidth;
+              targetEl.classList.add('is-focused');
+              window.setTimeout(function () { targetEl.classList.remove('is-focused'); }, 2000);
             }
           }
         }
 
-        expandSection(targetEl);
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        card.addEventListener('click', activate);
+        card.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            activate();
+          }
+        });
+      })(cards[i]);
+    }
 
-        targetEl.classList.remove('is-focused');
-        void targetEl.offsetWidth; // 강제 리플로우
-        targetEl.classList.add('is-focused');
-        window.setTimeout(function () {
-          targetEl.classList.remove('is-focused');
-        }, 2000);
-      });
+    // 접속 시 URL에 #섹션 해시가 있다면 바로 팝업 열기
+    var initialHash = (window.location.hash || '').replace('#', '');
+    if (initialHash && SECTION_TITLES[initialHash]) {
+      window.setTimeout(function () { openSectionModal(initialHash); }, 150);
     }
   }
 
@@ -726,24 +805,16 @@
     function setMode(mode) {
       var isCard = mode === 'card';
       body.classList.toggle('mode-card', isCard);
+      body.classList.toggle('mode-all', !isCard);
       btnModeCard.classList.toggle('is-active', isCard);
       btnModeCard.setAttribute('aria-pressed', isCard ? 'true' : 'false');
       btnModeAll.classList.toggle('is-active', !isCard);
       btnModeAll.setAttribute('aria-pressed', !isCard ? 'true' : 'false');
       safeLocalSet(VIEW_MODE_KEY, mode);
 
-      var blocks = document.querySelectorAll('.collapsible-block');
-      if (isCard) {
-        // 카드 모드: 첫 번째 섹션만 펼쳐두고 나머지는 접어 스크롤 압박 완화
-        for (var i = 0; i < blocks.length; i++) {
-          if (i > 0) collapseSection(blocks[i]);
-          else expandSection(blocks[i]);
-        }
-      } else {
-        // 전체 펼쳐보기 모드: 모든 블록 펼침
-        for (var j = 0; j < blocks.length; j++) {
-          expandSection(blocks[j]);
-        }
+      // 전체 모드로 전환 시 현재 모달이 열려있다면 닫고 복원
+      if (!isCard) {
+        closeSectionModal();
       }
     }
 
@@ -751,7 +822,7 @@
     btnModeAll.addEventListener('click', function () { setMode('all'); });
 
     var saved = safeLocalGet(VIEW_MODE_KEY);
-    // 기본값은 card 모드로 실행하여 스크롤 압박을 기본적으로 완화
+    // 기본값은 card (팝업 모드, 스크롤 0)
     setMode(saved === 'all' ? 'all' : 'card');
   }
 
@@ -763,7 +834,6 @@
     var extraItems = list.querySelectorAll('.news-item--extra');
     if (!extraItems.length) return;
 
-    // 초기 상태: 10건 초과 숨김
     for (var i = 0; i < extraItems.length; i++) {
       extraItems[i].classList.add('is-hidden');
     }
@@ -819,6 +889,36 @@
     }
   }
 
+  // 오늘자 최신 브리핑 확인 및 캐시 갱신 체크
+  function initFreshnessCheck() {
+    var timeEl = document.querySelector('.hero-date time');
+    if (!timeEl) return;
+    var publishedDate = timeEl.getAttribute('datetime');
+    if (!publishedDate) return;
+
+    // 한국 시간 기준 오늘 날짜 구하기
+    try {
+      var nowKst = new Date();
+      var utc = nowKst.getTime() + (nowKst.getTimezoneOffset() * 60000);
+      var kstDate = new Date(utc + (3600000 * 9));
+      var todayKstStr = kstDate.toISOString().slice(0, 10);
+
+      // 만약 오늘 날짜와 다르고, 최신 데이터 파일이 있는지 백그라운드로 가볍게 확인
+      if (publishedDate !== todayKstStr) {
+        fetch(BASE + 'data/latest.json?t=' + Date.now(), { cache: 'no-store' })
+          .then(function (res) { return res.ok ? res.json() : null; })
+          .then(function (data) {
+            if (data && data.date && data.date !== publishedDate) {
+              // 더 최신 브리핑이 배포된 경우 즉시 새로고침 안내 토스트
+              showToast('✨ 오늘자 최신 브리핑이 준비되었습니다! 새로고침합니다.', 'success');
+              window.setTimeout(function () { window.location.reload(); }, 1500);
+            }
+          })
+          .catch(function () {});
+      }
+    } catch (e) {}
+  }
+
   // ===== 부트스트랩 =====
   function boot() {
     initGoogleAnalytics();
@@ -829,11 +929,12 @@
     initPwaHint();
     initArchiveFilter();
     initServiceWorker();
-    initCollapsible();
+    initSectionModal();
     initHubNavigator();
     initViewMode();
     initNewsExpander();
     initQuickNav();
+    initFreshnessCheck();
   }
 
   if (document.readyState === 'loading') {

@@ -170,51 +170,72 @@ async def call_gemini(
     user_prompt: str,
     json_schema: dict | None = None,
 ) -> ProviderResult:
-    """Gemini 호출. json_schema를 주면 response_schema 구조화 출력을 요청한다."""
+    """Gemini 호출. 지정 모델 실패 시 flash-lite 계열로 자동 폴백."""
     from google.genai import types
 
     client = _get_gemini_client()
-    model = settings.gemini_model
+    candidate_models = [settings.gemini_model, "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"]
+    # 중복 제거 (순서 보존)
+    seen = set()
+    models = [m for m in candidate_models if not (m in seen or seen.add(m))]
 
-    def _config(schema: dict | None):
-        kwargs: dict[str, Any] = {
-            "system_instruction": system_prompt,
-            "temperature": TEMPERATURE,
-            "max_output_tokens": MAX_OUTPUT_TOKENS,
-        }
-        if schema is not None:
-            kwargs["response_mime_type"] = "application/json"
-            kwargs["response_schema"] = schema
-        return types.GenerateContentConfig(**kwargs)
+    last_error: Exception | None = None
 
-    async def _call(schema: dict | None) -> str:
-        response = await asyncio.to_thread(
-            client.models.generate_content,
-            model=model,
-            contents=user_prompt,
-            config=_config(schema),
-        )
-        return (getattr(response, "text", "") or "").strip()
+    for model in models:
+        def _config(schema: dict | None):
+            kwargs: dict[str, Any] = {
+                "system_instruction": system_prompt,
+                "temperature": TEMPERATURE,
+                "max_output_tokens": MAX_OUTPUT_TOKENS,
+            }
+            if schema is not None:
+                kwargs["response_mime_type"] = "application/json"
+                kwargs["response_schema"] = schema
+            return types.GenerateContentConfig(**kwargs)
 
-    if json_schema is not None:
-        logger.info("[LLM] Gemini %s 호출 중... (구조화)", model)
-        try:
-            content = await _call(to_gemini_schema(json_schema))
-            if not content:
-                raise ValueError("Gemini 구조화 응답이 비어 있습니다.")
-            return ProviderResult(text=content, structured=_json_object(content), model=model)
-        except _gemini_schema_error_types() as e:
-            # [SECURE] 빈 except 없음 - 원인을 로그로 남기고 스키마 없이 1회만 재시도 (Category 4)
-            logger.warning(
-                "[LLM] Gemini 구조화 출력 실패(%s: %s) - 스키마 없이 1회 재시도",
-                type(e).__name__, str(e)[:200],
+        async def _call(schema: dict | None, m: str) -> str:
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=m,
+                contents=user_prompt,
+                config=_config(schema),
             )
+            return (getattr(response, "text", "") or "").strip()
 
-    logger.info("[LLM] Gemini %s 호출 중... (텍스트)", model)
-    content = await _call(None)
-    if not content:
-        raise ProviderError("Gemini 응답이 비어 있습니다.")
-    return ProviderResult(text=content, structured=None, model=model)
+        if json_schema is not None:
+            logger.info("[LLM] Gemini %s 호출 중... (구조화)", model)
+            try:
+                content = await _call(to_gemini_schema(json_schema), model)
+                if not content:
+                    raise ValueError(f"Gemini {model} 구조화 응답이 비어 있습니다.")
+                return ProviderResult(text=content, structured=_json_object(content), model=model)
+            except _gemini_schema_error_types() as e:
+                logger.warning(
+                    "[LLM] Gemini %s 구조화 실패(%s: %s) - 텍스트 재시도",
+                    model, type(e).__name__, str(e)[:200],
+                )
+                last_error = e
+            except Exception as e:
+                logger.warning(
+                    "[LLM] Gemini %s 모델 호출 실패(%s: %s) - 다음 후보 모델 시도",
+                    model, type(e).__name__, str(e)[:200],
+                )
+                last_error = e
+                continue
+
+        logger.info("[LLM] Gemini %s 호출 중... (텍스트)", model)
+        try:
+            content = await _call(None, model)
+            if content:
+                return ProviderResult(text=content, structured=None, model=model)
+        except Exception as e:
+            logger.warning("[LLM] Gemini %s 텍스트 호출 실패: %s", model, str(e)[:200])
+            last_error = e
+            continue
+
+    if last_error:
+        raise ProviderError(f"Gemini 모든 모델 호출 실패: {last_error}")
+    raise ProviderError("Gemini 응답이 비어 있습니다.")
 
 
 # ===== OpenAI =====

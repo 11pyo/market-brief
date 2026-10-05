@@ -239,8 +239,8 @@ LABELS: dict[str, dict[str, str]] = {
         "hubCardNewsDesc": "T1 공식 원문 & 주요 외신 50선",
         "hubCardScorecard": "AI 예측 적중률 성적표",
         "hubCardScorecardDesc": "Brier Score 사후 검증 통계",
-        "hubModeCard": "🗂️ 카드 집중 모드 (스크롤 축소)",
-        "hubModeAll": "📜 전체 펼쳐보기",
+        "hubModeCard": "🗂️ 팝업 카드 모드 (스크롤 0)",
+        "hubModeAll": "📜 전체 펼쳐보기 (스크롤 뷰)",
         "collapseToggle": "접기/펼치기",
         "collapseFold": "접기",
         "collapseUnfold": "펼치기",
@@ -248,6 +248,8 @@ LABELS: dict[str, dict[str, str]] = {
         "newsShowLess": "뉴스 접기 (상위 10건만 보기)",
         "quickHub": "✨ 네비게이터",
         "quickTop": "▲ 맨 위로",
+        "modalClose": "닫기",
+        "cardActionPopup": "팝업으로 열기 ➔",
     },
     # ==========================================================
     "en": {
@@ -433,9 +435,8 @@ LABELS: dict[str, dict[str, str]] = {
         "hubCardNews": "Verified Source News",
         "hubCardNewsDesc": "T1 Primary Sources & Wire Coverage (Top 50)",
         "hubCardScorecard": "AI Accuracy Scorecard",
-        "hubCardScorecardDesc": "Brier Score Verification & Track Record",
-        "hubModeCard": "🗂️ Card Focus Mode",
-        "hubModeAll": "📜 Expand All",
+        "hubModeCard": "🗂️ Popup Card Mode (Zero Scroll)",
+        "hubModeAll": "📜 Expand All (Scroll View)",
         "collapseToggle": "Fold/Unfold",
         "collapseFold": "Fold",
         "collapseUnfold": "Unfold",
@@ -443,6 +444,8 @@ LABELS: dict[str, dict[str, str]] = {
         "newsShowLess": "Fold news (top 10 only)",
         "quickHub": "✨ Navigator",
         "quickTop": "▲ Back to Top",
+        "modalClose": "Close",
+        "cardActionPopup": "Open in Popup ➔",
     },
     # ==========================================================
     "zh": {
