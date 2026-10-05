@@ -191,13 +191,105 @@
   </div>
 </header>
 
+{# ============ 1-b. 스마트 네비게이터 허브 (둥실둥실 인터랙티브 카드) ============ #}
+<section class="hub-nav" id="hub-navigator" aria-label="{{ L.hubQuestion }}">
+  <div class="hub-header">
+    <div class="hub-badge"><span class="hub-sparkle" aria-hidden="true">✨</span> {{ L.hubBadge }}</div>
+    <h2 class="hub-title">{{ L.hubQuestion }}</h2>
+    <p class="hub-desc">{{ L.hubSubtitle }}</p>
+  </div>
+
+  <div class="hub-deck">
+    <!-- 카드 1: 핵심 브리핑 -->
+    <button type="button" class="hub-card hub-card--float1" data-target="briefing-body" aria-label="{{ L.hubCardBriefing }}">
+      <div class="hub-card-top">
+        <span class="hub-card-icon" aria-hidden="true">🧭</span>
+        <span class="hub-card-tag hub-tag--accent">7개 파트</span>
+      </div>
+      <strong class="hub-card-title">{{ L.hubCardBriefing }}</strong>
+      <span class="hub-card-sub">{{ L.hubCardBriefingDesc }}</span>
+      <span class="hub-card-action">열람하기 <i aria-hidden="true">➔</i></span>
+    </button>
+
+    <!-- 카드 2: 시장 스냅샷 -->
+    <button type="button" class="hub-card hub-card--float2" data-target="sec-market" aria-label="{{ L.hubCardMarket }}">
+      <div class="hub-card-top">
+        <span class="hub-card-icon" aria-hidden="true">📊</span>
+        <span class="hub-card-tag hub-tag--green">12대 지표</span>
+      </div>
+      <strong class="hub-card-title">{{ L.hubCardMarket }}</strong>
+      <span class="hub-card-sub">{{ L.hubCardMarketDesc }}</span>
+      <span class="hub-card-action">열람하기 <i aria-hidden="true">➔</i></span>
+    </button>
+
+    <!-- 카드 3: 섹터 과열도 & PER -->
+    <button type="button" class="hub-card hub-card--float3" data-target="sec-sectors" aria-label="{{ L.hubCardSectors }}">
+      <div class="hub-card-top">
+        <span class="hub-card-icon" aria-hidden="true">🔥</span>
+        <span class="hub-card-tag hub-tag--yellow">과열 진단</span>
+      </div>
+      <strong class="hub-card-title">{{ L.hubCardSectors }}</strong>
+      <span class="hub-card-sub">{{ L.hubCardSectorsDesc }}</span>
+      <span class="hub-card-action">열람하기 <i aria-hidden="true">➔</i></span>
+    </button>
+
+    <!-- 카드 4: 경제 캘린더 & FOMC -->
+    <button type="button" class="hub-card hub-card--float4" data-target="sec-calendar" aria-label="{{ L.hubCardCalendar }}">
+      <div class="hub-card-top">
+        <span class="hub-card-icon" aria-hidden="true">🏛️</span>
+        <span class="hub-card-tag hub-tag--blue">D-Day 일정</span>
+      </div>
+      <strong class="hub-card-title">{{ L.hubCardCalendar }}</strong>
+      <span class="hub-card-sub">{{ L.hubCardCalendarDesc }}</span>
+      <span class="hub-card-action">열람하기 <i aria-hidden="true">➔</i></span>
+    </button>
+
+    <!-- 카드 5: 팩트 근거 뉴스 -->
+    <button type="button" class="hub-card hub-card--float5" data-target="sec-news" aria-label="{{ L.hubCardNews }}">
+      <div class="hub-card-top">
+        <span class="hub-card-icon" aria-hidden="true">📰</span>
+        <span class="hub-card-tag hub-tag--cyan">50선 팩트</span>
+      </div>
+      <strong class="hub-card-title">{{ L.hubCardNews }}</strong>
+      <span class="hub-card-sub">{{ L.hubCardNewsDesc }}</span>
+      <span class="hub-card-action">열람하기 <i aria-hidden="true">➔</i></span>
+    </button>
+
+    <!-- 카드 6: 예측 적중률 성적표 -->
+    <button type="button" class="hub-card hub-card--float6" data-target="sec-scorecard" aria-label="{{ L.hubCardScorecard }}">
+      <div class="hub-card-top">
+        <span class="hub-card-icon" aria-hidden="true">🎯</span>
+        <span class="hub-card-tag hub-tag--purple">누적 검증</span>
+      </div>
+      <strong class="hub-card-title">{{ L.hubCardScorecard }}</strong>
+      <span class="hub-card-sub">{{ L.hubCardScorecardDesc }}</span>
+      <span class="hub-card-action">열람하기 <i aria-hidden="true">➔</i></span>
+    </button>
+  </div>
+
+  <div class="hub-modes">
+    <div class="hub-mode-switches" role="group" aria-label="보기 모드">
+      <button type="button" class="mode-toggle-btn is-active" id="btn-mode-card" data-mode="card">
+        {{ L.hubModeCard }}
+      </button>
+      <button type="button" class="mode-toggle-btn" id="btn-mode-all" data-mode="all">
+        {{ L.hubModeAll }}
+      </button>
+    </div>
+  </div>
+</section>
+
 {# ============ 2. 시장 스냅샷 ============ #}
 {% if cards %}
-<section class="block" aria-labelledby="h-market">
-  <div class="block-head">
+<section class="block collapsible-block" id="sec-market" data-section-name="{{ L.sectionMarket }}" aria-labelledby="h-market">
+  <div class="block-head block-head--collapsible">
     <h2 id="h-market">{{ L.sectionMarket }}</h2>
     {% if market_updated %}<span class="block-note">{{ L.marketBasis }}: {{ market_updated }}</span>{% endif %}
+    <button type="button" class="collapse-toggle-btn" aria-expanded="true" aria-controls="market-cards" aria-label="{{ L.collapseToggle }}">
+      <span class="collapse-icon">▾</span> <span class="collapse-text">{{ L.collapseFold }}</span>
+    </button>
   </div>
+  <div class="collapsible-body" id="sec-market-body">
   <div class="cards" id="market-cards" data-krw-rate="{{ krw_rate if krw_rate is not none else '' }}">
     {% for c in cards %}
     {% set card_attrs %}class="card card--{{ c.dir }}{{ ' card--chartable' if c.has_chart }}" data-name="{{ c.name }}"{% if c.convertible and c.price is not none %} data-usd="{{ c.price }}" data-usd-change="{{ c.change if c.change is not none else 0 }}"{% endif %}{% endset %}
@@ -218,13 +310,25 @@
     {% endif %}
     {% endfor %}
   </div>
+  </div>
 </section>
 {% endif %}
 
-{# ============ 3. 섹터 ETF ============ #}
+{# ============ 3. 섹터 ETF & 과열도 & 밸류에이션 ============ #}
+{% if sectors or sector_heat or theme_heat or sector_valuation or theme_valuation %}
+<section class="block collapsible-block" id="sec-sectors" data-section-name="{{ L.hubCardSectors }}" aria-labelledby="h-sectors-group">
+  <div class="block-head block-head--collapsible">
+    <h2 id="h-sectors-group">{{ L.hubCardSectors }}</h2>
+    <span class="block-note">24개 섹터·테마 과열 진단 및 밸류에이션</span>
+    <button type="button" class="collapse-toggle-btn" aria-expanded="true" aria-controls="sec-sectors-body" aria-label="{{ L.collapseToggle }}">
+      <span class="collapse-icon">▾</span> <span class="collapse-text">{{ L.collapseFold }}</span>
+    </button>
+  </div>
+  <div class="collapsible-body" id="sec-sectors-body">
+
 {% if sectors %}
-<section class="block block--tight" aria-labelledby="h-sectors">
-  <div class="block-head"><h2 id="h-sectors">{{ L.sectionSectors }}</h2></div>
+<div class="sub-block" aria-labelledby="h-sectors">
+  <div class="sub-block-head"><h3 id="h-sectors" class="sub-block-title">{{ L.sectionSectors }}</h3></div>
   <ul class="sector-grid">
     {% for s in sectors %}
     <li class="sector-chip sector-chip--{{ s.dir }}">
@@ -234,29 +338,14 @@
     </li>
     {% endfor %}
   </ul>
-</section>
+</div>
 {% endif %}
 
-{#-
-  ============ 3-b. 섹터 과열도 (v2.2) ============
-  바로 위 섹터 ETF 칩이 '오늘 얼마나 움직였나'라면 여기는 '지금 얼마나 달아올랐나'다.
-  밸류에이션 판정이 아니다 — 등급은 gapPercentile(그 섹터 자체의 과거 이격 분포에서 오늘의 위치)
-  하나로만 정해지고, RSI·3개월 상대는 참고 수치로 나란히 둔다.
-  sector_heat 는 기능 도입 이전 레코드에서 빈 리스트다 → 섹션 마크업 자체를 만들지 않는다.
-
-  [SECURE] 인라인 style 로 나가는 값은 빌더가 0~100 정수로 클램프한 h.bar / v.bar 뿐이고,
-  등급 클래스는 화이트리스트(builder.HEAT_LABEL_KEYS)를 통과한 다섯 값으로 한정된다.
-  나머지 문자열은 전부 Jinja autoescape 를 거치는 텍스트 노드다 - CSS/속성 인젝션 방지 (Category 1)
--#}
-{#-
-  대분류(GICS 11개)와 테마(반도체·소프트웨어 등)를 같은 마크업으로 두 번 그린다.
-  테마는 대분류의 부분집합이라 한 목록에 섞으면 순위가 오독된다 (SMH 는 XLK 안에 있다).
--#}
 {% for hg in [(sector_heat, L.sectorHeatTitle, L.heatNote, 'h-heat'),
               (theme_heat, L.themeHeatTitle, L.themeNote, 'h-theme-heat')] %}
 {% if hg[0] %}
-<section class="block block--tight" aria-labelledby="{{ hg[3] }}">
-  <div class="block-head"><h2 id="{{ hg[3] }}">{{ hg[1] }}</h2></div>
+<div class="sub-block" aria-labelledby="{{ hg[3] }}">
+  <div class="sub-block-head"><h3 id="{{ hg[3] }}" class="sub-block-title">{{ hg[1] }}</h3></div>
   <p class="heat-note">{{ hg[2] }}</p>
   <ul class="heat-list">
     {% for h in hg[0] %}
@@ -268,7 +357,6 @@
         {% endif %}
         <span class="heat-chip heat-chip--{{ h.label }}">{{ h.label_text }}</span>
       </div>
-      {#- 판정축은 백분위 하나다 → 바 + 숫자로 한 번만 보여주고 dl 에서는 중복하지 않는다 -#}
       <div class="heat-meter">
         <span class="heat-meter-label">{{ L.heatPercentile }}</span>
         <span class="heat-track" role="img"
@@ -285,20 +373,15 @@
     </li>
     {% endfor %}
   </ul>
-</section>
+</div>
 {% endif %}
 {% endfor %}
 
-{#-
-  ============ 3-c. 섹터 밸류에이션 (v2.2) ============
-  현재 PER/PBR 수치만 보여준다. pePercentile 이 없으면 '기록 중 (N일)' 진행 상태만 노출하고
-  어떤 평가 결론도 만들지 않는다 (근거가 될 과거 분포가 아직 없기 때문).
--#}
 {% for vg in [(sector_valuation, L.sectorValuationTitle, L.valuationNote, 'h-val'),
               (theme_valuation, L.themeValuationTitle, L.themeNote, 'h-theme-val')] %}
 {% if vg[0] %}
-<section class="block block--tight" aria-labelledby="{{ vg[3] }}">
-  <div class="block-head"><h2 id="{{ vg[3] }}">{{ vg[1] }}</h2></div>
+<div class="sub-block" aria-labelledby="{{ vg[3] }}">
+  <div class="sub-block-head"><h3 id="{{ vg[3] }}" class="sub-block-title">{{ vg[1] }}</h3></div>
   <p class="val-note">{{ vg[2] }}</p>
   <ul class="val-list">
     {% for v in vg[0] %}
@@ -327,13 +410,23 @@
     </li>
     {% endfor %}
   </ul>
-</section>
+</div>
 {% endif %}
 {% endfor %}
 
+  </div>
+</section>
+{% endif %}
+
 {# ============ 4. 브리핑 본문 ============ #}
-<article class="block briefing" id="briefing-body" aria-labelledby="h-briefing">
-  <div class="block-head"><h2 id="h-briefing">{{ L.sectionBriefing }}</h2></div>
+<article class="block briefing collapsible-block" id="briefing-body" data-section-name="{{ L.sectionBriefing }}" aria-labelledby="h-briefing">
+  <div class="block-head block-head--collapsible">
+    <h2 id="h-briefing">{{ L.sectionBriefing }}</h2>
+    <button type="button" class="collapse-toggle-btn" aria-expanded="true" aria-controls="briefing-content" aria-label="{{ L.collapseToggle }}">
+      <span class="collapse-icon">▾</span> <span class="collapse-text">{{ L.collapseFold }}</span>
+    </button>
+  </div>
+  <div class="collapsible-body" id="briefing-content">
 
   {% if s %}
   {# ---- PART 1 · 전날 시장 리캡 (v2.1 신규. recap이 None이면 섹션을 만들지 않는다) ---- #}
@@ -524,15 +617,20 @@
     <p class="disclaimer-head"><span aria-hidden="true">⚠️</span> <strong>{{ L.disclaimerTitle }}</strong></p>
     <p class="disclaimer-body">{{ L.disclaimerBody }}</p>
   </aside>
+  </div>
 </article>
 
 {# ============ 5. 경제 캘린더 ============ #}
 {% if calendar.fomc or calendar.indicators or calendar.days %}
-<section class="block" aria-labelledby="h-cal">
-  <div class="block-head">
+<section class="block collapsible-block" id="sec-calendar" data-section-name="{{ L.sectionCalendar }}" aria-labelledby="h-cal">
+  <div class="block-head block-head--collapsible">
     <h2 id="h-cal">{{ L.sectionCalendar }}</h2>
     <span class="block-note">{{ L.calSource }}</span>
+    <button type="button" class="collapse-toggle-btn" aria-expanded="true" aria-controls="sec-calendar-body" aria-label="{{ L.collapseToggle }}">
+      <span class="collapse-icon">▾</span> <span class="collapse-text">{{ L.collapseFold }}</span>
+    </button>
   </div>
+  <div class="collapsible-body" id="sec-calendar-body">
 
   {% if calendar.fomc %}
   <div class="econ-block">
@@ -597,19 +695,24 @@
     </div>
   </div>
   {% endif %}
+  </div>
 </section>
 {% endif %}
 
 {# ============ 6. 근거 뉴스 ============ #}
 {% if news %}
-<section class="block" aria-labelledby="h-news">
-  <div class="block-head">
+<section class="block collapsible-block" id="sec-news" data-section-name="{{ L.sectionNews }}" aria-labelledby="h-news">
+  <div class="block-head block-head--collapsible">
     <h2 id="h-news">{{ L.sectionNews }}</h2>
     <span class="block-note">{{ L.newsTierLegend }}</span>
+    <button type="button" class="collapse-toggle-btn" aria-expanded="true" aria-controls="sec-news-body" aria-label="{{ L.collapseToggle }}">
+      <span class="collapse-icon">▾</span> <span class="collapse-text">{{ L.collapseFold }}</span>
+    </button>
   </div>
-  <ol class="news-list">
+  <div class="collapsible-body" id="sec-news-body">
+  <ol class="news-list" id="news-list">
     {% for n in news %}
-    <li class="news-item">
+    <li class="news-item{{ ' news-item--extra' if loop.index > 10 }}">
       <span class="tier tier--t{{ n.tier }}">{{ n.tier_label }}</span>
       <span class="news-body">
         {% if n.url %}
@@ -622,13 +725,27 @@
     </li>
     {% endfor %}
   </ol>
+  {% if news|length > 10 %}
+  <div class="news-more-wrap">
+    <button type="button" class="news-more-btn" id="btn-news-more" data-count="{{ news|length - 10 }}">
+      <span class="news-more-icon">📰</span> <span class="news-more-text">근거 뉴스 전체 {{ news|length }}건 모두 보기 (+{{ news|length - 10 }}건 더보기)</span>
+    </button>
+  </div>
+  {% endif %}
+  </div>
 </section>
 {% endif %}
 
 {# ============ 7. 스코어카드 ============ #}
 {% if scorecard %}
-<section class="block block--tight" aria-labelledby="h-score">
-  <div class="block-head"><h2 id="h-score">{{ L.sectionScorecard }}</h2></div>
+<section class="block block--tight collapsible-block" id="sec-scorecard" data-section-name="{{ L.sectionScorecard }}" aria-labelledby="h-score">
+  <div class="block-head block-head--collapsible">
+    <h2 id="h-score">{{ L.sectionScorecard }}</h2>
+    <button type="button" class="collapse-toggle-btn" aria-expanded="true" aria-controls="sec-scorecard-body" aria-label="{{ L.collapseToggle }}">
+      <span class="collapse-icon">▾</span> <span class="collapse-text">{{ L.collapseFold }}</span>
+    </button>
+  </div>
+  <div class="collapsible-body" id="sec-scorecard-body">
   <div class="score-card">
     <p class="score-summary">{{ scorecard.summary }}</p>
     <ul class="score-dots">
@@ -639,6 +756,7 @@
       {% endfor %}
     </ul>
     <p class="score-note">{{ scorecard.note }}</p>
+  </div>
   </div>
 </section>
 {% endif %}
@@ -694,6 +812,15 @@
     </div>
     <div class="chart-body"><div id="chart-container"></div></div>
   </div>
+</div>
+{# ============ 플로팅 퀵 네비게이터 ============ #}
+<div class="quick-nav" id="quick-nav" aria-label="빠른 탐색">
+  <button type="button" class="quick-nav-btn quick-nav-btn--hub" id="btn-quick-hub" title="{{ L.quickHub }}" aria-label="{{ L.quickHub }}">
+    <span aria-hidden="true">✨</span> <span class="quick-nav-text">{{ L.quickHub }}</span>
+  </button>
+  <button type="button" class="quick-nav-btn quick-nav-btn--top" id="btn-quick-top" title="{{ L.quickTop }}" aria-label="{{ L.quickTop }}">
+    ▲
+  </button>
 </div>
 {% endblock %}
 

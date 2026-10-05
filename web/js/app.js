@@ -620,6 +620,205 @@
     gtag('config', gaId);
   }
 
+  // =======================================================================
+  // 8. 스마트 네비게이터 허브 & 접이식 블록 & 뷰 모드 스위처
+  // =======================================================================
+  var VIEW_MODE_KEY = 'mbrief_view_mode';
+
+  function expandSection(sectionEl) {
+    if (!sectionEl) return;
+    sectionEl.classList.remove('is-collapsed');
+    var btn = sectionEl.querySelector('.collapse-toggle-btn');
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'true');
+      var icon = btn.querySelector('.collapse-icon');
+      var text = btn.querySelector('.collapse-text');
+      if (icon) icon.textContent = '▾';
+      if (text) text.textContent = label('lCollapseFold', '접기');
+    }
+  }
+
+  function collapseSection(sectionEl) {
+    if (!sectionEl) return;
+    sectionEl.classList.add('is-collapsed');
+    var btn = sectionEl.querySelector('.collapse-toggle-btn');
+    if (btn) {
+      btn.setAttribute('aria-expanded', 'false');
+      var icon = btn.querySelector('.collapse-icon');
+      var text = btn.querySelector('.collapse-text');
+      if (icon) icon.textContent = '▸';
+      if (text) text.textContent = label('lCollapseUnfold', '펼치기');
+    }
+  }
+
+  function toggleSection(sectionEl) {
+    if (!sectionEl) return;
+    if (sectionEl.classList.contains('is-collapsed')) {
+      expandSection(sectionEl);
+    } else {
+      collapseSection(sectionEl);
+    }
+  }
+
+  function initCollapsible() {
+    var blocks = document.querySelectorAll('.collapsible-block');
+    if (!blocks.length) return;
+
+    for (var i = 0; i < blocks.length; i++) {
+      (function (block) {
+        var head = block.querySelector('.block-head--collapsible');
+        var btn = block.querySelector('.collapse-toggle-btn');
+        if (btn) {
+          btn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            toggleSection(block);
+          });
+        }
+        if (head) {
+          head.addEventListener('click', function (e) {
+            if (e.target.closest('a') || e.target.closest('button')) return;
+            toggleSection(block);
+          });
+        }
+      })(blocks[i]);
+    }
+  }
+
+  function initHubNavigator() {
+    var cards = document.querySelectorAll('.hub-card[data-target]');
+    if (!cards.length) return;
+
+    for (var i = 0; i < cards.length; i++) {
+      cards[i].addEventListener('click', function (e) {
+        var targetId = e.currentTarget.dataset.target;
+        if (!targetId) return;
+        var targetEl = document.getElementById(targetId);
+        if (!targetEl) return;
+
+        // 카드 집중 모드일 때 다른 섹션은 접어두어 스크롤 압박 최소화
+        if (body.classList.contains('mode-card')) {
+          var allBlocks = document.querySelectorAll('.collapsible-block');
+          for (var j = 0; j < allBlocks.length; j++) {
+            if (allBlocks[j] !== targetEl) {
+              collapseSection(allBlocks[j]);
+            }
+          }
+        }
+
+        expandSection(targetEl);
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        targetEl.classList.remove('is-focused');
+        void targetEl.offsetWidth; // 강제 리플로우
+        targetEl.classList.add('is-focused');
+        window.setTimeout(function () {
+          targetEl.classList.remove('is-focused');
+        }, 2000);
+      });
+    }
+  }
+
+  function initViewMode() {
+    var btnModeCard = document.getElementById('btn-mode-card');
+    var btnModeAll = document.getElementById('btn-mode-all');
+    if (!btnModeCard || !btnModeAll) return;
+
+    function setMode(mode) {
+      var isCard = mode === 'card';
+      body.classList.toggle('mode-card', isCard);
+      btnModeCard.classList.toggle('is-active', isCard);
+      btnModeCard.setAttribute('aria-pressed', isCard ? 'true' : 'false');
+      btnModeAll.classList.toggle('is-active', !isCard);
+      btnModeAll.setAttribute('aria-pressed', !isCard ? 'true' : 'false');
+      safeLocalSet(VIEW_MODE_KEY, mode);
+
+      var blocks = document.querySelectorAll('.collapsible-block');
+      if (isCard) {
+        // 카드 모드: 첫 번째 섹션만 펼쳐두고 나머지는 접어 스크롤 압박 완화
+        for (var i = 0; i < blocks.length; i++) {
+          if (i > 0) collapseSection(blocks[i]);
+          else expandSection(blocks[i]);
+        }
+      } else {
+        // 전체 펼쳐보기 모드: 모든 블록 펼침
+        for (var j = 0; j < blocks.length; j++) {
+          expandSection(blocks[j]);
+        }
+      }
+    }
+
+    btnModeCard.addEventListener('click', function () { setMode('card'); });
+    btnModeAll.addEventListener('click', function () { setMode('all'); });
+
+    var saved = safeLocalGet(VIEW_MODE_KEY);
+    // 기본값은 card 모드로 실행하여 스크롤 압박을 기본적으로 완화
+    setMode(saved === 'all' ? 'all' : 'card');
+  }
+
+  function initNewsExpander() {
+    var btn = document.getElementById('btn-news-more');
+    var list = document.getElementById('news-list');
+    if (!btn || !list) return;
+
+    var extraItems = list.querySelectorAll('.news-item--extra');
+    if (!extraItems.length) return;
+
+    // 초기 상태: 10건 초과 숨김
+    for (var i = 0; i < extraItems.length; i++) {
+      extraItems[i].classList.add('is-hidden');
+    }
+
+    var isExpanded = false;
+    var count = btn.dataset.count || extraItems.length;
+
+    btn.addEventListener('click', function () {
+      isExpanded = !isExpanded;
+      for (var j = 0; j < extraItems.length; j++) {
+        extraItems[j].classList.toggle('is-hidden', !isExpanded);
+      }
+      var textEl = btn.querySelector('.news-more-text');
+      if (textEl) {
+        if (isExpanded) {
+          textEl.textContent = label('lNewsShowLess', '뉴스 접기 (상위 10건만 보기)');
+        } else {
+          textEl.textContent = label('lNewsShowMore', '근거 뉴스 전체 펼치기') + ' (+' + count + '건 더보기)';
+        }
+      }
+    });
+  }
+
+  function initQuickNav() {
+    var quickNav = document.getElementById('quick-nav');
+    var btnHub = document.getElementById('btn-quick-hub');
+    var btnTop = document.getElementById('btn-quick-top');
+    if (!quickNav) return;
+
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (!ticking) {
+        window.requestAnimationFrame(function () {
+          var show = window.pageYOffset > 380;
+          quickNav.classList.toggle('is-visible', show);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+
+    if (btnHub) {
+      btnHub.addEventListener('click', function () {
+        var hub = document.getElementById('hub-navigator');
+        if (hub) hub.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    if (btnTop) {
+      btnTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+  }
+
   // ===== 부트스트랩 =====
   function boot() {
     initGoogleAnalytics();
@@ -630,6 +829,11 @@
     initPwaHint();
     initArchiveFilter();
     initServiceWorker();
+    initCollapsible();
+    initHubNavigator();
+    initViewMode();
+    initNewsExpander();
+    initQuickNav();
   }
 
   if (document.readyState === 'loading') {
