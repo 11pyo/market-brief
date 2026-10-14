@@ -1,0 +1,89 @@
+name: Daily Market Briefing Pipeline
+
+on:
+  schedule:
+    # 21:30 UTC 월~금 = 한국시간(KST) 화~토 오전 06:30 (미국 정규장 마감 후)
+    # 일요일·월요일 아침(KST)은 미국 주말 휴장이므로 크론 자체를 스케줄링하지 않아 자원 100% 보존
+    - cron: '30 21 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: '기존 브리핑이 있어도 강제 재생성 여부'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-briefing
+  cancel-in-progress: false
+
+jobs:
+  run-pipeline:
+    name: Run Intelligent Conditional Pipeline
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set up Node.js for Cloudflare Wrangler
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Market Brief Daily Pipeline
+        id: pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          SITE_URL: "https://market-brief-4ns.pages.dev"
+          SITE_NAME: "증시흐름"
+          LLM_FALLBACK_PROVIDERS: "gemini"
+          BRIEFING_DAYS: "tue,wed,thu,fri,sat"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ "${{ inputs.force }}" = "true" ]; then
+            python -m mbrief daily --force
+          else
+            python -m mbrief daily
+          fi
+
+      - name: Commit and Push Updated Data (If Changed)
+        id: git_push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ site/
+          if git diff --staged --quiet; then
+            echo "No changes in briefing data (Holiday or skipped). Nothing to commit."
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            git commit -m "chore(auto): daily market briefing updated [skip ci]"
+            git push
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Cloudflare Pages
+        if: steps.git_push.outputs.changed == 'true' || inputs.force == true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          npx wrangler pages deploy site --project-name=market-brief --branch=main

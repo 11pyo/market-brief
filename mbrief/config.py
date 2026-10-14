@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     briefing_langs: str = "ko"                # 쉼표 구분. 첫 언어로 분석 생성, 나머지는 번역 패스 (예: "ko,en")
     # 장중 시세 갱신(tick) 창. 한국 정규장 기준. 이 시간대 밖에서는 tick이 아무것도 하지 않는다.
     intraday_window: str = "09:00-15:30"
-    briefing_days: str = "mon,tue,wed,thu,fri,sat"  # daily 명령이 실행되는 요일 (일요일 기본 제외)
+    briefing_days: str = "tue,wed,thu,fri,sat"  # daily 명령 실행 요일 (화~토 06:30 KST = 월~금 미국 정규장 마감)
     max_briefings_on_site: int = 60           # 정적 사이트에 포함할 최근 브리핑 수 (data/briefings/는 전부 보관)
     publish_portfolio_note: bool = False      # PART 8(소유자 포트폴리오 조언)을 공개 사이트에 포함할지
     tz: str = "Asia/Seoul"
