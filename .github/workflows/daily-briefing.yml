@@ -45,7 +45,7 @@ jobs:
       - name: Set up Node.js for Cloudflare Wrangler
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Run Market Brief Daily Pipeline
         id: pipeline
@@ -56,13 +56,12 @@ jobs:
           SITE_NAME: "증시흐름"
           LLM_FALLBACK_PROVIDERS: "gemini"
           BRIEFING_DAYS: "tue,wed,thu,fri,sat"
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PUBLISH_ENABLED: "false"
         run: |
           if [ "${{ inputs.force }}" = "true" ]; then
-            python -m mbrief daily --force
+            python -m mbrief daily --no-publish --force
           else
-            python -m mbrief daily
+            python -m mbrief daily --no-publish
           fi
 
       - name: Commit and Push Updated Data (If Changed)
@@ -86,4 +85,9 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          npx wrangler pages deploy site --project-name=market-brief --branch=main
+          npx wrangler pages deploy site --project-name=market-brief --branch=main --commit-dirty=true
+
+      - name: Notify Search Engines via IndexNow
+        if: steps.git_push.outputs.changed == 'true' || inputs.force == true
+        run: |
+          python -c "from mbrief import indexing; indexing.push_indexnow('https://market-brief-4ns.pages.dev')"
