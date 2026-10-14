@@ -50,7 +50,7 @@ jobs:
       - name: Run Market Brief Daily Pipeline
         id: pipeline
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_FREE_API || secrets.GEMINI_API_KEY }}
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           SITE_URL: "https://market-brief-4ns.pages.dev"
           SITE_NAME: "증시흐름"
