@@ -288,7 +288,7 @@
   </div>
 
   <div class="hub-deck">
-    <!-- 카드 1: 핵심 브리핑 -->
+    {# 카드 1: 핵심 브리핑 #}
     <div class="hub-card hub-card--float1" role="button" tabindex="0" data-target="briefing-body" aria-label="{{ L.hubCardBriefing }}">
       <div class="hub-card-top">
         <span class="hub-card-icon" aria-hidden="true">🧭</span>
@@ -303,7 +303,7 @@
       </div>
     </div>
 
-    <!-- 카드 2: 시장 스냅샷 -->
+    {# 카드 2: 시장 스냅샷 #}
     <div class="hub-card hub-card--float2" role="button" tabindex="0" data-target="sec-market" aria-label="{{ L.hubCardMarket }}">
       <div class="hub-card-top">
         <span class="hub-card-icon" aria-hidden="true">📊</span>
@@ -318,11 +318,11 @@
       </div>
     </div>
 
-    <!-- 카드 3: 섹터 과열도 & PER -->
+    {# 카드 3: 섹터 동향 #}
     <div class="hub-card hub-card--float3" role="button" tabindex="0" data-target="sec-sectors" aria-label="{{ L.hubCardSectors }}">
       <div class="hub-card-top">
         <span class="hub-card-icon" aria-hidden="true">🔥</span>
-        <span class="hub-card-tag hub-tag--yellow">과열 진단</span>
+        <span class="hub-card-tag hub-tag--yellow">모멘텀</span>
       </div>
       <div class="hub-card-main">
         <strong class="hub-card-title">{{ L.hubCardSectors }}</strong>
@@ -333,7 +333,7 @@
       </div>
     </div>
 
-    <!-- 카드 4: 경제 캘린더 & FOMC -->
+    {# 카드 4: 경제 캘린더 & FOMC #}
     <div class="hub-card hub-card--float4" role="button" tabindex="0" data-target="sec-calendar" aria-label="{{ L.hubCardCalendar }}">
       <div class="hub-card-top">
         <span class="hub-card-icon" aria-hidden="true">🏛️</span>
@@ -348,7 +348,7 @@
       </div>
     </div>
 
-    <!-- 카드 5: 팩트 근거 뉴스 -->
+    {# 카드 5: 팩트 근거 뉴스 #}
     <div class="hub-card hub-card--float5" role="button" tabindex="0" data-target="sec-news" aria-label="{{ L.hubCardNews }}">
       <div class="hub-card-top">
         <span class="hub-card-icon" aria-hidden="true">📰</span>
@@ -363,7 +363,7 @@
       </div>
     </div>
 
-    <!-- 카드 6: 예측 적중률 성적표 -->
+    {# 카드 6: 예측 적중률 성적표 #}
     <div class="hub-card hub-card--float6" role="button" tabindex="0" data-target="sec-scorecard" aria-label="{{ L.hubCardScorecard }}">
       <div class="hub-card-top">
         <span class="hub-card-icon" aria-hidden="true">🎯</span>
@@ -887,12 +887,12 @@
         <h2 class="modal-title" id="modal-section-title">섹션 상세</h2>
       </div>
       <div class="modal-quick-tabs" role="tablist" id="modal-tabs">
-        <button type="button" class="modal-tab-btn" data-target="briefing-body">🧭 브리핑 본문</button>
-        <button type="button" class="modal-tab-btn" data-target="sec-market">📊 시장 스냅샷</button>
-        <button type="button" class="modal-tab-btn" data-target="sec-sectors">🔥 섹터 과열도/PER</button>
-        <button type="button" class="modal-tab-btn" data-target="sec-calendar">🏛️ FOMC/캘린더</button>
-        <button type="button" class="modal-tab-btn" data-target="sec-news">📰 근거 뉴스</button>
-        <button type="button" class="modal-tab-btn" data-target="sec-scorecard">🎯 적중률</button>
+        <button type="button" class="modal-tab-btn" data-target="briefing-body">🧭 {{ L.hubCardBriefing }}</button>
+        <button type="button" class="modal-tab-btn" data-target="sec-market">📊 {{ L.hubCardMarket }}</button>
+        <button type="button" class="modal-tab-btn" data-target="sec-sectors">🔥 {{ L.hubCardSectors }}</button>
+        <button type="button" class="modal-tab-btn" data-target="sec-calendar">🏛️ {{ L.hubCardCalendar }}</button>
+        <button type="button" class="modal-tab-btn" data-target="sec-news">📰 {{ L.hubCardNews }}</button>
+        <button type="button" class="modal-tab-btn" data-target="sec-scorecard">🎯 {{ L.hubCardScorecard }}</button>
       </div>
       <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="{{ L.modalClose }}">
         <span aria-hidden="true">✕</span> {{ L.modalClose }}
