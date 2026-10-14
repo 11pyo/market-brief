@@ -17,16 +17,10 @@ logs/
 # 런타임 데이터
 # 시세·차트 스냅샷 (재생성 가능)
 data/cache/
-# 생성된 브리핑 레코드 (portfolioNote 원본 포함 - 절대 커밋 금지, 공개본은 gh-pages로 배포)
-data/briefings/
 # 소유자 포트폴리오 (비공개)
 data/portfolio.json
 # 예시 파일은 실제 보유 내역이 아니므로 커밋한다 (복사해서 쓰는 템플릿)
 !data/portfolio.example.json
-# 섹터 PER/PBR 일별 기록 (append-only). 매일 한 줄씩 쌓이는 런타임 데이터라 커밋하지 않는다.
-# 사이트 빌드가 site/data/ 로 복사해 배포하므로 유실되어도 배포본에서 되살릴 수 있다.
-data/valuation/
-data/scorecard.json
 data/.daily.lock
 data/stats.json
 data/settings.json
