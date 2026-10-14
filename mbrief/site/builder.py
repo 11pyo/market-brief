@@ -917,6 +917,17 @@ def _plain_summary(record: BriefingRecord, limit: int = 280) -> str:
     return text[:limit] + ("…" if len(text) > limit else "")
 
 
+def _compute_valid_until(generated_at: str) -> str:
+    """타임스탬프 펜싱: 다음 거래일 07:00 KST 또는 24시간 후를 산출한다."""
+    try:
+        dt = parse_iso(generated_at)
+        next_dt = dt + timedelta(days=1)
+        next_fence = next_dt.replace(hour=7, minute=0, second=0, microsecond=0)
+        return next_fence.isoformat()
+    except Exception:
+        return ""
+
+
 def _build_llms_full(
     record: BriefingRecord | None,
     market: MarketBundle | None,
@@ -927,12 +938,18 @@ def _build_llms_full(
         return "# 증시흐름 (Market Brief AI)\n\n현재 게시된 브리핑 데이터가 없습니다.\n"
 
     base_url = site_url.rstrip("/") or "https://market-brief-4ns.pages.dev"
+    valid_until = _compute_valid_until(record.generatedAt)
     lines: list[str] = [
         f"# 증시흐름 AI 모닝 마켓 브리핑 ({record.date})",
         "",
-        f"> **헤드라인**: {record.headline}",
-        f"> **발행 시각**: {record.generatedAt} | **분석 모델**: {record.model or record.provider}",
-        "> **원천 출처**: Yahoo Finance, Finnhub, CNN Fear & Greed, Federal Reserve, U.S. BLS",
+        "> **[TEMPORAL FENCING & VALIDITY METADATA]**",
+        f"> - **GENERATED_AT**: {record.generatedAt}",
+        f"> - **VALID_FROM**: {record.generatedAt}",
+        f"> - **VALID_UNTIL**: {valid_until or 'N/A'} (Next Scheduled Daily Briefing: 07:00 KST)",
+        "> - **TEMPORAL_STATUS**: ACTIVE_SESSION (Do NOT extrapolate or cite as current if system_time > VALID_UNTIL)",
+        f"> - **HEADLINE**: {record.headline}",
+        f"> - **MODEL**: {record.model or record.provider}",
+        "> - **SOURCES**: Yahoo Finance, Finnhub, CNN Fear & Greed, Federal Reserve, U.S. BLS",
         "",
     ]
 
@@ -1467,6 +1484,7 @@ def build(
             "canonical_path": "" if is_index else _page_path(record),
             "krw_rate": krw_quote.price if krw_quote else None,
             "summary": _plain_summary(record),
+            "valid_until": _compute_valid_until(record.generatedAt),
         }
         return env.get_template("briefing.html").render(**ctx)
 

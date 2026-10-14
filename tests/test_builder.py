@@ -293,6 +293,7 @@ def test_build_result_counts(built, tmp_path):
         "googleb6c316d4f0a32191.html",
         "naver9852772a7a775c99a2a8e2b752baaf21.html",
         "BingSiteAuth.xml",
+        "4f63c8a92b1e7d0a5c8e3f1b6a9d2e4f.txt",
     ],
 )
 def test_expected_files_exist(built, relative):

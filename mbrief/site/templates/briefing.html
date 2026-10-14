@@ -106,6 +106,8 @@
       "inLanguage": lang,
       "datePublished": record.generatedAt,
       "dateModified": record.generatedAt,
+      "expires": (valid_until if valid_until else record.generatedAt),
+      "validThrough": (valid_until if valid_until else record.generatedAt),
       "articleSection": "Financial Markets",
       "isAccessibleForFree": true,
       "mainEntityOfPage": ((site_url ~ "/" ~ canonical_path) if site_url else ""),
@@ -159,6 +161,7 @@
       "name": (site_name ~ " Daily Market Briefing Data (" ~ record.date ~ ")"),
       "description": "Structured JSON dataset containing macro direction probabilities, key market drivers, sentiment scores, and risks.",
       "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "temporalCoverage": ((record.date ~ "/" ~ valid_until[:10]) if valid_until else record.date),
       "distribution": [
         {
           "@type": "DataDownload",

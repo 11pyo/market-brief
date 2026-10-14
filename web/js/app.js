@@ -802,6 +802,21 @@
     var btnModeAll = document.getElementById('btn-mode-all');
     if (!btnModeCard || !btnModeAll) return;
 
+    function expandAllSections() {
+      var collapsibles = document.querySelectorAll('.collapsible-block');
+      for (var i = 0; i < collapsibles.length; i++) {
+        collapsibles[i].classList.remove('is-collapsed');
+        var bodyEl = collapsibles[i].querySelector('.collapsible-body');
+        if (bodyEl) bodyEl.style.display = 'block';
+        var toggleBtn = collapsibles[i].querySelector('.collapse-toggle-btn');
+        if (toggleBtn) {
+          toggleBtn.setAttribute('aria-expanded', 'true');
+          var txt = toggleBtn.querySelector('.collapse-text');
+          if (txt) txt.textContent = label('lCollapseFold', '접기');
+        }
+      }
+    }
+
     function setMode(mode) {
       var isCard = mode === 'card';
       body.classList.toggle('mode-card', isCard);
@@ -812,9 +827,10 @@
       btnModeAll.setAttribute('aria-pressed', !isCard ? 'true' : 'false');
       safeLocalSet(VIEW_MODE_KEY, mode);
 
-      // 전체 모드로 전환 시 현재 모달이 열려있다면 닫고 복원
+      // 전체 모드로 전환 시 현재 모달이 열려있다면 닫고 복원하며, 모든 섹션을 자동 펼침(Ctrl+F 및 인쇄 지원)
       if (!isCard) {
         closeSectionModal();
+        expandAllSections();
       }
     }
 

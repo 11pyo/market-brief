@@ -652,6 +652,12 @@ async def daily(
             try:
                 if not publish_mod.publish_site():
                     failures.append("publish")
+                else:
+                    try:
+                        from mbrief import indexing
+                        indexing.push_indexnow(settings.site_url)
+                    except Exception as idx_err:
+                        logger.warning("[IndexNow] 알림 실패: %s", idx_err)
             except Exception as e:
                 logger.exception("[Pipeline] publish 실패: %s", e)
                 failures.append("publish")
@@ -713,8 +719,21 @@ def _current_fingerprint() -> str | None:
     return market_fingerprint(bundle, store.load_charts())
 
 
+def check_volatility_trigger(bundle: MarketBundle | None) -> tuple[bool, str]:
+    """변동성 트리거 검사: VIX |changePercent| >= 10.0% 또는 S&P 500 |changePercent| >= 2.0%."""
+    if not bundle or not bundle.quotes:
+        return False, ""
+    vix = bundle.quotes.get("VIX")
+    if vix and vix.changePercent is not None and abs(vix.changePercent) >= 10.0:
+        return True, f"VIX 변동성 급변({vix.changePercent:+.1f}%)"
+    spx = bundle.quotes.get("S&P 500")
+    if spx and spx.changePercent is not None and abs(spx.changePercent) >= 2.0:
+        return True, f"S&P 500 지수 급등락({spx.changePercent:+.1f}%)"
+    return False, ""
+
+
 async def tick(*, force: bool = False, no_publish: bool = False) -> int:
-    """장중 시세·차트만 갱신하고, 값이 바뀐 경우에만 빌드·배포한다."""
+    """장중 시세·차트만 갱신하고, 값이 바뀐 경우 또는 변동성 트리거 발동 시 빌드·배포한다."""
     window = marketclock.parse_window(settings.intraday_window)
     if not force and not marketclock.in_intraday_window(window=window):
         logger.info("[Tick] 장중 시간대가 아님 (%s) - 건너뜀", settings.intraday_window)
@@ -733,8 +752,12 @@ async def tick(*, force: bool = False, no_publish: bool = False) -> int:
             logger.exception("[Tick] 시세 갱신 실패: %s", e)
             return EXIT_FAILED
 
+        is_volatile, trigger_reason = check_volatility_trigger(bundle)
+        if is_volatile:
+            logger.warning("[Micro-Batch] 변동성 트리거 감지 (%s) - 강제 빌드 및 배포 가동", trigger_reason)
+
         after = market_fingerprint(bundle, store.load_charts())
-        if before is not None and before == after:
+        if not is_volatile and before is not None and before == after:
             logger.info("[Tick] 시세 변동 없음 - 빌드·배포 건너뜀")
             return EXIT_OK
 
@@ -745,9 +768,21 @@ async def tick(*, force: bool = False, no_publish: bool = False) -> int:
             return EXIT_OK
 
         from mbrief import publish as publish_mod
-        if not publish_mod.publish_site(message=f"tick: {now_iso()[:16]} 시세 갱신"):
+        commit_msg = (
+            f"microbatch: {now_iso()[:16]} ({trigger_reason})"
+            if is_volatile
+            else f"tick: {now_iso()[:16]} 시세 갱신"
+        )
+        if not publish_mod.publish_site(message=commit_msg):
             return EXIT_FAILED
         logger.info("[Tick] 완료 - 시세 갱신 배포됨")
+
+        try:
+            from mbrief import indexing
+            indexing.push_indexnow(settings.site_url)
+        except Exception as idx_err:
+            logger.warning("[IndexNow] 알림 실패: %s", idx_err)
+
         return EXIT_OK
 
 

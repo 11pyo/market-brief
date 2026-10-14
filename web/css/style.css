@@ -833,7 +833,9 @@ a.pager-link:hover { border-color: var(--border-medium); background: var(--bg-ca
 @media print {
   body { background: #fff; color: #111; }
   body::before { display: none; }
-  .top-nav, .pwa-hint, .chart-modal, .toast-container, .lens, .pager, .skip-link, .card-hint { display: none !important; }
+  .top-nav, .pwa-hint, .chart-modal, .toast-container, .lens, .pager, .skip-link, .card-hint, .section-modal, .quick-nav, .hub-modes, .hub-deck { display: none !important; }
+  #sections-vault { display: block !important; }
+  .collapsible-body { display: block !important; }
   .main { max-width: none; padding: 0; }
   .briefing, .signal, .card, .econ-block, .score-card,
   .recap-drivers, .recap-item, .actor-card,

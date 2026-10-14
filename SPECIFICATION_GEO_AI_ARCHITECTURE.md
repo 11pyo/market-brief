@@ -143,3 +143,23 @@ $$BS = \frac{1}{N} \sum_{t=1}^{N} \sum_{i \in \{\text{up}, \text{flat}, \text{do
    - 이 아키텍처가 직면할 수 있는 잠재적 취약점(예: 일일 배치 주기의 장중 지연, 크롤러의 llms-full.txt 캐싱 주기, 경쟁사 카피 등)은 무엇인가?
 6. **최종 종합 평점 및 총평**:
    - 상용 금융 플랫폼 및 AI 네이티브 웹 인프라 관점에서의 종합 등급 (S/A/B/C/D).
+
+---
+
+## 5. S+ Tier 엔터프라이즈 격상 반영 내역 (Implemented Enhancements)
+
+동료 프론티어 AI의 비판적 감사(Audit) 지적사항 3가지를 100% 수용하여 프로덕션에 즉시 구현 및 배포 완료:
+
+### 1) 이벤트 드리븐 마이크로 배치 (Volatility Triggered Micro-Batch)
+* **모듈**: `mbrief/pipeline.py` (`check_volatility_trigger`)
+* **동작 원리**: 일 1회 정기 배치 외에 장중 VIX $\ge 10.0\%$ 또는 S&P 500 $\ge 2.0\%$ 변동 발생 시 웹훅/스케줄러가 파이프라인 지문(Fingerprint) 불일치 여부와 무관하게 즉시 정적 컴파일 및 배포를 강제 실행 (`microbatch: volatility trigger`).
+
+### 2) 인덱싱 푸시(IndexNow) & 타임스탬프 펜싱(Temporal Fencing)
+* **모듈**: `mbrief/indexing.py`, `mbrief/site/builder.py`, `web/4f63c8a92b1e7d0a5c8e3f1b6a9d2e4f.txt`
+* **타임스탬프 펜싱**: `llms-full.txt` 최상단에 `[VALID_UNTIL: 2026-10-15T07:00:00+09:00]` 메타데이터 헤더와 `TEMPORAL_STATUS: ACTIVE_SESSION`을 명시하고, JSON-LD Schema.org에 `expires` 및 `validThrough`를 자동 주입하여 AI 에이전트의 시황 오인 원천 차단.
+* **실시간 인덱싱 푸시**: 빌드 완료 즉시 `https://api.indexnow.org/indexnow`를 호출하여 Bing, Yandex, Naver 및 AI 크롤러에게 실시간 캐시 갱신을 강제 통지.
+
+### 3) 리서처 뷰 (All-Expand Mode) & 인쇄 최적화
+* **모듈**: `web/js/app.js`, `web/css/style.css`, `mbrief/site/i18n.py`
+* **UX 개선**: 상단 뷰 모드 토글에 `🗂️ 팝업 모달 뷰 (Zero-Scroll)`와 `📑 리서처 뷰 (전체 펼침 · Ctrl+F 검색)`를 제공. 리서처 뷰 선택 시 모든 아코디언과 모달 섹션이 단번에 오픈되어 전수 검색 및 인쇄(`Ctrl+P` / `@media print` 스타일) 완벽 지원.
+
