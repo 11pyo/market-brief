@@ -1,0 +1,1151 @@
+{
+  "id": "2026-10-15-ko-384ba3",
+  "date": "2026-10-15",
+  "lang": "ko",
+  "generatedAt": "2026-10-15T00:23:53+09:00",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "generationTimeMs": 8029,
+  "newsCount": 50,
+  "tierCounts": {
+    "t1": 18,
+    "t2": 21,
+    "t3": 11
+  },
+  "headline": "9월 헤드라인 CPI +0.6% 및 코어 인플레이션 급등 여파로 미 10년물 금리 5.27%로 폭등, S&P 500 -0.77% 하락",
+  "structured": {
+    "headline": "9월 헤드라인 CPI +0.6% 및 코어 인플레이션 급등 여파로 미 10년물 금리 5.27%로 폭등, S&P 500 -0.77% 하락",
+    "sessionRecap": {
+      "summary": "미국 증시는 9월 소비자물가지수(CPI)가 전월 대비 +0.6% 상승하며 인플레이션 압력이 재차 부각됨에 따라 급락세를 보이고 있습니다. 현재 S&P 500은 7,745.29(-0.77%), 나스닥은 26,909.05(-1.09%)로 약세를 기록 중이며, 연준의 추가 금리 인상 우려가 시장을 강하게 압박하고 있습니다.",
+      "drivers": [
+        "미 10년물 국채 금리 5.27%(+0.06%, +1.09%) 급등 — 9월 인플레이션 충격 반영",
+        "달러 인덱스(DXY) 102.94(+0.80%) 상승 — 안전자산 선호 심리 강화",
+        "WTI 원유 95.32(+0.56%) 상승 — 중동 지정학적 리스크 및 사우디 아람코 시설 타격 우려",
+        "VIX 지수 16.02(+4.91%) 급등 — 시장 변동성 확대"
+      ]
+    },
+    "overnight": "볼로디미르 젤렌스키 우크라이나 대통령은 러시아가 에너지 인프라를 타격함에 따라 스타링크 제한이 군사 작전에 차질을 빚고 있다고 경고했습니다. 미국 노동부 발표에 따르면 9월 소비자물가지수(CPI)가 +0.6% 상승하고 실업률은 4.2%를 기록하며 인플레이션 압력과 고용 냉각이 공존하는 모습을 보였습니다. 씨티그룹은 연준이 올해 12월 25bp 금리 인상을 단행할 것으로 전망을 수정했으며, 트레이더들은 내년 1월까지 두 차례 금리 인상을 완전히 프라이싱하고 있습니다. 기업 및 법률 뉴스로는 애플과 오픈AI의 소송 과정에서 오픈AI 브리프를 통해 미공개 기기 이미지와 제조 데이터 유출 정황이 폭로되었으며, 뱅크오브아메리카는 3분기 실적 부진 및 12억 달러 규모의 재무부 벌금 여파로 주가가 8% 급락했습니다.",
+    "keyActors": [
+      {
+        "name": "볼로디미르 젤렌스키",
+        "role": "우크라이나 대통령",
+        "action": "러시아의 에너지 인프라 공격과 스타링크 제한이 우크라이나 군사 작전을 방해하고 있다고 경고함.",
+        "impact": "글로벌 에너지 공급망 불안을 가중시키며 WTI 유가를 95.32달러(+0.56%)로 밀어 올림.",
+        "assets": [
+          "WTI"
+        ]
+      }
+    ],
+    "direction": {
+      "up": 20,
+      "flat": 25,
+      "down": 55,
+      "rationaleUp": "장중 저가 매수세 유입 시 낙폭을 일부 축소할 수 있으나 촉매가 부족함.",
+      "rationaleFlat": "CPI 충격 이후 방향성을 탐색하며 주요 지지선 근처에서 횡보할 가능성.",
+      "rationaleDown": "9월 소비자물가 급등에 따른 연준 금리 인상 우려와 채권 금리 상승(5.27%)이 증시 전반에 지속적인 하방 압력으로 작용."
+    },
+    "sectorLeaders": [
+      {
+        "name": "Energy",
+        "etf": "XLE",
+        "reason": "중동 지정학적 긴장 고조 및 사우디 아람코 시설 공격 우려로 유가 상승세 지속"
+      },
+      {
+        "name": "Healthcare",
+        "etf": "XLV",
+        "reason": "매크로 불확실성 국면에서 상대적인 방어력과 양호한 모멘텀(200DMA gap +10.78%) 부각"
+      },
+      {
+        "name": "Cons. Staples",
+        "etf": "XLP",
+        "reason": "인플레이션 및 금리 인상 충격에 대응하기 위한 필수소비재로의 자금 유입"
+      }
+    ],
+    "sectorLaggards": [
+      {
+        "name": "반도체",
+        "etf": "SMH",
+        "reason": "금리 급등 및 기술주 전반의 밸류에이션 부담으로 투자 심리 악화"
+      },
+      {
+        "name": "Real Estate",
+        "etf": "XLRE",
+        "reason": "미 10년물 국채 금리 5.27% 돌파에 따른 직접적인 자금 조달 비용 부담"
+      }
+    ],
+    "risks": [
+      {
+        "title": "국채 금리 5.27% 상향 돌파",
+        "detail": "9월 CPI가 예상치를 웃돌며 연준의 추가 긴축 및 25bp 금리 인상 전망이 강화되어 증시 밸류에이션을 압박함.",
+        "severity": "high"
+      },
+      {
+        "title": "중동 지정학적 리스크 및 에너지 시설 타격",
+        "detail": "사우디 아람코 시설 공격 및 이란 관련 위협이 유가를 자극해 인플레이션을 재차 악화시킬 위험.",
+        "severity": "high"
+      },
+      {
+        "title": "대형 금융사 실적 및 규제 리스크",
+        "detail": "뱅크오브아메리카의 3분기 실적 부진 및 12억 달러 벌금 부과가 금융주 전반의 투자 심리를 위축시킴.",
+        "severity": "medium"
+      }
+    ],
+    "trades": [
+      {
+        "asset": "Energy (XLE)",
+        "side": "long",
+        "entry": "90.0~91.0",
+        "target": "96.0",
+        "stop": "88.5",
+        "rr": "1:3.3",
+        "rationale": "중동 지정학적 긴장과 원유 공급 차질 우려로 에너지 섹터의 단기 모멘텀이 매우 강력함."
+      },
+      {
+        "asset": "Technology (XLK)",
+        "side": "short",
+        "entry": "230.0~232.0",
+        "target": "215.0",
+        "stop": "236.0",
+        "rr": "1:3.75",
+        "rationale": "국채 금리 5.27% 급등과 밸류에이션 부담으로 기술주 중심의 차익실현 압력이 거셈."
+      }
+    ],
+    "dashboard": [
+      {
+        "label": "S&P 500",
+        "value": "7,745.29 (-0.77%)",
+        "comment": "인플레이션 충격으로 하락 압력"
+      },
+      {
+        "label": "NASDAQ",
+        "value": "26,909.05 (-1.09%)",
+        "comment": "금리 급등에 따른 기술주 매도"
+      },
+      {
+        "label": "Dow Jones",
+        "value": "51,650.79 (-0.04%)",
+        "comment": "보합권 혼조세"
+      },
+      {
+        "label": "10년물 금리",
+        "value": "5.27% (+1.09%)",
+        "comment": "CPI 급등 반영해 5.3% 테스트"
+      },
+      {
+        "label": "Dollar Index",
+        "value": "102.94 (+0.80%)",
+        "comment": "강한 안전자산 선호"
+      },
+      {
+        "label": "WTI 유가",
+        "value": "95.32 (+0.56%)",
+        "comment": "중동 리스크로 상승세 유지"
+      },
+      {
+        "label": "VIX",
+        "value": "16.02 (+4.91%)",
+        "comment": "시장 공포 심리 점진적 확대"
+      },
+      {
+        "label": "Gold",
+        "value": "4,105.70 (-1.90%)",
+        "comment": "달러 강세 및 금리 상승에 하락"
+      },
+      {
+        "label": "BTC/USD",
+        "value": "81,732.65 (-1.65%)",
+        "comment": "위험자산 회피로 조정을 받음"
+      }
+    ],
+    "portfolioNote": null
+  },
+  "contentMarkdown": "## PART 1 — 전날 시장 리캡\n\n미국 증시는 9월 소비자물가지수(CPI)가 전월 대비 +0.6% 상승하며 인플레이션 압력이 재차 부각됨에 따라 급락세를 보이고 있습니다. 현재 S&P 500은 7,745.29(-0.77%), 나스닥은 26,909.05(-1.09%)로 약세를 기록 중이며, 연준의 추가 금리 인상 우려가 시장을 강하게 압박하고 있습니다.\n\n**주요 동인**\n- 미 10년물 국채 금리 5.27%(+0.06%, +1.09%) 급등 — 9월 인플레이션 충격 반영\n- 달러 인덱스(DXY) 102.94(+0.80%) 상승 — 안전자산 선호 심리 강화\n- WTI 원유 95.32(+0.56%) 상승 — 중동 지정학적 리스크 및 사우디 아람코 시설 타격 우려\n- VIX 지수 16.02(+4.91%) 급등 — 시장 변동성 확대\n\n## PART 2 — 밤사이 이벤트 & 핵심 인물\n\n볼로디미르 젤렌스키 우크라이나 대통령은 러시아가 에너지 인프라를 타격함에 따라 스타링크 제한이 군사 작전에 차질을 빚고 있다고 경고했습니다. 미국 노동부 발표에 따르면 9월 소비자물가지수(CPI)가 +0.6% 상승하고 실업률은 4.2%를 기록하며 인플레이션 압력과 고용 냉각이 공존하는 모습을 보였습니다. 씨티그룹은 연준이 올해 12월 25bp 금리 인상을 단행할 것으로 전망을 수정했으며, 트레이더들은 내년 1월까지 두 차례 금리 인상을 완전히 프라이싱하고 있습니다. 기업 및 법률 뉴스로는 애플과 오픈AI의 소송 과정에서 오픈AI 브리프를 통해 미공개 기기 이미지와 제조 데이터 유출 정황이 폭로되었으며, 뱅크오브아메리카는 3분기 실적 부진 및 12억 달러 규모의 재무부 벌금 여파로 주가가 8% 급락했습니다.\n\n**볼로디미르 젤렌스키** (우크라이나 대통령) — 러시아의 에너지 인프라 공격과 스타링크 제한이 우크라이나 군사 작전을 방해하고 있다고 경고함.\n영향: 글로벌 에너지 공급망 불안을 가중시키며 WTI 유가를 95.32달러(+0.56%)로 밀어 올림.\n관련 자산: `WTI`\n\n## PART 3 — 오늘의 방향성 확률\n\n📈 상승: 20%\n➡️ 횡보: 25%\n📉 하락: 55%\n\n- **상승**: 장중 저가 매수세 유입 시 낙폭을 일부 축소할 수 있으나 촉매가 부족함.\n- **횡보**: CPI 충격 이후 방향성을 탐색하며 주요 지지선 근처에서 횡보할 가능성.\n- **하락**: 9월 소비자물가 급등에 따른 연준 금리 인상 우려와 채권 금리 상승(5.27%)이 증시 전반에 지속적인 하방 압력으로 작용.\n\n## PART 4 — 섹터 리더십\n\n**주도 섹터**\n- Energy (XLE) — 중동 지정학적 긴장 고조 및 사우디 아람코 시설 공격 우려로 유가 상승세 지속\n- Healthcare (XLV) — 매크로 불확실성 국면에서 상대적인 방어력과 양호한 모멘텀(200DMA gap +10.78%) 부각\n- Cons. Staples (XLP) — 인플레이션 및 금리 인상 충격에 대응하기 위한 필수소비재로의 자금 유입\n\n**약세 섹터**\n- 반도체 (SMH) — 금리 급등 및 기술주 전반의 밸류에이션 부담으로 투자 심리 악화\n- Real Estate (XLRE) — 미 10년물 국채 금리 5.27% 돌파에 따른 직접적인 자금 조달 비용 부담\n\n## PART 5 — 핵심 리스크\n\n- 🔴 **국채 금리 5.27% 상향 돌파** (높음)\n  9월 CPI가 예상치를 웃돌며 연준의 추가 긴축 및 25bp 금리 인상 전망이 강화되어 증시 밸류에이션을 압박함.\n- 🔴 **중동 지정학적 리스크 및 에너지 시설 타격** (높음)\n  사우디 아람코 시설 공격 및 이란 관련 위협이 유가를 자극해 인플레이션을 재차 악화시킬 위험.\n- 🟠 **대형 금융사 실적 및 규제 리스크** (중간)\n  뱅크오브아메리카의 3분기 실적 부진 및 12억 달러 벌금 부과가 금융주 전반의 투자 심리를 위축시킴.\n\n## PART 6 — 트레이드 아이디어\n\n🎯 **Energy (XLE)** 롱\n진입: 90.0~91.0 | 목표: 96.0 | 손절: 88.5 | R/R: 1:3.3\n근거: 중동 지정학적 긴장과 원유 공급 차질 우려로 에너지 섹터의 단기 모멘텀이 매우 강력함.\n\n🎯 **Technology (XLK)** 숏\n진입: 230.0~232.0 | 목표: 215.0 | 손절: 236.0 | R/R: 1:3.75\n근거: 국채 금리 5.27% 급등과 밸류에이션 부담으로 기술주 중심의 차익실현 압력이 거셈.\n\n## PART 7 — 10초 마켓 대시보드\n\n- **S&P 500**: 7,745.29 (-0.77%) — 인플레이션 충격으로 하락 압력\n- **NASDAQ**: 26,909.05 (-1.09%) — 금리 급등에 따른 기술주 매도\n- **Dow Jones**: 51,650.79 (-0.04%) — 보합권 혼조세\n- **10년물 금리**: 5.27% (+1.09%) — CPI 급등 반영해 5.3% 테스트\n- **Dollar Index**: 102.94 (+0.80%) — 강한 안전자산 선호\n- **WTI 유가**: 95.32 (+0.56%) — 중동 리스크로 상승세 유지\n- **VIX**: 16.02 (+4.91%) — 시장 공포 심리 점진적 확대\n- **Gold**: 4,105.70 (-1.90%) — 달러 강세 및 금리 상승에 하락\n- **BTC/USD**: 81,732.65 (-1.65%) — 위험자산 회피로 조정을 받음\n",
+  "market": {
+    "updatedAt": "2026-10-15T00:23:42+09:00",
+    "quotes": {
+      "S&P 500": {
+        "price": 7745.29,
+        "change": -60.2998,
+        "changePercent": -0.7725
+      },
+      "NASDAQ": {
+        "price": 26909.0469,
+        "change": -295.3331,
+        "changePercent": -1.0856
+      },
+      "Dow Jones": {
+        "price": 51650.7891,
+        "change": -21.3594,
+        "changePercent": -0.0413
+      },
+      "US 10Y Yield": {
+        "price": 5.274,
+        "change": 0.057,
+        "changePercent": 1.0926
+      },
+      "Dollar Index (DXY)": {
+        "price": 102.935,
+        "change": 0.819,
+        "changePercent": 0.802
+      },
+      "Crude Oil (WTI)": {
+        "price": 95.32,
+        "change": 0.53,
+        "changePercent": 0.5591
+      },
+      "VIX": {
+        "price": 16.02,
+        "change": 0.75,
+        "changePercent": 4.9116
+      },
+      "Gold": {
+        "price": 4105.7002,
+        "change": -79.6997,
+        "changePercent": -1.9042
+      },
+      "EUR/USD": {
+        "price": 1.112,
+        "change": -0.0081,
+        "changePercent": -0.7228
+      },
+      "BTC/USD": {
+        "price": 81732.6484,
+        "change": -1369.3438,
+        "changePercent": -1.6478
+      },
+      "KOSPI": {
+        "price": 6008.81,
+        "change": -26.54,
+        "changePercent": -0.4397
+      },
+      "USD/KRW": {
+        "price": 1342.83,
+        "change": 3.4199,
+        "changePercent": 0.2553
+      }
+    },
+    "sectors": {
+      "Technology": {
+        "symbol": "XLK",
+        "price": 192.64,
+        "changePercent": -1.79
+      },
+      "Financials": {
+        "symbol": "XLF",
+        "price": 54.22,
+        "changePercent": -0.83
+      },
+      "Energy": {
+        "symbol": "XLE",
+        "price": 67.38,
+        "changePercent": 0.33
+      },
+      "Healthcare": {
+        "symbol": "XLV",
+        "price": 173.01,
+        "changePercent": 1.94
+      },
+      "Industrials": {
+        "symbol": "XLI",
+        "price": 166.71,
+        "changePercent": -1.18
+      },
+      "Cons. Discretionary": {
+        "symbol": "XLY",
+        "price": 111.2,
+        "changePercent": -0.81
+      },
+      "Cons. Staples": {
+        "symbol": "XLP",
+        "price": 85.1,
+        "changePercent": 1.08
+      },
+      "Communication": {
+        "symbol": "XLC",
+        "price": 111.28,
+        "changePercent": -0.87
+      },
+      "Materials": {
+        "symbol": "XLB",
+        "price": 49.35,
+        "changePercent": -0.64
+      },
+      "Real Estate": {
+        "symbol": "XLRE",
+        "price": 41.48,
+        "changePercent": -0.84
+      },
+      "Utilities": {
+        "symbol": "XLU",
+        "price": 41.47,
+        "changePercent": -0.83
+      }
+    },
+    "fearGreed": {
+      "score": 36.7,
+      "rating": "fear",
+      "rating_ko": "fear",
+      "color": "#eab308",
+      "previous_close": 44.7,
+      "previous_1week": 42.1,
+      "previous_1month": 31.0,
+      "timestamp": "2026-10-14T15:20:40+00:00"
+    },
+    "calendar": {
+      "economic": [],
+      "earnings": [],
+      "fomc": [
+        {
+          "start": "2026-09-15",
+          "end": "2026-09-16",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": true,
+          "isLive": false,
+          "daysUntil": -29
+        },
+        {
+          "start": "2026-10-27",
+          "end": "2026-10-28",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 13
+        },
+        {
+          "start": "2026-12-08",
+          "end": "2026-12-09",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 55
+        },
+        {
+          "start": "2027-01-26",
+          "end": "2027-01-27",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 104
+        },
+        {
+          "start": "2027-03-16",
+          "end": "2027-03-17",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 153
+        },
+        {
+          "start": "2027-04-27",
+          "end": "2027-04-28",
+          "label": "FOMC 정례회의",
+          "hasSEP": false,
+          "impact": "high",
+          "note": "성명서 + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 195
+        },
+        {
+          "start": "2027-06-08",
+          "end": "2027-06-09",
+          "label": "FOMC 정례회의",
+          "hasSEP": true,
+          "impact": "high",
+          "note": "성명서 + 점도표(SEP) + 파월 기자회견",
+          "isPast": false,
+          "isLive": false,
+          "daysUntil": 237
+        }
+      ],
+      "indicators": [
+        {
+          "series": "CES0000000001",
+          "label": "비농업 고용 (Nonfarm Payrolls)",
+          "impact": "high",
+          "period": "2026 September",
+          "kind": "level",
+          "value": 159044.0,
+          "prevValue": 159015.0,
+          "display": 29.0,
+          "displayUnit": "천명",
+          "isDelta": true,
+          "changeNote": "이전 159015 → 159044",
+          "direction": "up"
+        },
+        {
+          "series": "LNS14000000",
+          "label": "실업률 (Unemployment Rate)",
+          "impact": "high",
+          "period": "2026 September",
+          "kind": "rate",
+          "value": 4.2,
+          "prevValue": 4.1,
+          "display": 4.2,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 4.1 → 4.2",
+          "direction": "up"
+        },
+        {
+          "series": "CUUR0000SA0",
+          "label": "소비자물가 CPI",
+          "impact": "high",
+          "period": "2026 September",
+          "kind": "index",
+          "value": 336.94,
+          "prevValue": 334.98,
+          "display": 0.59,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 334.98 → 336.94",
+          "direction": "up"
+        },
+        {
+          "series": "CUUR0000SA0L1E",
+          "label": "근원 CPI (Core CPI)",
+          "impact": "high",
+          "period": "2026 September",
+          "kind": "index",
+          "value": 339.287,
+          "prevValue": 338.041,
+          "display": 0.37,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 338.041 → 339.287",
+          "direction": "up"
+        },
+        {
+          "series": "WPUFD4",
+          "label": "생산자물가 PPI",
+          "impact": "high",
+          "period": "2026 August",
+          "kind": "index",
+          "value": 157.604,
+          "prevValue": 157.155,
+          "display": 0.29,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 157.155 → 157.604",
+          "direction": "up"
+        },
+        {
+          "series": "PRS85006092",
+          "label": "비농업 생산성 (Nonfarm Productivity)",
+          "impact": "high",
+          "period": "2026 2nd Quarter",
+          "kind": "pct",
+          "value": 1.4,
+          "prevValue": 0.8,
+          "display": 1.4,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 0.8 → 1.4",
+          "direction": "up"
+        },
+        {
+          "series": "PRS85006112",
+          "label": "단위노동비용 (Unit Labor Costs)",
+          "impact": "medium",
+          "period": "2026 2nd Quarter",
+          "kind": "pct",
+          "value": 1.2,
+          "prevValue": 1.3,
+          "display": 1.2,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 1.3 → 1.2",
+          "direction": "down"
+        },
+        {
+          "series": "CES0500000003",
+          "label": "시간당 평균임금 (Avg Hourly Earnings)",
+          "impact": "medium",
+          "period": "2026 September",
+          "kind": "index",
+          "value": 37.81,
+          "prevValue": 37.76,
+          "display": 0.13,
+          "displayUnit": "%",
+          "isDelta": true,
+          "changeNote": "이전 37.76 → 37.81",
+          "direction": "up"
+        },
+        {
+          "series": "LNS11300000",
+          "label": "경제활동참가율 (Participation Rate)",
+          "impact": "medium",
+          "period": "2026 September",
+          "kind": "rate",
+          "value": 61.8,
+          "prevValue": 61.6,
+          "display": 61.8,
+          "displayUnit": "%",
+          "isDelta": false,
+          "changeNote": "이전 61.6 → 61.8",
+          "direction": "up"
+        }
+      ]
+    },
+    "chartKeys": [
+      "btc_1d",
+      "btc_1mo",
+      "btc_5d",
+      "dow_1d",
+      "dow_1mo",
+      "dow_5d",
+      "dxy_1d",
+      "dxy_1mo",
+      "dxy_5d",
+      "eurusd_1d",
+      "eurusd_1mo",
+      "eurusd_5d",
+      "gold_1d",
+      "gold_1mo",
+      "gold_5d",
+      "kospi_1d",
+      "kospi_1mo",
+      "kospi_5d",
+      "nasdaq_1d",
+      "nasdaq_1mo",
+      "nasdaq_5d",
+      "sp500_1d",
+      "sp500_1mo",
+      "sp500_5d",
+      "us10y_1d",
+      "us10y_1mo",
+      "us10y_5d",
+      "usdkrw_1d",
+      "usdkrw_1mo",
+      "usdkrw_5d",
+      "vix_1d",
+      "vix_1mo",
+      "vix_5d",
+      "wti_1d",
+      "wti_1mo",
+      "wti_5d"
+    ],
+    "sectorHeat": {
+      "Technology": {
+        "symbol": "XLK",
+        "name": "Technology",
+        "group": "sector",
+        "gapPct": 15.51,
+        "gapPercentile": 51.2,
+        "rsi14": 47.1,
+        "rel3m": 5.84,
+        "label": "neutral",
+        "sampleDays": 303
+      },
+      "Financials": {
+        "symbol": "XLF",
+        "name": "Financials",
+        "group": "sector",
+        "gapPct": 1.67,
+        "gapPercentile": 32.7,
+        "rsi14": 41.7,
+        "rel3m": -6.94,
+        "label": "cool",
+        "sampleDays": 303
+      },
+      "Energy": {
+        "symbol": "XLE",
+        "name": "Energy",
+        "group": "sector",
+        "gapPct": 18.72,
+        "gapPercentile": 73.9,
+        "rsi14": 71.2,
+        "rel3m": 16.06,
+        "label": "warm",
+        "sampleDays": 303
+      },
+      "Healthcare": {
+        "symbol": "XLV",
+        "name": "Healthcare",
+        "group": "sector",
+        "gapPct": 10.78,
+        "gapPercentile": 82.8,
+        "rsi14": 60.6,
+        "rel3m": 4.53,
+        "label": "warm",
+        "sampleDays": 303
+      },
+      "Industrials": {
+        "symbol": "XLI",
+        "name": "Industrials",
+        "group": "sector",
+        "gapPct": -3.11,
+        "gapPercentile": 0.3,
+        "rsi14": 38.1,
+        "rel3m": -10.02,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "Cons. Discretionary": {
+        "symbol": "XLY",
+        "name": "Cons. Discretionary",
+        "group": "sector",
+        "gapPct": -3.75,
+        "gapPercentile": 11.9,
+        "rsi14": 46.8,
+        "rel3m": -7.83,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "Cons. Staples": {
+        "symbol": "XLP",
+        "name": "Cons. Staples",
+        "group": "sector",
+        "gapPct": 2.61,
+        "gapPercentile": 51.5,
+        "rsi14": 64.0,
+        "rel3m": -2.98,
+        "label": "neutral",
+        "sampleDays": 303
+      },
+      "Communication": {
+        "symbol": "XLC",
+        "name": "Communication",
+        "group": "sector",
+        "gapPct": -1.48,
+        "gapPercentile": 23.4,
+        "rsi14": 48.7,
+        "rel3m": -3.7,
+        "label": "cool",
+        "sampleDays": 303
+      },
+      "Materials": {
+        "symbol": "XLB",
+        "name": "Materials",
+        "group": "sector",
+        "gapPct": -2.13,
+        "gapPercentile": 3.6,
+        "rsi14": 43.8,
+        "rel3m": -5.39,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "Real Estate": {
+        "symbol": "XLRE",
+        "name": "Real Estate",
+        "group": "sector",
+        "gapPct": -2.64,
+        "gapPercentile": 3.3,
+        "rsi14": 44.4,
+        "rel3m": -10.79,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "Utilities": {
+        "symbol": "XLU",
+        "name": "Utilities",
+        "group": "sector",
+        "gapPct": -5.21,
+        "gapPercentile": 6.9,
+        "rsi14": 54.2,
+        "rel3m": -10.9,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "반도체": {
+        "symbol": "SMH",
+        "name": "반도체",
+        "group": "theme",
+        "gapPct": 12.45,
+        "gapPercentile": 2.3,
+        "rsi14": 40.8,
+        "rel3m": -2.1,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "소프트웨어": {
+        "symbol": "IGV",
+        "name": "소프트웨어",
+        "group": "theme",
+        "gapPct": 15.61,
+        "gapPercentile": 96.0,
+        "rsi14": 52.2,
+        "rel3m": 12.84,
+        "label": "hot",
+        "sampleDays": 303
+      },
+      "클라우드": {
+        "symbol": "SKYY",
+        "name": "클라우드",
+        "group": "theme",
+        "gapPct": 23.86,
+        "gapPercentile": 88.4,
+        "rsi14": 50.2,
+        "rel3m": 19.2,
+        "label": "hot",
+        "sampleDays": 303
+      },
+      "데이터센터 인프라": {
+        "symbol": "DTCR",
+        "name": "데이터센터 인프라",
+        "group": "theme",
+        "gapPct": -2.64,
+        "gapPercentile": 0.3,
+        "rsi14": 38.4,
+        "rel3m": -6.49,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "사이버보안": {
+        "symbol": "CIBR",
+        "name": "사이버보안",
+        "group": "theme",
+        "gapPct": 29.28,
+        "gapPercentile": 90.8,
+        "rsi14": 54.5,
+        "rel3m": 11.48,
+        "label": "hot",
+        "sampleDays": 303
+      },
+      "인터넷 플랫폼": {
+        "symbol": "FDN",
+        "name": "인터넷 플랫폼",
+        "group": "theme",
+        "gapPct": 9.85,
+        "gapPercentile": 78.2,
+        "rsi14": 51.2,
+        "rel3m": 4.69,
+        "label": "warm",
+        "sampleDays": 303
+      },
+      "AI": {
+        "symbol": "AIQ",
+        "name": "AI",
+        "group": "theme",
+        "gapPct": 11.45,
+        "gapPercentile": 25.7,
+        "rsi14": 46.0,
+        "rel3m": 6.08,
+        "label": "cool",
+        "sampleDays": 303
+      },
+      "바이오텍": {
+        "symbol": "XBI",
+        "name": "바이오텍",
+        "group": "theme",
+        "gapPct": 5.38,
+        "gapPercentile": 7.6,
+        "rsi14": 37.7,
+        "rel3m": -5.86,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "방산·항공우주": {
+        "symbol": "ITA",
+        "name": "방산·항공우주",
+        "group": "theme",
+        "gapPct": -11.0,
+        "gapPercentile": 1.0,
+        "rsi14": 31.2,
+        "rel3m": -14.14,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "지역은행": {
+        "symbol": "KRE",
+        "name": "지역은행",
+        "group": "theme",
+        "gapPct": -1.89,
+        "gapPercentile": 0.7,
+        "rsi14": 35.1,
+        "rel3m": -14.2,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "주택건설": {
+        "symbol": "ITB",
+        "name": "주택건설",
+        "group": "theme",
+        "gapPct": -13.84,
+        "gapPercentile": 1.3,
+        "rsi14": 33.6,
+        "rel3m": -19.62,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "금광": {
+        "symbol": "GDX",
+        "name": "금광",
+        "group": "theme",
+        "gapPct": -8.24,
+        "gapPercentile": 11.9,
+        "rsi14": 37.0,
+        "rel3m": 14.2,
+        "label": "cold",
+        "sampleDays": 303
+      },
+      "우라늄·원자력": {
+        "symbol": "URA",
+        "name": "우라늄·원자력",
+        "group": "theme",
+        "gapPct": -25.28,
+        "gapPercentile": 0.3,
+        "rsi14": 29.8,
+        "rel3m": -11.32,
+        "label": "cold",
+        "sampleDays": 303
+      }
+    },
+    "sectorValuation": {
+      "Technology": {
+        "symbol": "XLK",
+        "name": "Technology",
+        "group": "sector",
+        "trailingPE": 31.54,
+        "priceToBook": null,
+        "dividendYield": 0.0043,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Financials": {
+        "symbol": "XLF",
+        "name": "Financials",
+        "group": "sector",
+        "trailingPE": 15.45,
+        "priceToBook": 1.59,
+        "dividendYield": 0.0155,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Energy": {
+        "symbol": "XLE",
+        "name": "Energy",
+        "group": "sector",
+        "trailingPE": 19.19,
+        "priceToBook": 1.29,
+        "dividendYield": 0.0248,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Healthcare": {
+        "symbol": "XLV",
+        "name": "Healthcare",
+        "group": "sector",
+        "trailingPE": 30.85,
+        "priceToBook": null,
+        "dividendYield": 0.0152,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Industrials": {
+        "symbol": "XLI",
+        "name": "Industrials",
+        "group": "sector",
+        "trailingPE": 27.39,
+        "priceToBook": 1.69,
+        "dividendYield": 0.0113,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Cons. Discretionary": {
+        "symbol": "XLY",
+        "name": "Cons. Discretionary",
+        "group": "sector",
+        "trailingPE": 24.52,
+        "priceToBook": null,
+        "dividendYield": 0.0086,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Cons. Staples": {
+        "symbol": "XLP",
+        "name": "Cons. Staples",
+        "group": "sector",
+        "trailingPE": 25.25,
+        "priceToBook": 1.25,
+        "dividendYield": 0.0273,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Communication": {
+        "symbol": "XLC",
+        "name": "Communication",
+        "group": "sector",
+        "trailingPE": 16.33,
+        "priceToBook": null,
+        "dividendYield": 0.0124,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Materials": {
+        "symbol": "XLB",
+        "name": "Materials",
+        "group": "sector",
+        "trailingPE": 23.0,
+        "priceToBook": 0.62,
+        "dividendYield": 0.0177,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Real Estate": {
+        "symbol": "XLRE",
+        "name": "Real Estate",
+        "group": "sector",
+        "trailingPE": 29.61,
+        "priceToBook": null,
+        "dividendYield": 0.0353,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "Utilities": {
+        "symbol": "XLU",
+        "name": "Utilities",
+        "group": "sector",
+        "trailingPE": 18.78,
+        "priceToBook": 0.65,
+        "dividendYield": 0.0307,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "반도체": {
+        "symbol": "SMH",
+        "name": "반도체",
+        "group": "theme",
+        "trailingPE": 30.6,
+        "priceToBook": null,
+        "dividendYield": 0.0018,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "소프트웨어": {
+        "symbol": "IGV",
+        "name": "소프트웨어",
+        "group": "theme",
+        "trailingPE": 32.45,
+        "priceToBook": 0.27,
+        "dividendYield": 0.0002,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "클라우드": {
+        "symbol": "SKYY",
+        "name": "클라우드",
+        "group": "theme",
+        "trailingPE": 29.23,
+        "priceToBook": null,
+        "dividendYield": 0.0,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "데이터센터 인프라": {
+        "symbol": "DTCR",
+        "name": "데이터센터 인프라",
+        "group": "theme",
+        "trailingPE": 17.82,
+        "priceToBook": null,
+        "dividendYield": 0.0091,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "사이버보안": {
+        "symbol": "CIBR",
+        "name": "사이버보안",
+        "group": "theme",
+        "trailingPE": 32.34,
+        "priceToBook": null,
+        "dividendYield": 0.0038,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "인터넷 플랫폼": {
+        "symbol": "FDN",
+        "name": "인터넷 플랫폼",
+        "group": "theme",
+        "trailingPE": 24.74,
+        "priceToBook": null,
+        "dividendYield": 0.0,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "AI": {
+        "symbol": "AIQ",
+        "name": "AI",
+        "group": "theme",
+        "trailingPE": 23.4,
+        "priceToBook": null,
+        "dividendYield": 0.0007,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "바이오텍": {
+        "symbol": "XBI",
+        "name": "바이오텍",
+        "group": "theme",
+        "trailingPE": null,
+        "priceToBook": null,
+        "dividendYield": 0.0035,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "방산·항공우주": {
+        "symbol": "ITA",
+        "name": "방산·항공우주",
+        "group": "theme",
+        "trailingPE": 31.47,
+        "priceToBook": null,
+        "dividendYield": 0.0027,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "지역은행": {
+        "symbol": "KRE",
+        "name": "지역은행",
+        "group": "theme",
+        "trailingPE": 11.89,
+        "priceToBook": null,
+        "dividendYield": 0.0232,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "주택건설": {
+        "symbol": "ITB",
+        "name": "주택건설",
+        "group": "theme",
+        "trailingPE": 14.5,
+        "priceToBook": null,
+        "dividendYield": 0.0145,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "금광": {
+        "symbol": "GDX",
+        "name": "금광",
+        "group": "theme",
+        "trailingPE": 13.26,
+        "priceToBook": null,
+        "dividendYield": 0.0072,
+        "pePercentile": null,
+        "recordedDays": 4
+      },
+      "우라늄·원자력": {
+        "symbol": "URA",
+        "name": "우라늄·원자력",
+        "group": "theme",
+        "trailingPE": 21.37,
+        "priceToBook": null,
+        "dividendYield": 0.0521,
+        "pePercentile": null,
+        "recordedDays": 4
+      }
+    }
+  },
+  "topNews": [
+    {
+      "headline": "Major Economic Indicators Latest Numbers",
+      "source": "US Bureau of Labor Statistics",
+      "tier": 1,
+      "url": "https://www.bls.gov/bls/",
+      "time": "2026-10-14 12:30 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "The Fifteenth Tripartite Governors' Meeting among PBOC, BOJ, and BOK",
+      "source": "Bank of Japan",
+      "tier": 1,
+      "url": "http://www.boj.or.jp/en/intl_finance/cooperate/coop261014a.pdf",
+      "time": "2026-10-14 11:00 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "Ukraine warns Starlink limits are disrupting military operations as Russia pounds its energy infrastructure",
+      "source": "CNBC",
+      "tier": 2,
+      "url": "https://www.cnbc.com/2026/10/14/russia-ukraine-energy-ceasefire-power-outages.html",
+      "time": "2026-10-14 09:18 UTC",
+      "category": "general"
+    },
+    {
+      "headline": "Philip R. Lane: The AI opportunity for Europe",
+      "source": "ECB",
+      "tier": 1,
+      "url": "https://www.ecb.europa.eu//press/key/date/2026/html/ecb.sp261013~9db9bf4fd6.en.html",
+      "time": "2026-10-13 18:30 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "Files leaked include detailed unreleased device images, engineering data, supplier info - OpenAI brief in Apple vs Openai lawsuit. $AAPL",
+      "source": "FinancialJuice",
+      "tier": 3,
+      "url": "https://www.financialjuice.com/News/9805442/Files-leaked-include-detailed-unreleased-device-images-engineering-data-supplier-info---OpenAI-brief-in-Apple-vs-Openai-lawsuit-AAPL.aspx?xy=rss",
+      "time": "2026-10-14 15:20 UTC",
+      "category": "wire"
+    },
+    {
+      "headline": "OpenAI: Files leaked by employee also include manufacturing data about devices - OpenAI brief in Apple vs OpenAI lawsuit $AAPL",
+      "source": "FinancialJuice",
+      "tier": 3,
+      "url": "https://www.financialjuice.com/News/9805439/OpenAI-Files-leaked-by-employee-also-include-manufacturing-data-about-devices---OpenAI-brief-in-Apple-vs-OpenAI-lawsuit-AAPL.aspx?xy=rss",
+      "time": "2026-10-14 15:20 UTC",
+      "category": "wire"
+    },
+    {
+      "headline": "OpenAI: Apple has not assured it is not in possession of and has not used OpenAI confidential data - OpenAI brief in Apple vs OpenAI lawsuit $AAPL",
+      "source": "FinancialJuice",
+      "tier": 3,
+      "url": "https://www.financialjuice.com/News/9805438/OpenAI-Apple-has-not-assured-it-is-not-in-possession-of-and-has-not-used-OpenAI-confidential-data---OpenAI-brief-in-Apple-vs-OpenAI-lawsuit-AAPL.aspx?xy=rss",
+      "time": "2026-10-14 15:19 UTC",
+      "category": "wire"
+    },
+    {
+      "headline": "Japanese Government Bonds Held by the Bank of Japan",
+      "source": "Bank of Japan",
+      "tier": 1,
+      "url": "http://www.boj.or.jp/en/statistics/boj/other/mei/release/2026/mei261009.xlsx",
+      "time": "2026-10-14 08:00 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "Fed rate hike call seen tight as inflation heats up",
+      "source": "Reuters",
+      "tier": 2,
+      "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxPMjl1ZWZGd2lIRXg1US1hUjNacTVDN2o5S2lIcXpCdnZ1VHBXcEpqOHV5SzJJZHJrT3RxYjdrRjRrRU03eHNGTTFRMnVCVEdZa0VfLU9BeFdSeTE1aFRrc3ZRampyOFVTczZRbWk0azFBakVndUJ1X0NjVmJmV1JmeXNXSlFkNzF0NUZKTUUyUnlHWi1sOXFpVHV5NnVvcDA?oc=5",
+      "time": "2026-10-14 14:22 UTC",
+      "category": "general"
+    },
+    {
+      "headline": "Waller, The Signaling Value of the Summary of Economic Projections",
+      "source": "Federal Reserve Speeches",
+      "tier": 1,
+      "url": "https://www.federalreserve.gov/newsevents/speech/waller20261008a.htm",
+      "time": "2026-10-08 08:30 UTC",
+      "category": "official"
+    },
+    {
+      "headline": "10-year Treasury yield jumps as September core inflation comes in hotter than expected",
+      "source": "CNBC",
+      "tier": 2,
+      "url": "https://www.cnbc.com/2026/10/14/us-treasury-yields-cpi-inflation-report.html",
+      "time": "2026-10-14 13:48 UTC",
+      "category": "general"
+    },
+    {
+      "headline": "Nvidia and Chipagents launch evaluation for AI-powered chip design - The Information $NVDA",
+      "source": "FinancialJuice",
+      "tier": 3,
+      "url": "https://www.financialjuice.com/News/9805422/Nvidia-and-Chipagents-launch-evaluation-for-AI-powered-chip-design---The-Information-NVDA.aspx?xy=rss",
+      "time": "2026-10-14 15:13 UTC",
+      "category": "wire"
+    }
+  ],
+  "translatedFrom": null
+}
