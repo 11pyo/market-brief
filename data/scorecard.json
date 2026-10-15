@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-15T09:00:49+09:00",
+  "updatedAt": "2026-10-16T08:45:46+09:00",
   "entries": [
+    {
+      "date": "2026-10-15",
+      "briefingId": "2026-10-15-ko-b4c4c0",
+      "predicted": "down",
+      "probs": {
+        "up": 25,
+        "flat": 20,
+        "down": 55,
+        "rationaleUp": "장중 저가 매수세가 유입되며 낙폭을 일부 축소할 가능성이 있으나 촉매는 제한적입니다.",
+        "rationaleFlat": "CPI 서프라이즈 충격 이후 채권 금리가 고점 부근에서 안정을 찾으면 지수가 횡보세를 보일 수 있습니다.",
+        "rationaleDown": "9월 CPI가 예상보다 뜨겁게 나오면서 10년물 금리가 5.25%까지 치솟아 기술주를 중심으로 강한 하방 압력이 작용하고 있습니다."
+      },
+      "actual": "up",
+      "spxChangePercent": 0.3254,
+      "scoredAt": "2026-10-16T08:45:46+09:00",
+      "hit": false,
+      "brier": 0.905
+    },
     {
       "date": "2026-09-07",
       "briefingId": "2026-09-07-ko-710ebc",
@@ -20,8 +38,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 1.0,
-  "avgBrier": 0.38,
-  "sampleSize": 1,
+  "hitRate": 0.5,
+  "avgBrier": 0.6425,
+  "sampleSize": 2,
   "sampleWindow": 30
 }
