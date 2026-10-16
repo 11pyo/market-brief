@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-16T08:45:46+09:00",
+  "updatedAt": "2026-10-17T08:45:38+09:00",
   "entries": [
+    {
+      "date": "2026-10-16",
+      "briefingId": "2026-10-16-ko-6b8f14",
+      "predicted": "up",
+      "probs": {
+        "up": 45,
+        "flat": 25,
+        "down": 30,
+        "rationaleUp": "다우지수를 중심으로 한 가치주 및 헬스케어 섹터로의 순환매가 지속되며 지수 하방을 방어할 가능성.",
+        "rationaleFlat": "AI 섹터의 낙폭 과대 인식에 따른 저가 매수세와 인플레이션 경계감에 따른 관망세가 팽팽히 맞설 경우.",
+        "rationaleDown": "미국 10년물 금리 고공행진과 AI 생태계 부채 우려(CDS 지표 악화 등)가 전면적인 기술주 붕괴로 확산될 경우."
+      },
+      "actual": "down",
+      "spxChangePercent": -1.0927,
+      "scoredAt": "2026-10-17T08:45:38+09:00",
+      "hit": false,
+      "brier": 0.755
+    },
     {
       "date": "2026-10-15",
       "briefingId": "2026-10-15-ko-b4c4c0",
@@ -38,8 +56,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.5,
-  "avgBrier": 0.6425,
-  "sampleSize": 2,
+  "hitRate": 0.3333,
+  "avgBrier": 0.68,
+  "sampleSize": 3,
   "sampleWindow": 30
 }
