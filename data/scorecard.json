@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-20T09:30:43+09:00",
+  "updatedAt": "2026-10-21T09:01:40+09:00",
   "entries": [
+    {
+      "date": "2026-10-20",
+      "briefingId": "2026-10-20-ko-e99f57",
+      "predicted": "up",
+      "probs": {
+        "up": 45,
+        "flat": 35,
+        "down": 20,
+        "rationaleUp": "모건스탠리의 아마존 목표가 상향과 엔비디아의 유럽 투자 행보로 AI/반도체 저가 매수세가 재유입되며 나스닥 중심의 기술적 반등 흐름이 이어질 가능성이 높습니다.",
+        "rationaleFlat": "10년물 국채금리가 5.14% 수준에 도달하고 10월 FOMC(10/27~28)를 앞둔 상황에서 유가(WTI 98달러선) 상승 부담이 지수 상단을 7,700선 부근에서 제한할 수 있습니다.",
+        "rationaleDown": "연준의 인플레이션 경계감 및 9월 PPI(+1.11%), CPI(+0.59%)의 고물가 잔존 지표로 인해 장기 금리가 추가 급등할 경우 성장주 밸류에이션 부담이 재차 부각될 수 있습니다."
+      },
+      "actual": "flat",
+      "spxChangePercent": 0.284,
+      "scoredAt": "2026-10-21T09:01:40+09:00",
+      "hit": false,
+      "brier": 0.665
+    },
     {
       "date": "2026-10-16",
       "briefingId": "2026-10-16-ko-6b8f14",
@@ -56,8 +74,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.3333,
-  "avgBrier": 0.68,
-  "sampleSize": 3,
+  "hitRate": 0.25,
+  "avgBrier": 0.6763,
+  "sampleSize": 4,
   "sampleWindow": 30
 }
