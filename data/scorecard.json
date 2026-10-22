@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-21T09:01:40+09:00",
+  "updatedAt": "2026-10-22T09:06:25+09:00",
   "entries": [
+    {
+      "date": "2026-10-21",
+      "briefingId": "2026-10-21-ko-dd04ea",
+      "predicted": "up",
+      "probs": {
+        "up": 55,
+        "flat": 25,
+        "down": 20,
+        "rationaleUp": "스페이스X의 실적 호조 및 테슬라 합병 기대감이 기술주 전반의 투자 심리를 자극하고 국채 금리 및 VIX가 하향 안정세를 보이고 있기 때문",
+        "rationaleFlat": "9월 CPI 상승률(+0.6%)과 주택 시장 지표 악화에 따른 연준의 추가 긴축 경계감이 상단을 제한할 수 있기 때문",
+        "rationaleDown": "캐나다 관세 관련 법적 소송 및 지정학적 리스크가 돌발 악재로 작용할 경우 차익실현 매물이 출회될 수 있기 때문"
+      },
+      "actual": "up",
+      "spxChangePercent": 0.5896,
+      "scoredAt": "2026-10-22T09:06:25+09:00",
+      "hit": true,
+      "brier": 0.305
+    },
     {
       "date": "2026-10-20",
       "briefingId": "2026-10-20-ko-e99f57",
@@ -74,8 +92,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.25,
-  "avgBrier": 0.6763,
-  "sampleSize": 4,
+  "hitRate": 0.4,
+  "avgBrier": 0.602,
+  "sampleSize": 5,
   "sampleWindow": 30
 }
