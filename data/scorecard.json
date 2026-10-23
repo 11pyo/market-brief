@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-22T09:06:25+09:00",
+  "updatedAt": "2026-10-23T09:04:29+09:00",
   "entries": [
+    {
+      "date": "2026-10-22",
+      "briefingId": "2026-10-22-ko-ca0884",
+      "predicted": "up",
+      "probs": {
+        "up": 50,
+        "flat": 35,
+        "down": 15,
+        "rationaleUp": "메타와 IBM의 호실적 발표 및 SMCI 가이던스 상향으로 AI 성장성에 대한 펀더멘털 신뢰가 유지되며 테크 중심의 매수세가 지수를 지지할 가능성이 높다.",
+        "rationaleFlat": "10월 27~28일 FOMC 회의를 앞두고 미 10년물 금리가 5.15%에 달하는 등 고금리 부담으로 인해 밸류에이션 확장이 제한되며 좁은 박스권에 갇힐 수 있다.",
+        "rationaleDown": "테슬라의 합병 모멘텀 소멸에 따른 차익 실현과 코어위브 발 AI 부채 리스크 및 고금리 압박이 가중될 경우 기술주 중심의 차익 매물이 확대될 수 있다."
+      },
+      "actual": "down",
+      "spxChangePercent": -1.2091,
+      "scoredAt": "2026-10-23T09:04:29+09:00",
+      "hit": false,
+      "brier": 1.095
+    },
     {
       "date": "2026-10-21",
       "briefingId": "2026-10-21-ko-dd04ea",
@@ -92,8 +110,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.4,
-  "avgBrier": 0.602,
-  "sampleSize": 5,
+  "hitRate": 0.3333,
+  "avgBrier": 0.6842,
+  "sampleSize": 6,
   "sampleWindow": 30
 }
