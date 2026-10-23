@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-23T09:04:29+09:00",
+  "updatedAt": "2026-10-24T08:55:00+09:00",
   "entries": [
+    {
+      "date": "2026-10-23",
+      "briefingId": "2026-10-23-ko-4c26ba",
+      "predicted": "down",
+      "probs": {
+        "up": 25,
+        "flat": 25,
+        "down": 50,
+        "rationaleUp": "과매도 국면에 진입한 일부 방어주 및 에너지 관련 섹터의 저가 매수세 유입 가능성.",
+        "rationaleFlat": "주요 지수 급락 이후 방향성을 탐색하며 관망세가 짙어질 수 있는 구간.",
+        "rationaleDown": "AI 투자 비용 우려와 메타 중심의 기술주 매도세가 이어지고 VIX가 19선을 상회하며 공포 심리가 지속되는 국면."
+      },
+      "actual": "down",
+      "spxChangePercent": -0.519,
+      "scoredAt": "2026-10-24T08:55:00+09:00",
+      "hit": true,
+      "brier": 0.375
+    },
     {
       "date": "2026-10-22",
       "briefingId": "2026-10-22-ko-ca0884",
@@ -110,8 +128,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.3333,
-  "avgBrier": 0.6842,
-  "sampleSize": 6,
+  "hitRate": 0.4286,
+  "avgBrier": 0.64,
+  "sampleSize": 7,
   "sampleWindow": 30
 }
