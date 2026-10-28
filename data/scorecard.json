@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-27T09:41:03+09:00",
+  "updatedAt": "2026-10-28T09:39:11+09:00",
   "entries": [
+    {
+      "date": "2026-10-27",
+      "briefingId": "2026-10-27-ko-9485f2",
+      "predicted": "flat",
+      "probs": {
+        "up": 35,
+        "flat": 45,
+        "down": 20,
+        "rationaleUp": "앤스로픽 IPO 신청으로 AI 밸류체인 전반의 투자 심리가 회복되고 실적 기대감이 빅테크 주가를 지지할 수 있다.",
+        "rationaleFlat": "10월 FOMC 회의 개막과 10년물 금리 4.99% 부담으로 주요 기관들이 파월 의장 발언 전까지 적극적 포지션 구축을 자제할 가능성이 크다.",
+        "rationaleDown": "미 국채 10년물 금리가 5.0%를 재돌파할 경우 고밸류 성장주 중심의 차익 실현 매물이 출회될 위험이 상존한다."
+      },
+      "actual": "up",
+      "spxChangePercent": 0.5991,
+      "scoredAt": "2026-10-28T09:39:11+09:00",
+      "hit": false,
+      "brier": 0.665
+    },
     {
       "date": "2026-10-23",
       "briefingId": "2026-10-23-ko-4c26ba",
@@ -128,8 +146,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.4286,
-  "avgBrier": 0.64,
-  "sampleSize": 7,
+  "hitRate": 0.375,
+  "avgBrier": 0.6431,
+  "sampleSize": 8,
   "sampleWindow": 30
 }
