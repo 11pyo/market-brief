@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-28T09:39:11+09:00",
+  "updatedAt": "2026-10-30T10:14:38+09:00",
   "entries": [
+    {
+      "date": "2026-10-28",
+      "briefingId": "2026-10-28-ko-553448",
+      "predicted": "up",
+      "probs": {
+        "up": 55,
+        "flat": 25,
+        "down": 20,
+        "rationaleUp": "빅테크 실적 기대감과 AI 반도체 관련 종목들의 강세가 지속될 경우 지수 추가 상승 가능.",
+        "rationaleFlat": "연준의 10월 FOMC 회의 결과를 앞두고 관망세가 유입되며 좁은 범위에서 등락 반복 가능.",
+        "rationaleDown": "국채금리 5% 인접에 따른 부담과 지정학적 관세 리스크가 시장을 압박할 경우 하락 압력 우려."
+      },
+      "actual": "down",
+      "spxChangePercent": -0.3567,
+      "scoredAt": "2026-10-30T10:14:38+09:00",
+      "hit": false,
+      "brier": 1.005
+    },
     {
       "date": "2026-10-27",
       "briefingId": "2026-10-27-ko-9485f2",
@@ -146,8 +164,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.375,
-  "avgBrier": 0.6431,
-  "sampleSize": 8,
+  "hitRate": 0.3333,
+  "avgBrier": 0.6833,
+  "sampleSize": 9,
   "sampleWindow": 30
 }
