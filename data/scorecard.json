@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-10-30T10:14:38+09:00",
+  "updatedAt": "2026-10-31T09:57:24+09:00",
   "entries": [
+    {
+      "date": "2026-10-30",
+      "briefingId": "2026-10-30-ko-3ab1ce",
+      "predicted": "down",
+      "probs": {
+        "up": 25,
+        "flat": 30,
+        "down": 45,
+        "rationaleUp": "과도하게 낙폭을 키운 빅테크 종목들에 대한 저가 매수세가 유입될 경우 지수가 반발 매수세로 전환될 수 있다.",
+        "rationaleFlat": "주요 경제지표 발표가 부재하고 주말을 앞둔 관망세가 짙어지며 지수는 제한적인 범위에서 등락할 것이다.",
+        "rationaleDown": "알파벳·인텔·서비스나우 등 대형 기술주의 어닝 쇼크와 AI CAPEX 부담이 지속되며 투자 심리를 압박할 것이다."
+      },
+      "actual": "down",
+      "spxChangePercent": -1.8255,
+      "scoredAt": "2026-10-31T09:57:24+09:00",
+      "hit": true,
+      "brier": 0.455
+    },
     {
       "date": "2026-10-28",
       "briefingId": "2026-10-28-ko-553448",
@@ -164,8 +182,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.3333,
-  "avgBrier": 0.6833,
-  "sampleSize": 9,
+  "hitRate": 0.4,
+  "avgBrier": 0.6605,
+  "sampleSize": 10,
   "sampleWindow": 30
 }
