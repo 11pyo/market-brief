@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-06T10:42:22+09:00",
+  "updatedAt": "2026-11-07T10:02:40+09:00",
   "entries": [
+    {
+      "date": "2026-11-06",
+      "briefingId": "2026-11-06-ko-699b0d",
+      "predicted": "down",
+      "probs": {
+        "up": 15,
+        "flat": 25,
+        "down": 60,
+        "rationaleUp": "나스닥 -5.5% 폭락에 따른 단기 과매도 기술적 반등 및 클라우드플레어 등 호실적 종목 중심의 선별적 저가 매수세 유입 가능성.",
+        "rationaleFlat": "패닉 셀 이후 추가 재료 탐색을 위한 아시아 장 마감 대기 및 10월 고용보고서 발표 전 관망 심리 형성.",
+        "rationaleDown": "VIX 28선 폭등, 공포탐욕지수 19.9(극단적 공포) 진입, 엔비디아 의회 리스크 및 유가 급등(91달러)에 따른 스태그플레이션 공포."
+      },
+      "actual": "flat",
+      "spxChangePercent": 0.2736,
+      "scoredAt": "2026-11-07T10:02:40+09:00",
+      "hit": false,
+      "brier": 0.945
+    },
     {
       "date": "2026-11-04",
       "briefingId": "2026-11-04-ko-609781",
@@ -200,8 +218,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.3636,
-  "avgBrier": 0.6882,
-  "sampleSize": 11,
+  "hitRate": 0.3333,
+  "avgBrier": 0.7096,
+  "sampleSize": 12,
   "sampleWindow": 30
 }
