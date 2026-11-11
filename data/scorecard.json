@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-10T12:43:04+09:00",
+  "updatedAt": "2026-11-11T10:22:50+09:00",
   "entries": [
+    {
+      "date": "2026-11-10",
+      "briefingId": "2026-11-10-ko-58f742",
+      "predicted": "up",
+      "probs": {
+        "up": 55,
+        "flat": 15,
+        "down": 30,
+        "rationaleUp": "유가 급락과 전일 대형 기술주의 강한 반등 모멘텀이 이어질 경우 추가 상승 가능.",
+        "rationaleFlat": "화요일 예정된 CPI 인플레이션 발표를 앞두고 관망세가 유입될 경우 횡보.",
+        "rationaleDown": "엔비디아 CEO 관련 스캔들 장기화 및 대중국 규제 우려가 지수 전반으로 확산될 경우 하락 압력."
+      },
+      "actual": "down",
+      "spxChangePercent": -0.372,
+      "scoredAt": "2026-11-11T10:22:50+09:00",
+      "hit": false,
+      "brier": 0.815
+    },
     {
       "date": "2026-11-06",
       "briefingId": "2026-11-06-ko-699b0d",
@@ -218,8 +236,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.3333,
-  "avgBrier": 0.7096,
-  "sampleSize": 12,
+  "hitRate": 0.3077,
+  "avgBrier": 0.7177,
+  "sampleSize": 13,
   "sampleWindow": 30
 }
