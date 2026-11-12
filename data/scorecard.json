@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-11T10:22:50+09:00",
+  "updatedAt": "2026-11-12T11:23:25+09:00",
   "entries": [
+    {
+      "date": "2026-11-11",
+      "briefingId": "2026-11-11-ko-5a860e",
+      "predicted": "down",
+      "probs": {
+        "up": 25,
+        "flat": 35,
+        "down": 40,
+        "rationaleUp": "CoreWeave 호실적 가이던스와 장 마감 후 야간 지수 선물의 기술적 반등 시도가 유입될 경우 제한적 반등 가능.",
+        "rationaleFlat": "10년물 금리가 5.0% 목전에서 저항을 맞으며 관망세를 형성할 경우 지수 보합권 등락 연출.",
+        "rationaleDown": "10년물 금리 4.98% 돌파 위협과 엔비디아 CEO 리스크 장기화 우려가 겹치며 성장주 중심 추가 매물 출회 가능성 우세."
+      },
+      "actual": "up",
+      "spxChangePercent": 1.291,
+      "scoredAt": "2026-11-12T11:23:25+09:00",
+      "hit": false,
+      "brier": 0.845
+    },
     {
       "date": "2026-11-10",
       "briefingId": "2026-11-10-ko-58f742",
@@ -236,8 +254,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.3077,
-  "avgBrier": 0.7177,
-  "sampleSize": 13,
+  "hitRate": 0.2857,
+  "avgBrier": 0.7268,
+  "sampleSize": 14,
   "sampleWindow": 30
 }
