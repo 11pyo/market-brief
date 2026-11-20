@@ -935,8 +935,71 @@
     } catch (e) {}
   }
 
+  // ===== 인앱 브라우저(카카오톡/인스타/네이버/라인) 감지 및 외부 브라우저 전환 =====
+  function initInAppBrowserGuard() {
+    var ua = navigator.userAgent || '';
+    if (!/(KAKAOTALK|Instagram|NAVER|FB_IAB|FBAN|FBAV|Line\/)/i.test(ua)) return;
+
+    var proto = window.location.protocol;
+    if (proto !== 'https:' && proto !== 'http:') return;
+
+    var isAndroid = /Android/i.test(ua);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua);
+    // [SECURE] sessionStorage 플래그로 무한 리다이렉트 루프 방지 (Category 3)
+    var redirectKey = 'mbrief_inapp_redirected';
+
+    if (isAndroid && !window.sessionStorage.getItem(redirectKey)) {
+      try {
+        window.sessionStorage.setItem(redirectKey, '1');
+        var intentUrl = 'intent://' + window.location.host + window.location.pathname +
+          window.location.search + '#Intent;scheme=' + proto.replace(':', '') +
+          ';package=com.android.chrome;end';
+        window.location.href = intentUrl;
+      } catch (err) {
+        console.warn('[mbrief] 외부 브라우저 전환 실패:', err && err.name);
+      }
+    }
+
+    // [SECURE] DOM createElement + textContent 전용 구성 - XSS 방지 (Category 1)
+    if (document.getElementById('mbrief-inapp-banner')) return;
+    var banner = document.createElement('div');
+    banner.id = 'mbrief-inapp-banner';
+    banner.style.cssText = 'position:sticky;top:0;z-index:9999;background:#1e1b4b;color:#e0e7ff;' +
+      'padding:10px 14px;font-size:13px;display:flex;align-items:center;justify-content:space-between;' +
+      'gap:8px;border-bottom:1px solid rgba(129,140,248,0.4);';
+
+    var msg = document.createElement('span');
+    msg.textContent = isIOS
+      ? '앱 내 브라우저에서는 일부 기능이 제한될 수 있습니다. 우측 하단/상단 메뉴에서 Safari로 열어주세요.'
+      : '앱 내 브라우저에서 열렸습니다. 더 안정적인 화면과 알림을 위해 Chrome으로 여는 것을 권장합니다.';
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = isAndroid ? 'Chrome으로 열기' : '주소 복사';
+    btn.style.cssText = 'background:#6366f1;color:#fff;border:none;border-radius:6px;' +
+      'padding:6px 10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;';
+    btn.addEventListener('click', function () {
+      if (isAndroid) {
+        window.location.href = 'intent://' + window.location.host + window.location.pathname +
+          window.location.search + '#Intent;scheme=' + proto.replace(':', '') +
+          ';package=com.android.chrome;end';
+      } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(window.location.href).then(function () {
+          showToast('주소가 복사되었습니다. Safari 주소창에 붙여넣어 주세요.', 'success');
+        }).catch(function () {
+          showToast('주소 복사에 실패했습니다.', 'error');
+        });
+      }
+    });
+
+    banner.appendChild(msg);
+    banner.appendChild(btn);
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
   // ===== 부트스트랩 =====
   function boot() {
+    initInAppBrowserGuard();
     initGoogleAnalytics();
     initCurrency();
     initChart();

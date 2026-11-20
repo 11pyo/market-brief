@@ -270,6 +270,8 @@ def test_structured_schema_matches_model_fields():
 # ===== 4. 로컬 CLI를 쓰지 못한 사실을 안내로 표면화한다 =====
 def test_notice_when_cli_not_installed(monkeypatch):
     """CLI 미설치 → 설치 안내를 담고 API 폴백으로 진행한다 (login_required는 False)."""
+    # [SECURE] 로컬 .env의 CLAUDE_CLI_ENABLED=false와 격리해 단위 테스트 결정성 보장 (Category 5)
+    monkeypatch.setattr(engine.settings, "claude_cli_enabled", True)
     monkeypatch.setattr(claude_cli, "available", lambda: False)
     monkeypatch.setattr(claude_cli, "resolve_cli", lambda: None)
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["openai"])
@@ -287,6 +289,7 @@ def test_notice_when_cli_not_installed(monkeypatch):
 
 def test_notice_when_cli_not_logged_in(monkeypatch):
     """CLI는 있는데 인증 백오프 중 → 로그인 안내 + login_required=True."""
+    monkeypatch.setattr(engine.settings, "claude_cli_enabled", True)
     monkeypatch.setattr(claude_cli, "available", lambda: False)
     monkeypatch.setattr(claude_cli, "resolve_cli", lambda: r"C:\fake\claude.exe")
     monkeypatch.setattr(api_providers, "available_providers", lambda: ["openai"])
