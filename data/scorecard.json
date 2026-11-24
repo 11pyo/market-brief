@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-20T11:29:43+09:00",
+  "updatedAt": "2026-11-24T14:25:57+09:00",
   "entries": [
+    {
+      "date": "2026-11-20",
+      "briefingId": "2026-11-20-ko-af3a70",
+      "predicted": "down",
+      "probs": {
+        "up": 15,
+        "flat": 25,
+        "down": 60,
+        "rationaleUp": "공포·탐욕 지수가 18.7(극단적 공포)에 도달하고 VIX가 28선까지 폭등한 데 따른 과매도 기술적 반발 매수세 유입 가능성.",
+        "rationaleFlat": "10년물 국채금리가 5.05% 부근에서 소강상태를 보이며 7,150선 지지력을 테스트하는 관망 장세 형성 가능성.",
+        "rationaleDown": "엔비디아 대상 주 사법당국 소환장 발부와 연준 인사들의 잇따른 긴축 경고, 소프트뱅크(-16%)발 글로벌 AI 공급망 투매 연쇄 작용."
+      },
+      "actual": "up",
+      "spxChangePercent": 4.6068,
+      "scoredAt": "2026-11-24T14:25:57+09:00",
+      "hit": false,
+      "brier": 1.145
+    },
     {
       "date": "2026-11-11",
       "briefingId": "2026-11-11-ko-5a860e",
@@ -254,8 +272,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.2857,
-  "avgBrier": 0.7268,
-  "sampleSize": 14,
+  "hitRate": 0.2667,
+  "avgBrier": 0.7547,
+  "sampleSize": 15,
   "sampleWindow": 30
 }
