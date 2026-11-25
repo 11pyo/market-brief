@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-24T14:25:57+09:00",
+  "updatedAt": "2026-11-25T13:28:31+09:00",
   "entries": [
+    {
+      "date": "2026-11-24",
+      "briefingId": "2026-11-24-ko-b768e0",
+      "predicted": "up",
+      "probs": {
+        "up": 55,
+        "flat": 25,
+        "down": 20,
+        "rationaleUp": "젠슨 황의 엔비디아 복귀로 촉발된 AI 섹터 전반의 강력한 매수세와 VIX 26.62로의 급락에 따른 투자 심리 회복이 추가 상승을 지지합니다.",
+        "rationaleFlat": "전일 지수가 단기간에 너무 큰 폭(+4.61%)으로 급등한 데 따른 자연스러운 숨 고르기와 차익 실현 매물이 맞설 수 있습니다.",
+        "rationaleDown": "호르무즈 해협 긴장 고조에 따른 유가 변동성 및 연준 위원들의 매파적 고금리 지속 발언이 부담으로 작용할 수 있습니다."
+      },
+      "actual": "down",
+      "spxChangePercent": -0.4941,
+      "scoredAt": "2026-11-25T13:28:31+09:00",
+      "hit": false,
+      "brier": 1.005
+    },
     {
       "date": "2026-11-20",
       "briefingId": "2026-11-20-ko-af3a70",
@@ -272,8 +290,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.2667,
-  "avgBrier": 0.7547,
-  "sampleSize": 15,
+  "hitRate": 0.25,
+  "avgBrier": 0.7703,
+  "sampleSize": 16,
   "sampleWindow": 30
 }
