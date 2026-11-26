@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-25T13:28:31+09:00",
+  "updatedAt": "2026-11-26T12:42:16+09:00",
   "entries": [
+    {
+      "date": "2026-11-25",
+      "briefingId": "2026-11-25-ko-995162",
+      "predicted": "down",
+      "probs": {
+        "up": 15,
+        "flat": 35,
+        "down": 50,
+        "rationaleUp": "델 테크놀로지스의 AI 서버 부문 호실적(+220.3억 달러)과 250억 달러 규모 자사주 매입 승인이 기술주 하방을 지지할 가능성.",
+        "rationaleFlat": "10년물 금리(4.90%)가 소폭 안정세를 유지하고 다우 지수(+0.84%)로의 방어적 섹터 로테이션이 지수 하락을 방어할 가능성.",
+        "rationaleDown": "트럼프의 대외 관세 압박, 엔비디아 정부 지분 인수 발언, 호르무즈 유조선 피격에 따른 유가 상승 및 극단적 공포 심리(Fear & Greed 17.4)."
+      },
+      "actual": "flat",
+      "spxChangePercent": -0.2731,
+      "scoredAt": "2026-11-26T12:42:16+09:00",
+      "hit": false,
+      "brier": 0.695
+    },
     {
       "date": "2026-11-24",
       "briefingId": "2026-11-24-ko-b768e0",
@@ -290,8 +308,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.25,
-  "avgBrier": 0.7703,
-  "sampleSize": 16,
+  "hitRate": 0.2353,
+  "avgBrier": 0.7659,
+  "sampleSize": 17,
   "sampleWindow": 30
 }
