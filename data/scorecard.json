@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-26T12:42:16+09:00",
+  "updatedAt": "2026-11-27T12:43:37+09:00",
   "entries": [
+    {
+      "date": "2026-11-26",
+      "briefingId": "2026-11-26-ko-e850b3",
+      "predicted": "up",
+      "probs": {
+        "up": 45,
+        "flat": 15,
+        "down": 40,
+        "rationaleUp": "장 마감 후 시간외 거래에서 기술주 중심으로 반발 매수세가 유입되며 지수 선거가 반등세를 보이고 있다.",
+        "rationaleFlat": "추수감사절 연휴를 앞두고 거래량이 감소하며 관망세가 짙어질 수 있다.",
+        "rationaleDown": "S&P의 엔비디아 신용등급 경고와 트럼프의 관세 정책에 따른 지정학·무역 마찰 우려가 상단을 제한한다."
+      },
+      "actual": "flat",
+      "spxChangePercent": -0.2731,
+      "scoredAt": "2026-11-27T12:43:37+09:00",
+      "hit": false,
+      "brier": 1.085
+    },
     {
       "date": "2026-11-25",
       "briefingId": "2026-11-25-ko-995162",
@@ -308,8 +326,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.2353,
-  "avgBrier": 0.7659,
-  "sampleSize": 17,
+  "hitRate": 0.2222,
+  "avgBrier": 0.7836,
+  "sampleSize": 18,
   "sampleWindow": 30
 }
