@@ -1,6 +1,24 @@
 {
-  "updatedAt": "2026-11-27T12:43:37+09:00",
+  "updatedAt": "2026-11-28T12:26:47+09:00",
   "entries": [
+    {
+      "date": "2026-11-27",
+      "briefingId": "2026-11-27-ko-fb0a61",
+      "predicted": "up",
+      "probs": {
+        "up": 55,
+        "flat": 25,
+        "down": 20,
+        "rationaleUp": "추수감사절 휴장 이후 휴일 단축 거래 속에서 기술주 및 AI 관련 낙폭 과대 종목들을 중심으로 저가 매수세가 유입되며 선물 시장이 강세를 보이고 있다.",
+        "rationaleFlat": "휴일 연휴 분위기로 인해 거래량이 급감하며 지수가 좁은 횡보세를 보일 가능성이 존재한다.",
+        "rationaleDown": "중동 지역 지정학적 리스크와 유가 급등세가 장기화될 경우 투자 심리에 부담으로 작용할 수 있다."
+      },
+      "actual": "up",
+      "spxChangePercent": 1.5977,
+      "scoredAt": "2026-11-28T12:26:47+09:00",
+      "hit": true,
+      "brier": 0.305
+    },
     {
       "date": "2026-11-26",
       "briefingId": "2026-11-26-ko-e850b3",
@@ -326,8 +344,8 @@
       "brier": 0.38
     }
   ],
-  "hitRate": 0.2222,
-  "avgBrier": 0.7836,
-  "sampleSize": 18,
+  "hitRate": 0.2632,
+  "avgBrier": 0.7584,
+  "sampleSize": 19,
   "sampleWindow": 30
 }
